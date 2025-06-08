@@ -8,8 +8,17 @@ This project managing your honeies. If you are a collector of honeies then you c
 
 ![Events](https://github.com/user-attachments/assets/fb8d6349-a483-4388-942c-7e41c75982bf)
 
+# database migraion
 
+```bash
+$ cd resources/db
+$ sqlx migrate run --database-url sqlite:${PATH_TO_YOUR_SQLITE_DB_FILE}
+
+# ex
+
+$ sqlx migrate run --database-url sqlite:./honey_note.db
+```
 
 # other information
 
-- This project includes data from "ISO 3166 Countries with Regional Codes", licensed under the MIT License. https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes
+- This project includes data from "ISO 3166 Countries with Regional Codes", licensed under the MIT License. <https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes>

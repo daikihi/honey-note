@@ -28,3 +28,7 @@ target/
 ## database should not be shared (e.g. SQLite)
 **/*.db
 **/*.sqlite
+
+# IDEs
+.idea/
+.vscode/
