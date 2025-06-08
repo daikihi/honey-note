@@ -3,5 +3,6 @@ name = "front"
 version.workspace = true
 description.workspace = true
 documentation.workspace = true
+edition.workspace = true
 
 [dependencies]

@@ -1,3 +1,8 @@
+extern crate log;
+use log::info;
+
 fn main() {
-    println!("prefecture_loader 起動");
+    info!("prefecture_loader is starting to run ...");
+
+    info!("complete prefecture_loader");
 }
