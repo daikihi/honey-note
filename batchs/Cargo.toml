@@ -5,7 +5,8 @@ description.workspace = true
 documentation.workspace = true
 
 [dependencies]
-
+sqlx = { version = "0.8.6", features = ["sqlite", "runtime-tokio-native-tls"] }
+tokio = { version = "1", features = ["full"] }
 
 [[bin]]
 name = "beekeeper_loader"
