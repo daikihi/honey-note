@@ -5,3 +5,21 @@ description.workspace = true
 documentation.workspace = true
 
 [dependencies]
+
+
+[[bin]]
+name = "beekeeper_loader"
+path = "src/beekeeper_loader/main.rs"
+
+
+[[bin]]
+name = "flower_loader"
+path = "src/flower_loader/main.rs"
+
+[[bin]]
+name = "honey_loader"
+path = "src/honey_loader/main.rs"
+
+[[bin]]
+name = "prefecture_loader"
+path = "src/prefecture_loader/main.rs"
