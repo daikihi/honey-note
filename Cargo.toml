@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "batchs",
+    "common",
+    "front",
+    "server"
+]
+
+[workspace.package]
+name = "honey-note"
+version = "0.1.0"
+edition = "2021"
+description = "https://github.com/daikihi/honey-note"
+documentation = "https://github.com/daikihi/honey-note"

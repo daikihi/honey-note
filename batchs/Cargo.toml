@@ -1,0 +1,7 @@
+[package]
+name = "batchs"
+version.workspace = true
+description.workspace = true
+documentation.workspace = true
+
+[dependencies]
