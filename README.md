@@ -19,6 +19,25 @@ $ sqlx migrate run --database-url sqlite:${PATH_TO_YOUR_SQLITE_DB_FILE}
 $ sqlx migrate run --database-url sqlite:./honey_note.db
 ```
 
+# Execution
+
+## batch
+In this section, we show how to execute our batches.
+
+### Japanese prececture loader
+This batch loads the master data of prefectures from the filesystem.
+It reads the file line by line and saves each entry into the database if it is new.
+
+```bash
+$ cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.scv 
+```
+
+if you want to check log then run following command
+
+```bash
+$ RUST_LOG=info cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.csv
+```
+
 # other information
 
 - This project includes data from "ISO 3166 Countries with Regional Codes", licensed under the MIT License. <https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes>
