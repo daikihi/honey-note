@@ -41,3 +41,57 @@ impl Prefecture {
         }
     }
 }
+
+
+#[cfg(test)]
+mod  tests {
+    use super::*;
+    use sqlx::SqlitePool;
+
+    // test target model
+    fn test_prefecture() -> Prefecture {
+        Prefecture {
+            id: 1,
+            name_jp: "東京都".to_string(),
+            name_en: "Tokyo".to_string(),
+        }
+    }
+
+    // craete database and table for testing
+    async fn setup_db() -> SqlitePool {
+        let pool = SqlitePool::connect(":memory:").await.unwrap();
+        sqlx::query(
+            "CREATE TABLE prefecture (
+                id INTEGER PRIMARY KEY,
+                name_jp TEXT NOT NULL,
+                name_en TEXT NOT NULL
+            )"
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        pool
+    }
+
+    #[tokio::test]
+    async fn test_insert_and_has_prefecture() {
+        let _pool = setup_db().await;
+        let _test_prefectue = test_prefecture();
+
+        // before inserting, check if it does not exist
+        let exists = _test_prefectue.has_prefecture(&_pool).await.unwrap();
+        assert!(!exists, "Prefecture should not exist before insertion");
+
+        // insert the prefecture
+        _test_prefectue.insert_prefecture(&_pool).await.unwrap();
+        // after inserting, check if it exists
+        let exists = _test_prefectue.has_prefecture(&_pool).await.unwrap();
+        assert!(exists, "Prefecture should exist after insertion");
+
+        // try to insert again, it should fail due to PRIMARY KEY constraint
+        let result = _test_prefectue.insert_prefecture(&_pool).await;
+        assert!(result.is_err(), "Inserting duplicate prefecture should return an error");  // check again, it should still exist
+        let exists = _test_prefectue.has_prefecture(&_pool).await.unwrap();
+        assert!(exists, "Prefecture should still exist after re-insertion");
+    }
+}
