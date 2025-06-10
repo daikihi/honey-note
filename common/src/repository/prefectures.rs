@@ -30,3 +30,51 @@ pub async fn insert_prefecture(_model_prefecture: &PrefectureModel, pool: &sqlx:
 fn for_logging(db_prefecture: &prefecture::Prefecture, msg: &str) { 
     info!("{}, {:?}", msg, db_prefecture);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::SqlitePool;
+
+    // Test target model
+    fn test_prefecture() -> PrefectureModel {
+        PrefectureModel {
+            id: 1,
+            name_jp: "東京都".to_string(),
+            name_en: "Tokyo".to_string(),
+        }
+    }
+
+    // Create database and table for testing
+    async fn setup_db() -> SqlitePool {
+        let pool = SqlitePool::connect(":memory:").await.unwrap();
+        sqlx::query(
+            "CREATE TABLE prefecture (
+                id INTEGER PRIMARY KEY,
+                name_jp TEXT NOT NULL,
+                name_en TEXT NOT NULL
+            )"
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        pool
+    }
+
+    #[tokio::test]
+    async fn test_insert_and_has_prefecture() {
+        let pool = setup_db().await;
+        let test_prefecture = test_prefecture();
+
+        // Before inserting, check if it does not exist
+        let exists = has_prefecture(&test_prefecture, &pool).await.unwrap();
+        assert!(!exists, "Prefecture should not exist before insertion");
+
+        // Insert the prefecture
+        insert_prefecture(&test_prefecture, &pool).await;
+
+        // After inserting, check if it exists
+        let exists = has_prefecture(&test_prefecture, &pool).await.unwrap();
+        assert!(exists, "Prefecture should exist after insertion");
+    }
+}
