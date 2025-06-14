@@ -22,8 +22,22 @@ pub async fn has_prefecture(
 
 pub async fn get_all_prefectures(
     pool: &sqlx::SqlitePool,
-) -> Result<Vec<prefecture::Prefecture>, sqlx::Error> {
-    prefecture::Prefecture::get_all_prefectures(pool).await
+) -> Result<Vec<PrefectureModel>, sqlx::Error> {
+    let db_prefectures = prefecture::Prefecture::get_all_prefectures(pool).await;
+    match db_prefectures {
+        Ok(prefectures) => {
+            let model_prefectures: Vec<PrefectureModel> = prefectures
+                .into_iter()
+                .map(|db_pref| PrefectureModel {
+                    id: db_pref.id,
+                    name_jp: db_pref.name_jp,
+                    name_en: db_pref.name_en,
+                })
+                .collect();
+            Ok(model_prefectures)
+        }
+        Err(e) => Err(e),
+    }
 }
 
 pub async fn insert_prefecture(_model_prefecture: &PrefectureModel, pool: &sqlx::SqlitePool) {

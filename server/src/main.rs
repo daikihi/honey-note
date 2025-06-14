@@ -1,19 +1,17 @@
 mod controllers;
 
-use actix_web::{HttpServer, App};
+use actix_web::{App, HttpServer};
+use log::info;
 
-#[actix_web::main] 
+#[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Initialize logging
-
-
-    // Start the server on port 8080
-    HttpServer::new(|| 
-     App::new()
+    info!("Starting server ...... ");
+    HttpServer::new(|| {
+        App::new()
             .service(controllers::health_checking::health_check)
-        )
-        .bind(("127.0.0.1", 8080))?
+            .service(controllers::prefecture_controller::get_all_prefectures)
+    })
+    .bind(("127.0.0.1", 8080))?
     .run()
     .await
-    
 }
