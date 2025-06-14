@@ -131,6 +131,9 @@ dependencies = [
  "common",
  "env_logger",
  "log",
+ "once_cell",
+ "sqlx",
+ "tempfile",
  "tokio",
 ]
 
@@ -191,6 +194,7 @@ version = "0.1.0"
 dependencies = [
  "env_logger",
  "log",
+ "once_cell",
  "sqlx",
  "tokio",
 ]

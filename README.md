@@ -29,13 +29,13 @@ This batch loads the master data of prefectures from the filesystem.
 It reads the file line by line and saves each entry into the database if it is new.
 
 ```bash
-$ cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.scv 
+$ cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.scv $PATH_TO_DB_FILE
 ```
 
 if you want to check log then run following command
 
 ```bash
-$ RUST_LOG=info cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.csv
+$ RUST_LOG=info cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.csv $PATH_TO_DB_FILE
 ```
 
 # other information

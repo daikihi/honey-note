@@ -1,8 +1,12 @@
 pub mod prefecture;
+use once_cell::sync::OnceCell;
+use sqlx::SqlitePool;
 
-pub async fn create_sqlite_pool()-> sqlx::SqlitePool {
-    let database_url = "sqlite://./resources/db/honey_note.db";
-    sqlx::SqlitePool::connect(database_url)
-        .await
-        .expect("Failed to create SQLite pool")
+static POOL: OnceCell<SqlitePool> = OnceCell::new();
+
+pub fn get_sqlite_pool(path: String) -> sqlx::SqlitePool {
+    POOL.get_or_init(|| {
+        SqlitePool::connect_lazy(path.as_str()).expect("Failed to create SQLite pool")
+    })
+    .clone()
 }

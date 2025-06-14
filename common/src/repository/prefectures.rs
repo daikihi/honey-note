@@ -1,33 +1,48 @@
-use crate::models::prefectures::Prefecture as PrefectureModel;
 use crate::infrastructure::db::sqlx::prefecture;
+use crate::models::prefectures::Prefecture as PrefectureModel;
 use log::info;
 
-pub async  fn has_prefecture(_model_prefecture: &PrefectureModel, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
-    let db_prefecture: prefecture::Prefecture = prefecture::Prefecture::from_model(&PrefectureModel {
-        id: 0, // ID is not used in this check
-        name_jp: _model_prefecture.name_jp.clone(),
-        name_en: _model_prefecture.name_en.clone(), // English name is not used in this check
-    });
+pub async fn has_prefecture(
+    _model_prefecture: &PrefectureModel,
+    pool: &sqlx::SqlitePool,
+) -> Result<bool, sqlx::Error> {
+    let db_prefecture: prefecture::Prefecture =
+        prefecture::Prefecture::from_model(&PrefectureModel {
+            id: 0, // ID is not used in this check
+            name_jp: _model_prefecture.name_jp.clone(),
+            name_en: _model_prefecture.name_en.clone(), // English name is not used in this check
+        });
 
     for_logging(&db_prefecture, "Checking if prefecture exists in database");
 
-    let result =  db_prefecture.has_prefecture(pool)
-        .await;
+    let result = db_prefecture.has_prefecture(pool).await;
     // @todo should not return sqlx::Error to application layer
     result
 }
 
-pub async fn insert_prefecture(_model_prefecture: &PrefectureModel, pool: &sqlx::SqlitePool) { 
-    let db_prefecture: prefecture::Prefecture = prefecture::Prefecture::from_model(_model_prefecture);
-    let _cloned = db_prefecture.clone();
-    for_logging(&db_prefecture, "Inserting prefecture into database");
-
-    db_prefecture.insert_prefecture(pool)
-        .await
-        .expect("Failed to insert prefecture");
+pub async fn get_all_prefectures(
+    pool: &sqlx::SqlitePool,
+) -> Result<Vec<prefecture::Prefecture>, sqlx::Error> {
+    prefecture::Prefecture::get_all_prefectures(pool).await
 }
 
-fn for_logging(db_prefecture: &prefecture::Prefecture, msg: &str) { 
+pub async fn insert_prefecture(_model_prefecture: &PrefectureModel, pool: &sqlx::SqlitePool) {
+    let db_prefecture: prefecture::Prefecture =
+        prefecture::Prefecture::from_model(_model_prefecture);
+    let _cloned = db_prefecture.clone();
+    let msg: String = format!(
+        "Inserting prefecture into database: id={}, name_jp={}, name_en={}",
+        _cloned.id, _cloned.name_jp, _cloned.name_en
+    );
+    for_logging(&db_prefecture, msg.as_str());
+
+    db_prefecture
+        .insert_prefecture(pool)
+        .await
+        .expect("Failed to insert prefecture ");
+}
+
+fn for_logging(db_prefecture: &prefecture::Prefecture, msg: &str) {
     info!("{}, {:?}", msg, db_prefecture);
 }
 
@@ -53,7 +68,7 @@ mod tests {
                 id INTEGER PRIMARY KEY,
                 name_jp TEXT NOT NULL,
                 name_en TEXT NOT NULL
-            )"
+            )",
         )
         .execute(&pool)
         .await
