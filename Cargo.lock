@@ -425,6 +425,7 @@ dependencies = [
  "env_logger",
  "log",
  "once_cell",
+ "serde",
  "sqlx",
  "tokio",
 ]
@@ -1768,6 +1769,12 @@ name = "server"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "common",
+ "env_logger",
+ "log",
+ "serde",
+ "sqlx",
+ "tokio",
 ]
 
 [[package]]

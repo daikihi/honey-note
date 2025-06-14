@@ -58,11 +58,11 @@ mod tests {
     use sqlx::sqlite::SqlitePoolOptions;
 
     use super::*;
-    use common::infrastructure::db::sqlx::prefecture;
     use common::repository::prefectures;
 
     #[tokio::test]
     async fn test_run() {
+        use common::models::prefectures::Prefecture;
         use tempfile::NamedTempFile;
 
         // 1. 一時ファイル作成
@@ -101,7 +101,7 @@ mod tests {
         };
         let _ = run(_dao).await;
 
-        let prefectures: Result<Vec<prefecture::Prefecture>, sqlx::Error> =
+        let prefectures: Result<Vec<Prefecture>, sqlx::Error> =
             prefectures::get_all_prefectures(&_pool).await;
 
         assert!(
