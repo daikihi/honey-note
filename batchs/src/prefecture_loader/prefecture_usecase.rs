@@ -54,24 +54,12 @@ pub async fn run<'a>(_dao: PrefectureLoaderRequestDto<'a>) {
 
 #[cfg(test)]
 mod tests {
-    use sqlx::{ query};
+    use sqlx::query;
     use sqlx::sqlite::SqlitePoolOptions;
-    
 
+    use super::*;
     use common::infrastructure::db::sqlx::prefecture;
     use common::repository::prefectures;
-    use super::*;
-
-
-
-fn get_project_root() -> std::path::PathBuf {
-    let mut dir = std::env::current_dir().expect("can't get current_dir");
-    while !dir.join("Cargo.toml").exists() {
-        dir = dir.parent().expect("can't find Cargo.toml").to_path_buf();
-    }
-    dir
-}
-
 
     #[tokio::test]
     async fn test_run() {
@@ -100,7 +88,10 @@ fn get_project_root() -> std::path::PathBuf {
 
         let csv_path = "../resources/master_data/japanese_prefectures.csv";
         println!("CARGO_MANIFEST_DIR: {}", env!("CARGO_MANIFEST_DIR"));
-        assert!(std::path::Path::new(&csv_path).exists(), "CSVファイルが存在しません");
+        assert!(
+            std::path::Path::new(&csv_path).exists(),
+            "CSVファイルが存在しません"
+        );
         let content = std::fs::read_to_string(&csv_path).expect("CSVファイルが読めません");
         println!("CSV内容: {}", content);
 
@@ -113,17 +104,23 @@ fn get_project_root() -> std::path::PathBuf {
         let prefectures: Result<Vec<prefecture::Prefecture>, sqlx::Error> =
             prefectures::get_all_prefectures(&_pool).await;
 
-        assert!(prefectures.is_ok(), "Failed to fetch prefectures from the database");
+        assert!(
+            prefectures.is_ok(),
+            "Failed to fetch prefectures from the database"
+        );
         match prefectures {
             Ok(_prefectures) => {
-                assert!(_prefectures.iter().cloned().len() == 47, "Expected 47 prefectures, found {}", _prefectures.len());
+                assert!(
+                    _prefectures.iter().cloned().len() == 47,
+                    "Expected 47 prefectures, found {}",
+                    _prefectures.len()
+                );
             }
             Err(e) => {
                 panic!("Error fetching prefectures: {}", e);
             }
         }
-        
-        
+
         info!("Test run completed successfully");
         tmpfile.close().unwrap(); // Clean up the temporary file
     }
