@@ -49,7 +49,6 @@ impl Prefecture {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde::{Deserialize, Serialize};
     use sqlx::SqlitePool;
 
     // test target model

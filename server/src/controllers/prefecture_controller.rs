@@ -9,11 +9,7 @@ pub async fn get_all_prefectures() -> actix_web::Result<actix_web::web::Json<Vec
     let file_name = "resources/db/honey_note.db";
     let pool = common::infrastructure::db::sqlx::get_sqlite_pool(file_name.to_string());
     match repository_get_all_prefectures(&pool).await {
-        Ok(_prefectures) => {
-            // Map DB prefectures to API model prefectures
-            let prefectures: Vec<PrefectureModel> = _prefectures;
-            Ok(web::Json(prefectures))
-        }
+        Ok(_prefectures) => Ok(web::Json(_prefectures)),
         Err(e) => {
             log::error!("Failed to fetch prefectures: {}", e);
             Err(error::ErrorInternalServerError("Database error"))
