@@ -37,6 +37,15 @@ if you want to check log then run following command
 ```bash
 $ RUST_LOG=info cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.csv $PATH_TO_DB_FILE
 ```
+## web-server
+In this section, we show how to execute our web-server.
+
+```bash
+cd $honey_note_top_directory
+cargo run -p server
+```
+
+$honey_note_top_directory is not for server directory. this is to top directory of this repository
 
 # other information
 
