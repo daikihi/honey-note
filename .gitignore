@@ -32,3 +32,5 @@ target/
 # IDEs
 .idea/
 .vscode/
+.DS_Store
+tmp/
