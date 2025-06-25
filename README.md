@@ -1,6 +1,7 @@
 # honey-note
 
-This project managing your honeies. If you are a collector of honeies then you can manage your honies using this project.
+This project managing your honeies. If you are a collector of honeies then you can manage your honies using this
+project.
 
 # Overview of Design
 
@@ -9,6 +10,14 @@ This project managing your honeies. If you are a collector of honeies then you c
 ![Events](https://github.com/user-attachments/assets/fb8d6349-a483-4388-942c-7e41c75982bf)
 
 # database migraion
+
+Preparing a database migration.
+
+The following installation should be executed on the first run.
+
+```bash
+cargo install sqlx-cli
+```
 
 ```bash
 $ cd resources/db
@@ -22,9 +31,11 @@ $ sqlx migrate run --database-url sqlite:./honey_note.db
 # Execution
 
 ## batch
+
 In this section, we show how to execute our batches.
 
 ### Japanese prececture loader
+
 This batch loads the master data of prefectures from the filesystem.
 It reads the file line by line and saves each entry into the database if it is new.
 
@@ -37,7 +48,9 @@ if you want to check log then run following command
 ```bash
 $ RUST_LOG=info cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.csv $PATH_TO_DB_FILE
 ```
+
 ## web-server
+
 In this section, we show how to execute our web-server.
 
 ```bash
@@ -49,4 +62,6 @@ $honey_note_top_directory is not for server directory. this is to top directory 
 
 # other information
 
-- This project includes data from "ISO 3166 Countries with Regional Codes", licensed under the MIT License. <https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes>
+- This project includes data from "ISO 3166 Countries with Regional Codes", licensed under the MIT
+  License. <https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes>
+
