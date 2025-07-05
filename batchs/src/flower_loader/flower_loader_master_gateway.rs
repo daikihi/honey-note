@@ -11,5 +11,4 @@ pub fn load_master_data(file_name: &str) -> String {
             String::new() // エラー時は空の文字列を返す
         }
     }
-
 }
