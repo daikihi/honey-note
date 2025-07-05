@@ -13,6 +13,10 @@ pub async fn run(dto: FlowerLoaderRequestDto) {
     let master_data: String = load_master_data(&master_file_name);
 
     for line in master_data.lines() {
+        if line.is_empty() { // parse error or empty line does not need to be processed
+            continue;
+        }
+
         let flower = common::models::flowers::create_model_flower_from_name(line);
 
         let connection_pool = get_sqlite_pool(db_file_name.to_string());
