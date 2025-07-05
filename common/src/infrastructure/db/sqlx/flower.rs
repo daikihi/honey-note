@@ -1,0 +1,51 @@
+use crate::models::flowers::Flower as ModelFlower;
+
+#[derive(sqlx::FromRow, sqlx::Type, Debug, Clone)]
+pub struct InsertFlower {
+    pub name_jp: String,
+    pub name_en: Option<String>,
+    pub scientific_name: Option<String>,
+    pub short_note: Option<String>, // description に相当する簡単な説明
+    pub flower_type: Option<String>,
+    pub image_path: Option<String>,
+    pub note: Option<String>,
+}
+
+impl InsertFlower {
+    pub async fn has_flower(self: &Self, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
+        let flower_name_jp = self.name_jp.clone();
+        let query = "SELECT EXISTS(SELECT 1 FROM flower WHERE name_jp = $1)";
+        let exists: (i64,) = sqlx::query_as(query)
+            .bind(flower_name_jp)
+            .fetch_one(pool)
+            .await?;
+        Ok(exists.0 != 0)
+    }
+
+    pub async fn insert_flower(&self, pool: &sqlx::SqlitePool) -> Result<(), sqlx::Error> {
+        let query = "INSERT INTO flower (name_jp, name_en, scientific_name, short_note, flower_type, image_path, note) VALUES ($1, $2, $3, $4, $5, $6, $7)";
+        sqlx::query(query)
+            .bind(&self.name_jp)
+            .bind(&self.name_en)
+            .bind(&self.scientific_name)
+            .bind(&self.short_note)
+            .bind(&self.flower_type)
+            .bind(&self.image_path)
+            .bind(&self.note)
+            .execute(pool)
+            .await
+            .map(|_| ())
+    }
+
+    pub fn from_model_flower(model_flower: &ModelFlower) -> Self {
+        InsertFlower {
+            name_jp: model_flower.name_jp.clone(),
+            name_en: model_flower.name_en.clone(),
+            scientific_name: model_flower.scientific_name.clone(),
+            short_note: model_flower.short_note.clone(),
+            flower_type: model_flower.flower_type.clone(),
+            image_path: model_flower.image_path.clone(),
+            note: model_flower.note.clone(),
+        }
+    }
+}

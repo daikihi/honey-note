@@ -1,4 +1,6 @@
+pub mod flower;
 pub mod prefecture;
+
 use once_cell::sync::OnceCell;
 use sqlx::SqlitePool;
 
