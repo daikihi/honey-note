@@ -34,3 +34,6 @@ target/
 .vscode/
 .DS_Store
 tmp/
+
+# master_data
+resources/master_data/flower_names.csv
