@@ -37,6 +37,16 @@ if you want to check log then run following command
 ```bash
 $ RUST_LOG=info cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.csv $PATH_TO_DB_FILE
 ```
+
+### flower master data loader 
+This batch processes a master data file located in the file system under `resources/something_directory/something_file`. 
+It checks if the data is new and stores it in the database. The master file should exclusively contain flower names, listed line by line.
+This batch doesn't care about name extensions of name. This file doesn't care about header line and we assume each line has only one flower name.
+
+```bash
+$ RUST_LOG=info cargo run -p batchs --bin flower_loader flower_master_data_directory/file_name.csv database_file(sqlite file).db
+```
+
 ## web-server
 In this section, we show how to execute our web-server.
 
