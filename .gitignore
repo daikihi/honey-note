@@ -37,3 +37,4 @@ tmp/
 
 # master_data
 resources/master_data/flower_names.csv
+resources/master_data/beekeeper.csv
