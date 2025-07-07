@@ -28,6 +28,7 @@ target/
 ## database should not be shared (e.g. SQLite)
 **/*.db
 **/*.sqlite
+*session.sql
 
 # IDEs
 .idea/
