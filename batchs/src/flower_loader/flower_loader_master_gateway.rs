@@ -16,12 +16,15 @@ mod tests {
     use super::*;
     use std::fs;
 
-
     #[test]
     fn test_load_master_data() {
         let test_file = "../resources/master_data/tests/test_data_flower.csv";
         let content = load_master_data(test_file);
         assert!(!content.is_empty(), "Failed to load master data");
-        assert_eq!(content.lines().count(), 3, "Unexpected number of lines in master data");
+        assert_eq!(
+            content.lines().count(),
+            3,
+            "Unexpected number of lines in master data"
+        );
     }
 }
