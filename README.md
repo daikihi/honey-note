@@ -21,6 +21,13 @@ $ sqlx migrate run --database-url sqlite:./honey_note.db
 
 # Execution
 
+## build
+
+```bash
+$ cd $honey-note-path
+$ cargo install wasm-bindgen-cli # build for front sub project
+```
+
 ## batch
 In this section, we show how to execute our batches.
 
@@ -55,8 +62,21 @@ cd $honey_note_top_directory
 cargo run -p server
 ```
 
-$honey_note_top_directory is not for server directory. this is to top directory of this repository
+$honey_note_top_directory is not for server directory. this is to top directory of this repository.
+
+### javascripts
+
+```bash
+$ cd front/
+$ wasm-pack build --target front --out-dir ../server/src/assets/javascript/
+$ ls ../server/src/assets/javascript
+front_bg.wasm      front_bg.wasm.d.ts front.d.ts         front.js           package.json
+```
+
+Then you will see above files in `server/src/assets/javascript` directory.
+
 
 # other information
 
 - This project includes data from "ISO 3166 Countries with Regional Codes", licensed under the MIT License. <https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes>
+

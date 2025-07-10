@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>HoneyNote | トップページ</title>
+  <style>
+    :root {
+      --gold:#FFB703;
+      --blue:#219EBC;
+      --line:#E9C46A;
+      --cream:#FFF8ED;
+      --radius:12px;
+      font-family:"Inter","Noto Sans JP",sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background:var(--cream);
+      color:#333;
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+
+    header {
+      background:#fff;
+      box-shadow:0 1px 4px rgba(0,0,0,.06);
+    }
+    header nav {
+      max-width:1000px;
+      height:64px;
+      margin:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 1rem;
+    }
+    .nav-left {
+      display:flex;
+      align-items:center;
+      gap:1rem;
+    }
+    nav a.logo {
+      display:flex;
+      align-items:center;
+      gap:0.5rem;
+      font-size:1.5rem;
+      font-weight:700;
+      color:var(--gold);
+      text-decoration:none;
+    }
+    .logo img {
+      height:56px;
+      vertical-align:middle;
+    }
+
+    .hero {
+      text-align:center;
+      padding:2rem 1rem;
+    }
+    .hero h1 {
+      font-size:2rem;
+      color:#333;
+      margin-bottom:0.5rem;
+    }
+    .hero p {
+      color:#666;
+      font-size:1rem;
+    }
+
+    .cards {
+      max-width:1000px;
+      margin:2rem auto;
+      padding:0 1rem;
+      display:grid;
+      gap:1rem;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    }
+    .card {
+      background:#fff;
+      border-radius:var(--radius);
+      box-shadow:0 1px 4px rgba(0,0,0,.08);
+      padding:1.5rem;
+      text-align:center;
+      transition:.2s;
+    }
+    .card:hover {
+      transform:translateY(-2px);
+      box-shadow:0 4px 10px rgba(0,0,0,.1);
+    }
+    .card h2 {
+      color:var(--blue);
+      font-size:1.2rem;
+      margin-bottom:.5rem;
+    }
+    .card p {
+      font-size:.9rem;
+      color:#555;
+      margin-bottom:1rem;
+    }
+    .card a {
+      display:inline-block;
+      padding:.5rem 1rem;
+      background:var(--gold);
+      color:#fff;
+      text-decoration:none;
+      border-radius:var(--radius);
+      font-weight:600;
+    }
+
+    footer {
+      text-align:center;
+      font-size:.8rem;
+      color:#999;
+      margin-top:auto;
+      padding:1rem 0;
+    }
+  </style>
+
+
+  <script type="module">
+    import init,  { top_page_main } from '/honey_note/javascript/front.js';
+    init().then(() => {
+      // WASMの初期化後に呼び出したい処理を書く
+      top_page_main();
+      console.log("WASM loaded!");
+    });
+  </script>
+</head>
+
+<body>
+
+<header>
+  <nav>
+    <div class="nav-left">
+      <a class="logo" href="/">
+        <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
+        HoneyNote
+      </a>
+    </div>
+  </nav>
+</header>
+
+<div class="hero">
+  <h1>ようこそ、HoneyNote へ 🍯</h1>
+  <p>あなたのハチミツコレクションを記録し、探し、楽しむためのWebアプリ</p>
+</div>
+
+<section class="cards">
+  <div class="card">
+    <h2>はちみつ一覧</h2>
+    <p>集めたハチミツの一覧を表示。採蜜年や蜜源での検索も。</p>
+    <a href="/honey_note/honeies/lists.html">見る</a>
+  </div>
+  <div class="card">
+    <h2>蜜源リスト</h2>
+    <p>植物ごとの蜜源を確認。花の種類からハチミツを探す手がかりに。</p>
+    <a href="/honey_note/flowers/lists.html">見る</a>
+  </div>
+  <div class="card">
+    <h2>養蜂場</h2>
+    <p>どこの養蜂家が作ったハチミツかを一覧で確認。</p>
+    <a href="/honey_note/beekeepers/lists.html">見る</a>
+  </div>
+</section>
+
+<footer>
+  &copy; 2025 HoneyNote Project
+</footer>
+
+</body>
+</html>
