@@ -11,6 +11,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .service(Files::new("/honey_note/icons", "server/src/assets/icons"))
             .service(Files::new("/honey_note", "server/src/assets/html"))
+            .service(Files::new("/honey_note/", "server/src/assets/"))
             .service(controllers::health_checking::health_check)
             .service(controllers::prefecture_controller::get_all_prefectures)
     })

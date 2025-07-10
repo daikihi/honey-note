@@ -116,7 +116,18 @@
       padding:1rem 0;
     }
   </style>
+
+
+  <script type="module">
+    import init,  { top_page_main } from '/honey_note/javascript/front.js';
+    init().then(() => {
+      // WASMの初期化後に呼び出したい処理を書く
+      top_page_main();
+      console.log("WASM loaded!");
+    });
+  </script>
 </head>
+
 <body>
 
 <header>
