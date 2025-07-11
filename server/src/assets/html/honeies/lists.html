@@ -120,6 +120,15 @@
     }
   }
   </style>
+
+    <script type="module">
+    import init,  { honey_list_main } from '/honey_note/javascript/front.js';
+    init().then(() => {
+      // WASMの初期化後に呼び出したい処理を書く
+      honey_list_main();
+      console.log("WASM loaded!");
+    });
+  </script>
 </head>
 <body>
 
