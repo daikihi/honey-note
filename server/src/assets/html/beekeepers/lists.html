@@ -5,49 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>HoneyNote | 養蜂場一覧</title>
 
-<style>
-:root {
-  --gold:#FFB703;
-  --blue:#219EBC;
-  --line:#E9C46A;
-  --cream:#FFF8ED;
-  --radius:6px;
-  font-family:"Inter","Noto Sans JP",sans-serif;
-}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--cream);color:#333;}
-
-/* Header */
-header {background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);}
-header nav {max-width:1000px;height:64px;margin:auto;display:flex;align-items:center;padding:0 1rem;}
-header nav a {color:#555;text-decoration:none;font-size:.95rem;}
-header nav a.logo {font-size:1.4rem;font-weight:700;color:var(--gold);}
-header nav a:hover {color:var(--gold);}
-.logo img {
-height:150px;
-vertical-align:middle;
-}
-/* Search Bar */
-.search-wrap {max-width:1000px;margin:1.2rem auto;padding:0 1rem;}
-.search-wrap input {width:100%;padding:.6rem 1rem;border:1px solid var(--line);border-radius:var(--radius);font-size:.95rem;}
-
-/* Table */
-main {max-width:1000px;margin:auto;padding:0 1rem 2rem;}
-table {width:100%;border-collapse:collapse;background:#fff;border-radius:var(--radius);overflow:hidden;}
-th, td {padding:.65rem 1rem;border-bottom:1px solid var(--line);text-align:left;font-size:.9rem;white-space:nowrap;}
-th {background:var(--cream);font-weight:600;}
-tr:hover {background:#FFF4C2;cursor:pointer;}
-
-/* Responsive */
-@media(max-width:640px){
-  table,thead {display:none;}
-  tr,td {display:block;width:100%;}
-  td {border:none;border-bottom:1px solid var(--line);}
-  td::before {content:attr(data-label)": ";font-weight:600;color:#777;}
-}
-</style>
-</head>
-<body>
+  <style>
+    @import url('/honey_note/css/common_list.css');
+  </style>
+  </head>
+  
+  <body>
 
 <header>
   <nav>
@@ -64,6 +27,8 @@ tr:hover {background:#FFF4C2;cursor:pointer;}
     </div>
   </nav>
 </header>
+
+
 <div class="search-wrap">
   <input id="searchInput" placeholder="ID・養蜂場名・地域で検索…" autocomplete="off">
 </div>
