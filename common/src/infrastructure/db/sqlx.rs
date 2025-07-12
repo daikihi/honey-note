@@ -12,3 +12,5 @@ pub fn get_sqlite_pool(path: String) -> sqlx::SqlitePool {
     })
     .clone()
 }
+
+pub static db_file_name: &str = "resources/db/honey_note.db";

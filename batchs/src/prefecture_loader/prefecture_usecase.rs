@@ -54,6 +54,7 @@ pub async fn run<'a>(_dao: PrefectureLoaderRequestDto<'a>) {
 
 #[cfg(test)]
 mod tests {
+    use common::errors::AppError;
     use sqlx::query;
     use sqlx::sqlite::SqlitePoolOptions;
 
@@ -101,7 +102,7 @@ mod tests {
         };
         let _ = run(_dao).await;
 
-        let prefectures: Result<Vec<Prefecture>, sqlx::Error> =
+        let prefectures: Result<Vec<Prefecture>, AppError> =
             prefectures::get_all_prefectures(&_pool).await;
 
         assert!(

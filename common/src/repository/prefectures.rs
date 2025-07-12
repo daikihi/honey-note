@@ -1,11 +1,13 @@
+use crate::errors::AppError;
 use crate::infrastructure::db::sqlx::prefecture;
 use crate::models::prefectures::Prefecture as PrefectureModel;
 use log::info;
+use serde::de::value::Error;
 
 pub async fn has_prefecture(
     _model_prefecture: &PrefectureModel,
     pool: &sqlx::SqlitePool,
-) -> Result<bool, sqlx::Error> {
+) -> Result<bool, AppError> {
     let db_prefecture: prefecture::Prefecture =
         prefecture::Prefecture::from_model(&PrefectureModel {
             id: 0, // ID is not used in this check
@@ -17,12 +19,22 @@ pub async fn has_prefecture(
 
     let result = db_prefecture.has_prefecture(pool).await;
     // @todo should not return sqlx::Error to application layer
-    result
+    match result {
+        Ok(exists) => Ok(exists),
+        Err(sqlx::Error::RowNotFound) => {
+            info!("Prefecture does not exist in database");
+            Err(AppError::NotFound("Prefecture not found".to_string()))
+        }
+        Err(e) => {
+            info!("Error checking prefecture existence: {}", e);
+            Err(AppError::DatabaseError(e.to_string()))
+        }
+    }
 }
 
 pub async fn get_all_prefectures(
     pool: &sqlx::SqlitePool,
-) -> Result<Vec<PrefectureModel>, sqlx::Error> {
+) -> Result<Vec<PrefectureModel>, AppError> {
     let db_prefectures = prefecture::Prefecture::get_all_prefectures(pool).await;
     match db_prefectures {
         Ok(prefectures) => {
@@ -36,7 +48,7 @@ pub async fn get_all_prefectures(
                 .collect();
             Ok(model_prefectures)
         }
-        Err(e) => Err(e),
+        Err(e) => Err(AppError::DatabaseError(e.to_string())),
     }
 }
 

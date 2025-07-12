@@ -20,7 +20,8 @@ async fn main() {
         "マスターファイル名: {}, DBファイル名: {}",
         master_file_name, db_file_name
     );
-    let dto: FlowerLoaderRequestDto = FlowerLoaderRequestDto::new(master_file_name.to_string(), db_file_name.to_string());
+    let dto: FlowerLoaderRequestDto =
+        FlowerLoaderRequestDto::new(master_file_name.to_string(), db_file_name.to_string());
     let _ = flower_loader_usecase::run(dto).await;
 
     info!("flower_loader 完了");
