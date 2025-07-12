@@ -1,0 +1,60 @@
+use crate::models::beekeeper::Beekeeper as ModelBeekeeper;
+// for select and update
+pub struct Beekeeper {
+    pub id: i32,
+    pub name_jp: String,
+    pub name_en: Option<String>,
+    pub founding_year: Option<i32>, // 創業・設立された西暦年
+    pub location_prefecture_id: Option<i32>,
+    pub location_city: Option<String>,
+    pub website_url: Option<String>,
+    pub note: Option<String>,
+}
+// for new insert
+pub struct BeekeeperForInsert {
+    pub name_jp: String,
+    pub name_en: Option<String>,
+    pub founding_year: Option<i32>, // 創業・設立された西暦年
+    pub location_prefecture_id: Option<i32>,
+    pub location_city: Option<String>,
+    pub website_url: Option<String>,
+    pub note: Option<String>,
+}
+
+impl BeekeeperForInsert {
+    pub fn new(model_beekeeper: &ModelBeekeeper) -> Self {
+        BeekeeperForInsert {
+            name_jp: model_beekeeper.name_jp.clone(),
+            name_en: model_beekeeper.name_en.clone(),
+            founding_year: model_beekeeper.founding_year,
+            location_prefecture_id: model_beekeeper.location_prefecture_id,
+            location_city: model_beekeeper.location_city.clone(),
+            website_url: model_beekeeper.website_url.clone(),
+            note: model_beekeeper.note.clone(),
+        }
+    }
+
+    pub async fn has_beekeeper(&self, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
+        let query = "SELECT EXISTS(SELECT 1 FROM beekeeper WHERE name_jp = $1)";
+        let exists: (i64,) = sqlx::query_as(query)
+            .bind(&self.name_jp)
+            .fetch_one(pool)
+            .await?;
+        Ok(exists.0 != 0)
+    }
+
+    pub async fn insert_beekeeper(&self, pool: &sqlx::SqlitePool) -> Result<(), sqlx::Error> {
+        let query = "INSERT INTO beekeeper (name_jp, name_en, founding_year, location_prefecture_id, location_city, website_url, note) VALUES ($1, $2, $3, $4, $5, $6, $7)";
+        sqlx::query(query)
+            .bind(&self.name_jp)
+            .bind(&self.name_en)
+            .bind(self.founding_year)
+            .bind(self.location_prefecture_id)
+            .bind(&self.location_city)
+            .bind(&self.website_url)
+            .bind(&self.note)
+            .execute(pool)
+            .await
+            .map(|_| ())
+    }
+}
