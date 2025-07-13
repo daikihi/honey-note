@@ -1,3 +1,4 @@
+pub mod beekeeper;
 pub mod flower;
 pub mod prefecture;
 
