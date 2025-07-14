@@ -4,5 +4,3 @@
 pub mod beekeepers;
 pub mod flowers;
 pub mod prefectures;
-
-// TODO: Repository 用のException をつくりたい.
