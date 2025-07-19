@@ -1,8 +1,11 @@
 use log::info;
 
-use crate::models::flowers::Flower;
+use crate::{errors::AppError, models::flowers::Flower as ModelFlower};
 
-pub async fn insert_flower(flower: &Flower, pool: &sqlx::SqlitePool) -> Result<(), sqlx::Error> {
+pub async fn insert_flower(
+    flower: &ModelFlower,
+    pool: &sqlx::SqlitePool,
+) -> Result<(), sqlx::Error> {
     info!("insert_flower: flower={:?}", flower);
     let insert_flower =
         crate::infrastructure::db::sqlx::flower::InsertFlower::from_model_flower(flower);
@@ -12,7 +15,10 @@ pub async fn insert_flower(flower: &Flower, pool: &sqlx::SqlitePool) -> Result<(
     })
 }
 
-pub async fn has_flower(flower: &Flower, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
+pub async fn has_flower(
+    flower: &ModelFlower,
+    pool: &sqlx::SqlitePool,
+) -> Result<bool, sqlx::Error> {
     // flower.has_flower(pool)
     let insert_flower =
         crate::infrastructure::db::sqlx::flower::InsertFlower::from_model_flower(flower);
@@ -20,6 +26,17 @@ pub async fn has_flower(flower: &Flower, pool: &sqlx::SqlitePool) -> Result<bool
         eprintln!("Error checking if flower exists: {}", e);
         e
     })
+}
+
+pub async fn get_all_flowers(pool: &sqlx::SqlitePool) -> Result<Vec<ModelFlower>, AppError> {
+    let db_flowers = crate::infrastructure::db::sqlx::flower::get_all_flowers(pool).await;
+    match db_flowers {
+        Ok(flowers) => Ok(flowers
+            .iter()
+            .map(|f| f.to_model_flower())
+            .collect::<Vec<ModelFlower>>()),
+        Err(e) => Err(AppError::DatabaseError(e.to_string())),
+    }
 }
 
 // ここから下はテストコード

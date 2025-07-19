@@ -1,3 +1,5 @@
+use sqlx::{pool, query, query_as};
+
 use crate::models::flowers::Flower as ModelFlower;
 
 #[derive(sqlx::FromRow, sqlx::Type, Debug, Clone)]
@@ -48,4 +50,45 @@ impl InsertFlower {
             note: model_flower.note.clone(),
         }
     }
+}
+
+#[derive(sqlx::FromRow, sqlx::Type, Debug, Clone)]
+pub struct Flower {
+    pub id: Option<i32>,
+    pub name_jp: String,
+    pub name_en: Option<String>,
+    pub scientific_name: Option<String>,
+    pub short_note: Option<String>,
+    pub flower_type: Option<String>,
+    pub image_path: Option<String>,
+    pub note: Option<String>,
+}
+
+impl Flower {
+    pub fn to_model_flower(&self) -> ModelFlower {
+        ModelFlower {
+            id: self.id.map(|l| l as i128),
+            name_jp: self.name_jp.clone(),
+            name_en: self.name_en.clone(),
+            scientific_name: self.scientific_name.clone(),
+            short_note: self.short_note.clone(),
+            flower_type: self.flower_type.clone(),
+            image_path: self.image_path.clone(),
+            note: self.note.clone(),
+        }
+    }
+}
+
+pub async fn get_all_flowers(pool: &sqlx::SqlitePool) -> Result<Vec<Flower>, sqlx::Error> {
+    // get all flowers from sqlite db
+    let flowers: Result<Vec<Flower>, sqlx::Error> = sqlx::query_as::<_, Flower>(
+        r#"
+        SELECT id, name_jp, name_en, scientific_name , short_note, flower_type,
+        image_path, note
+        FROM flower
+        "#,
+    )
+    .fetch_all(pool)
+    .await;
+    flowers
 }

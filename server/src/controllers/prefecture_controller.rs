@@ -2,7 +2,7 @@ use actix_web::{error, get, web};
 use common::infrastructure::db::sqlx;
 use common::models::prefectures::Prefecture as PrefectureModel;
 use common::repository::prefectures::get_all_prefectures as repository_get_all_prefectures;
-#[get("/honey_note/api/prefectures")]
+#[get("/honey-note/api/prefectures")]
 pub async fn get_all_prefectures() -> actix_web::Result<actix_web::web::Json<Vec<PrefectureModel>>>
 {
     // should move to parameter of program or somethins static place

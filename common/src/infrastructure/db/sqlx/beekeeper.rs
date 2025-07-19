@@ -59,11 +59,13 @@ impl BeekeeperForInsert {
             .map(|_| ())
     }
 
-    pub async fn get_all_beekeepers(pool: &sqlx::SqlitePool) -> Result<Vec<Beekeeper>, sqlx::Error> {
+    // should be implemented in Beekeeper not in BeekeeperForInsert
+    pub async fn get_all_beekeepers(
+        pool: &sqlx::SqlitePool,
+    ) -> Result<Vec<Beekeeper>, sqlx::Error> {
         let query = "SELECT id, name_jp, name_en, founding_year, location_prefecture_id, location_city, website_url, note FROM beekeeper";
-        let beekeepers: Result<Vec<Beekeeper>, sqlx::Error> = sqlx::query_as::<_, Beekeeper>(query)
-            .fetch_all(pool)
-            .await;
+        let beekeepers: Result<Vec<Beekeeper>, sqlx::Error> =
+            sqlx::query_as::<_, Beekeeper>(query).fetch_all(pool).await;
         beekeepers
     }
 }
