@@ -8,6 +8,12 @@
 <style>
     @import url('/honey_note/css/common_list.css');
 </style>
+<script type="module">
+  import init, { flower_list_main } from '/honey_note/javascript/front.js';
+  init().then(() => {
+    flower_list_main();
+  });
+</script>
 </head>
 <body>
 <header>
