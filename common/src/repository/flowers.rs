@@ -1,7 +1,7 @@
 use log::info;
 
-use crate::{errors::AppError, models::flowers::Flower as ModelFlower};
-
+use crate::errors::AppError;
+use common_type::models::flowers::Flower as ModelFlower;
 pub async fn insert_flower(
     flower: &ModelFlower,
     pool: &sqlx::SqlitePool,
@@ -45,9 +45,7 @@ mod tests {
     use sqlx::SqlitePool;
 
     use super::*;
-    use crate::{
-        infrastructure::db::sqlx::get_sqlite_pool, models::flowers::create_model_flower_from_name,
-    };
+    use common_type::models::flowers::create_model_flower_from_name;
 
     // Create database and table for testing
     async fn setup_db() -> SqlitePool {

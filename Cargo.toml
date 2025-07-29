@@ -2,6 +2,7 @@
 members = [
     "batchs",
     "common",
+    "common-type",
     "front",
     "server"
 ]

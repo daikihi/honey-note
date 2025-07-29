@@ -1,15 +1,14 @@
 use crate::errors::AppError;
 use crate::infrastructure::db::sqlx::prefecture;
-use crate::models::prefectures::Prefecture as PrefectureModel;
+use common_type::models::prefectures::Prefecture as PrefectureModel;
 use log::info;
-use serde::de::value::Error;
 
 pub async fn has_prefecture(
     _model_prefecture: &PrefectureModel,
     pool: &sqlx::SqlitePool,
 ) -> Result<bool, AppError> {
     let db_prefecture: prefecture::Prefecture =
-        prefecture::Prefecture::from_model(&PrefectureModel {
+        prefecture::Prefecture::from_model(PrefectureModel {
             id: 0, // ID is not used in this check
             name_jp: _model_prefecture.name_jp.clone(),
             name_en: _model_prefecture.name_en.clone(), // English name is not used in this check
@@ -54,7 +53,7 @@ pub async fn get_all_prefectures(
 
 pub async fn insert_prefecture(_model_prefecture: &PrefectureModel, pool: &sqlx::SqlitePool) {
     let db_prefecture: prefecture::Prefecture =
-        prefecture::Prefecture::from_model(_model_prefecture);
+        prefecture::Prefecture::from_model(_model_prefecture.clone());
     let _cloned = db_prefecture.clone();
     let msg: String = format!(
         "Inserting prefecture into database: id={}, name_jp={}, name_en={}",

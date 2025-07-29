@@ -1,6 +1,6 @@
 use crate::errors::AppError;
 use crate::infrastructure::db::sqlx::beekeeper::BeekeeperForInsert;
-use crate::models::beekeeper::Beekeeper as ModelBeekeeper;
+use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 use log::error;
 
 pub async fn has_beekeeper(beekeeper: &ModelBeekeeper, pool: &sqlx::SqlitePool) -> bool {

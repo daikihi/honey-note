@@ -8,7 +8,7 @@ pub async fn run(
     dto: get_all_beekeepers_dto::GetAllBeekeepersRequestDto,
 ) -> Result<get_all_beekeepers_dto::GetAllBeekeepersResponseDto, AppError> {
     let _ = dto; // Now dto is empty
-    let file_name = common::infrastructure::db::sqlx::db_file_name;
+    let file_name = common::infrastructure::db::sqlx::DB_FILE_NAME;
     let pool = common::infrastructure::db::sqlx::get_sqlite_pool(file_name.to_string());
 
     let beekeepers = common::repository::beekeepers::get_all_beekeepers(&pool).await;

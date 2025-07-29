@@ -1,30 +1,26 @@
-use wasm_bindgen::JsValue;
-use web_sys::XmlHttpRequest;
+// use wasm_bindgen::{JsCast, JsValue};
+// use web_sys::{Request, RequestInit, RequestMode, Response};
+// use wasm_bindgen_futures::JsFuture;
 
-pub async fn request_get_httprequest_get_as_json(url: &str) -> Result<String, JsValue> {
-    let response = XmlHttpRequest::new()?;
-    response.open("GET", url)?;
-    response.set_request_header("Accept", "application/json")?;
-    response.send()?;
-    if response.status() == Ok(200) {
-        let response_text_result = response.response_text();
-        match response_text_result {
-            Ok(text_opt) => match text_opt {
-                Some(text) => {
-                    let json: Result<String, serde_json::Error> = serde_json::from_str(&text);
-                    match json {
-                        Ok(json) => Ok(json),
-                        Err(_) => Err(JsValue::from_str("Failed to parse JSON")),
-                    }
-                }
-                None => return Err(JsValue::from_str("Response text is empty")),
-            },
-            Err(_) => return Err(JsValue::from_str("Failed to get response text")),
-        }
-    } else {
-        Err(JsValue::from_str(&format!(
-            "Request failed with status: {}",
-            response.status()?
-        )))
-    }
-}
+// pub async fn request_get_httprequest_get_as_json(url: &str) -> Result<JsValue, JsValue> {
+//     let mut opts = RequestInit::new();
+//     opts.method("GET");
+//     opts.mode(RequestMode::Cors);
+
+//     let request = Request::new_with_str_and_init(url, &opts)?;
+//     request.headers().set("Accept", "application/json")?;
+
+//     let window = web_sys::window().unwrap();
+//     let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
+
+//     let resp: Response = resp_value.dyn_into().unwrap();
+//     if resp.ok() {
+//         let json = JsFuture::from(resp.json()?).await?;
+//         Ok(json)
+//     } else {
+//         Err(JsValue::from_str(&format!(
+//             "Request failed with status: {}",
+//             resp.status()
+//         )))
+//     }
+// }

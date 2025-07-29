@@ -1,11 +1,11 @@
-use crate::beekeeper_loader_request::beekeeper_loader_request_dto;
+use crate::beekeeper_loader_request::BeekeeperLoaderRequestDto;
 use common::infrastructure::gateway::filesystem::load_master_data::load_master_data;
-use common::models::beekeeper::Beekeeper as ModelBeekeeper;
+use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 use log::info;
 
-pub async fn run(requestDto: beekeeper_loader_request_dto<'_>) {
-    let file_name = requestDto.file_name;
-    let db_file_name = requestDto.db_file_name;
+pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) {
+    let file_name = request_dto.file_name;
+    let db_file_name = request_dto.db_file_name;
 
     let connection_pool =
         common::infrastructure::db::sqlx::get_sqlite_pool(db_file_name.to_string());

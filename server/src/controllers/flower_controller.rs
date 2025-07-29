@@ -12,7 +12,7 @@ pub async fn get_all_flowers() -> Result<actix_web::HttpResponse, actix_web::Err
     match req {
         Ok(_req) => {
             let flowers: Result<
-                get_all_flowers::get_all_flowers_dto::get_all_flowers_response_dto,
+                get_all_flowers::get_all_flowers_dto::GetAllFlowersResponseDto,
                 AppError,
             > = get_all_flowers::run(_req).await;
             match flowers {

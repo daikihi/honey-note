@@ -1,5 +1,5 @@
 use crate::prefecture_loader_request::PrefectureLoaderRequestDto;
-use common::models::prefectures::Prefecture as PrefectureModel;
+use common_type::models::prefectures::Prefecture as PrefectureModel;
 use log::{error, info};
 use std::fs;
 
@@ -63,7 +63,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_run() {
-        use common::models::prefectures::Prefecture;
+        use common_type::models::prefectures::Prefecture;
         use tempfile::NamedTempFile;
 
         // 1. 一時ファイル作成

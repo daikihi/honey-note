@@ -5,6 +5,7 @@ pub struct Prefecture {
     pub name_en: String,
 }
 
+use common_type::models::prefectures::Prefecture as ModelPrefecture;
 impl Prefecture {
     pub async fn has_prefecture(self: &Self, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
         let prefecture_name_jp = self.name_jp.clone();
@@ -37,7 +38,9 @@ impl Prefecture {
             .map(|_| ())
     }
 
-    pub fn from_model(model: &crate::models::prefectures::Prefecture) -> Self {
+
+
+    pub fn from_model(model: ModelPrefecture) -> Self {
         Prefecture {
             id: model.id,
             name_jp: model.name_jp.clone(),

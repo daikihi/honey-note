@@ -1,4 +1,4 @@
-use common::models::beekeeper::Beekeeper;
+use common_type::models::beekeeper::Beekeeper ;
 
 pub struct GetAllBeekeepersRequestDto {}
 

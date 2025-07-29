@@ -1,4 +1,4 @@
-use crate::models::beekeeper::Beekeeper as ModelBeekeeper;
+use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 // for select and update
 #[derive(Debug, sqlx::FromRow)]
 pub struct Beekeeper {

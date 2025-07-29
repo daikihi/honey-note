@@ -15,7 +15,7 @@ pub fn honey_list_main() {
 }
 
 #[wasm_bindgen]
-pub fn flower_list_main() {
+pub async fn flower_list_main() {
     web_sys::console::log_1(&"Hello, Flower List!".into());
-    lists::flower_list_page_main::run();
+    lists::flower_list_page_main::run().await;
 }
