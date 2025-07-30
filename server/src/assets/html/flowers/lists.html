@@ -9,10 +9,30 @@
     @import url('/honey_note/css/common_list.css');
 </style>
 <script type="module">
-  import init, { flower_list_main } from '/honey_note/javascript/front.js';
+  import init, { flower_list_main, filter_rows } from '/honey_note/javascript/front.js';
   init().then(() => {
     flower_list_main();
   });
+
+async function filterTable() {
+  await init(); // Initialize WebAssembly
+  const input = document.getElementById("searchInput").value.toLowerCase();
+  
+  // Prepare data: Extract all rows' text content
+  const rows = Array.from(document.querySelectorAll("#flowerTable tbody tr"))
+      .map(row => Array.from(row.cells).map(cell => cell.textContent).join(" "));
+
+  // Call the WebAssembly function
+  const matchingIndices = filter_rows(input, rows);
+
+  // Update display
+  const tableRows = document.querySelectorAll("#flowerTable tbody tr");
+  tableRows.forEach((row, index) => {
+      row.style.display = matchingIndices.includes(index) ? "" : "none";
+  });
+}
+
+document.getElementById("searchInput").addEventListener("keyup", filterTable);
 </script>
 </head>
 <body>

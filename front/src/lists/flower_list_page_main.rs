@@ -5,9 +5,9 @@ use web_sys::{
     js_sys::{JsString, Reflect},
     Request, RequestInit,
 };
-use web_sys::{Document, Response, Window};
+use web_sys::{Document, Window};
 
-use crate::commons;
+use crate::{commons};
 
 pub async fn run() {
     web_sys::console::log_1(&"Hello, Flower List Page!".into());
