@@ -8,6 +8,32 @@
 <style>
     @import url('/honey_note/css/common_list.css');
 </style>
+<script type="module">
+  import init, { flower_list_main, filter_rows } from '/honey_note/javascript/front.js';
+  init().then(() => {
+    flower_list_main();
+  });
+
+async function filterTable() {
+  await init(); // Initialize WebAssembly
+  const input = document.getElementById("searchInput").value.toLowerCase();
+  
+  // Prepare data: Extract all rows' text content
+  const rows = Array.from(document.querySelectorAll("#flowerTable tbody tr"))
+      .map(row => Array.from(row.cells).map(cell => cell.textContent).join(" "));
+
+  // Call the WebAssembly function
+  const matchingIndices = filter_rows(input, rows);
+
+  // Update display
+  const tableRows = document.querySelectorAll("#flowerTable tbody tr");
+  tableRows.forEach((row, index) => {
+      row.style.display = matchingIndices.includes(index) ? "" : "none";
+  });
+}
+
+document.getElementById("searchInput").addEventListener("keyup", filterTable);
+</script>
 </head>
 <body>
 <header>
@@ -35,10 +61,10 @@
   <table id="flowerTable">
     <thead>
       <tr>
-        <th>ID</th><th>名前 (JP)</th><th>名前 (EN)</th><th>開花時期</th>
+        <th>ID</th><th>名前 (JP)</th><th>名前 (EN)</th><th>ノート</th>
       </tr>
     </thead>
-    <tbody><!-- JS で生成 --></tbody>
+    <tbody id="flower_list_table_body"><!-- JS で生成 --></tbody>
   </table>
 </main>
 

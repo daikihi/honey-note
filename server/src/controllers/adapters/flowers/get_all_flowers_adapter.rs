@@ -1,16 +1,16 @@
-use common::models::flowers::Flower;
+use common_type::models::flowers::Flower;
 
-use crate::use_case::get_all_flowers::get_all_flowers_dto::get_all_flowers_request_dto;
+use crate::use_case::get_all_flowers::get_all_flowers_dto::GetAllFlowersRequestDto;
 
-pub fn get_all_flowers_request_adapter() -> Result<get_all_flowers_request_dto, actix_web::Error> {
+pub fn get_all_flowers_request_adapter() -> Result<GetAllFlowersRequestDto, actix_web::Error> {
     // This function will handle the request to get all flowers
     // It will call the repository method to fetch flowers from the database
     // and return the response in the appropriate format.
 
     // Placeholder for actual implementation
-    let path = common::infrastructure::db::sqlx::db_file_name;
+    let path = common::infrastructure::db::sqlx::DB_FILE_NAME;
     let pool = common::infrastructure::db::sqlx::get_sqlite_pool(path.to_string());
-    Ok(get_all_flowers_request_dto { pool })
+    Ok(GetAllFlowersRequestDto { pool })
 }
 
 pub fn get_all_flowers_response_adapter(

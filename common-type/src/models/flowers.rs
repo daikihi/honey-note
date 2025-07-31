@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Flower {
-    pub id: Option<i128>,
+    pub id: Option<f64>,
     pub name_jp: String,
     pub name_en: Option<String>,
     pub scientific_name: Option<String>,

@@ -1,7 +1,7 @@
 mod beekeeper_loader_request;
 mod beekeeper_loader_usecase;
 
-use crate::beekeeper_loader_request::beekeeper_loader_request_dto;
+use crate::beekeeper_loader_request::BeekeeperLoaderRequestDto;
 
 #[tokio::main]
 async fn main() {
@@ -12,7 +12,7 @@ async fn main() {
         .get(1)
         .expect("マスターデータファイルのパスを指定してください");
     let db_url = args.get(2).expect("データベースのURLを指定してください");
-    let _dao = beekeeper_loader_request_dto::new(master_data_file, db_url);
+    let _dao = BeekeeperLoaderRequestDto::new(master_data_file, db_url);
     beekeeper_loader_usecase::run(_dao).await;
     println!("beekeeper_loader 終了");
 }

@@ -1,6 +1,4 @@
-use sqlx::{pool, query, query_as};
-
-use crate::models::flowers::Flower as ModelFlower;
+use common_type::models::flowers::Flower as ModelFlower;
 
 #[derive(sqlx::FromRow, sqlx::Type, Debug, Clone)]
 pub struct InsertFlower {
@@ -67,7 +65,7 @@ pub struct Flower {
 impl Flower {
     pub fn to_model_flower(&self) -> ModelFlower {
         ModelFlower {
-            id: self.id.map(|l| l as i128),
+            id: self.id.map(|l| l as f64),
             name_jp: self.name_jp.clone(),
             name_en: self.name_en.clone(),
             scientific_name: self.scientific_name.clone(),

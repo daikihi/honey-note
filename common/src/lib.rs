@@ -1,4 +1,7 @@
 pub mod errors;
+
+#[cfg(not(target_arch = "wasm32"))]
 pub mod infrastructure;
-pub mod models;
+
+#[cfg(not(target_arch = "wasm32"))]
 pub mod repository;

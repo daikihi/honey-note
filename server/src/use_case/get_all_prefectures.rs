@@ -4,9 +4,8 @@ use common::{
 };
 use sqlx::pool;
 
-pub async fn run(
-    pool: &pool::Pool<sqlx::Sqlite>,
-) -> Result<Vec<common::models::prefectures::Prefecture>, AppError> {
+use common_type::models::prefectures::Prefecture;
+pub async fn run(pool: &pool::Pool<sqlx::Sqlite>) -> Result<Vec<Prefecture>, AppError> {
     match repository_get_all_prefectures(pool).await {
         Ok(prefectures) => Ok(prefectures),
         Err(e) => {

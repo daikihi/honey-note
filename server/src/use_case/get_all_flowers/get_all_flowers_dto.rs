@@ -1,10 +1,10 @@
-use common::models::flowers::Flower;
+use common_type::models::flowers::Flower as ModelFlower;
 
-pub struct get_all_flowers_request_dto {
+pub struct GetAllFlowersRequestDto {
     pub pool: sqlx::SqlitePool,
 }
 
 #[derive()]
-pub struct get_all_flowers_response_dto {
-    pub flowers: Vec<Flower>,
+pub struct GetAllFlowersResponseDto {
+    pub flowers: Vec<ModelFlower>,
 }

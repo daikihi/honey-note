@@ -18,7 +18,8 @@ pub async fn run(dto: FlowerLoaderRequestDto) {
             continue;
         }
 
-        let flower = common::models::flowers::create_model_flower_from_name(line);
+        use common_type::models::flowers;
+        let flower = flowers::create_model_flower_from_name(line);
 
         let connection_pool = get_sqlite_pool(db_file_name.to_string());
         let has_flower = common::repository::flowers::has_flower(&flower, &connection_pool).await;

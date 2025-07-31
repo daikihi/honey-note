@@ -68,7 +68,7 @@ $honey_note_top_directory is not for server directory. this is to top directory 
 
 ```bash
 $ cd front/
-$ wasm-pack build --target front --out-dir ../server/src/assets/javascript/
+$ wasm-pack build --target web  --out-dir ../server/src/assets/javascript/
 $ ls ../server/src/assets/javascript
 front_bg.wasm      front_bg.wasm.d.ts front.d.ts         front.js           package.json
 ```
