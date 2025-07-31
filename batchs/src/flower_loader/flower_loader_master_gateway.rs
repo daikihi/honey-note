@@ -14,7 +14,6 @@ pub fn load_master_data(file_name: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     #[test]
     fn test_load_master_data() {

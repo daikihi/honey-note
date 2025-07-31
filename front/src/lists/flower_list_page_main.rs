@@ -7,7 +7,7 @@ use web_sys::{
 };
 use web_sys::{Document, Window};
 
-use crate::{commons};
+use crate::commons;
 
 pub async fn run() {
     web_sys::console::log_1(&"Hello, Flower List Page!".into());
@@ -90,7 +90,6 @@ async fn convert_js_value_to_flower_list_data(value: JsValue) -> Result<Vec<Mode
         .dyn_into()
         .map_err(|_| JsValue::from_str("Expected Response"))?;
     let json = JsFuture::from(resp.json()?).await?;
-
 
     serde_wasm_bindgen::from_value(json).map_err(|err| {
         JsValue::from_str(&format!(

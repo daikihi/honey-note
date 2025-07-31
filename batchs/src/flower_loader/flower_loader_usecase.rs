@@ -18,7 +18,6 @@ pub async fn run(dto: FlowerLoaderRequestDto) {
             continue;
         }
 
-
         use common_type::models::flowers;
         let flower = flowers::create_model_flower_from_name(line);
 

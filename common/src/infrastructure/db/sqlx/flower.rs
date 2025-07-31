@@ -1,4 +1,3 @@
-
 use common_type::models::flowers::Flower as ModelFlower;
 
 #[derive(sqlx::FromRow, sqlx::Type, Debug, Clone)]

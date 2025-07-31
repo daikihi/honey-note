@@ -38,8 +38,6 @@ impl Prefecture {
             .map(|_| ())
     }
 
-
-
     pub fn from_model(model: ModelPrefecture) -> Self {
         Prefecture {
             id: model.id,

@@ -1,9 +1,9 @@
 mod controllers;
 mod use_case;
 
-use actix_files::Files;
-use actix_web::{App, HttpServer, middleware::Logger};
 use actix_cors::Cors;
+use actix_files::Files;
+use actix_web::{middleware::Logger, App, HttpServer};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
