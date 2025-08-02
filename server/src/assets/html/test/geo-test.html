@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>GeoJSONで日本地図表示</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Leaflet CSS -->
+  <!-- <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" /> -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    #map {
+      width: 100%;
+      height: 600px;
+    }
+  </style>
+</head>
+<body>
+  <h2>leaflet test</h2>
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+   <script src="/honey_note/javascript/leaflet1.9.4/leaflet.js"></script>
+  <script>
+    // 地図の初期化
+    const map = L.map('map').setView([36.2048, 138.2529], 5); // 日本の中心
+
+    // タイルレイヤー追加（OpenStreetMap）
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+  </script>
+</body>
+</html>
