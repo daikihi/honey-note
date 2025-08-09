@@ -1,5 +1,6 @@
 pub mod beekeeper;
 pub mod flower;
+pub mod honey;
 pub mod prefecture;
 
 use once_cell::sync::OnceCell;

@@ -1,4 +1,5 @@
 use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
+
 // for select and update
 #[derive(Debug, sqlx::FromRow)]
 pub struct Beekeeper {
@@ -11,6 +12,8 @@ pub struct Beekeeper {
     pub website_url: Option<String>,
     pub note: Option<String>,
 }
+
+#[derive(Debug, sqlx::FromRow)]
 // for new insert
 pub struct BeekeeperForInsert {
     pub name_jp: String,
