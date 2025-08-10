@@ -1,4 +1,3 @@
-use common_type::models::flowers::Flower;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, sqlx::Type, Clone)]
