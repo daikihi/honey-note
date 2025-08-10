@@ -13,6 +13,32 @@ pub struct Beekeeper {
     pub note: Option<String>,
 }
 
+impl Beekeeper {
+    pub fn to_model_beekeeper(&self) -> ModelBeekeeper {
+        ModelBeekeeper {
+            id: Some(self.id),
+            name_jp: self.name_jp.clone(),
+            name_en: self.name_en.clone(),
+            founding_year: self.founding_year,
+            location_prefecture_id: self.location_prefecture_id,
+            location_city: self.location_city.clone(),
+            website_url: self.website_url.clone(),
+            note: self.note.clone(),
+        }
+    }
+
+    pub async fn get_beekeeper_id_by_name(name: &str, pool: &sqlx::SqlitePool) -> Option<i32> {
+        let query = "SELECT id FROM beekeeper WHERE name_jp = $1";
+        let result: Result<(i32,), sqlx::Error> =
+            sqlx::query_as(query).bind(name).fetch_one(pool).await;
+
+        match result {
+            Ok((id,)) => Some(id),
+            Err(_) => None,
+        }
+    }
+}
+
 #[derive(Debug, sqlx::FromRow)]
 // for new insert
 pub struct BeekeeperForInsert {

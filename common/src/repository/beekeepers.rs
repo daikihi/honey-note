@@ -1,4 +1,5 @@
 use crate::errors::AppError;
+use crate::infrastructure::db::sqlx::beekeeper::Beekeeper as SqlBeekeeper;
 use crate::infrastructure::db::sqlx::beekeeper::BeekeeperForInsert;
 use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 use log::error;
@@ -19,6 +20,10 @@ pub async fn insert_beekeeper(beekeeper: &ModelBeekeeper, pool: &sqlx::SqlitePoo
     if let Err(e) = inserted_beekeeper.insert_beekeeper(pool).await {
         error!("Error inserting beekeeper: {}", e);
     }
+}
+
+pub async fn get_beekeeper_id_by_name(name: &str, pool: &sqlx::SqlitePool) -> Option<i32> {
+    SqlBeekeeper::get_beekeeper_id_by_name(name, pool).await
 }
 
 pub async fn get_all_beekeepers(pool: &sqlx::SqlitePool) -> Result<Vec<ModelBeekeeper>, AppError> {

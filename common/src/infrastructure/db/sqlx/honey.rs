@@ -1,3 +1,4 @@
+use common_type::models::flowers::Flower;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow, sqlx::Type, Clone)]
@@ -13,9 +14,79 @@ pub struct Honey {
     pub note: Option<String>,           // 補足（NULL可能）
 }
 
+impl Honey {
+    pub fn new_for_simple_insert(id: i32, name_jp: String) -> Self {
+        Honey {
+            id: Some(id),
+            name_jp,
+            name_en: None,
+            beekeeper_id: None,
+            origin_country: None,
+            origin_region: None,
+            harvest_year: None,
+            purchase_date: None,
+            note: None,
+        }
+    }
+
+    pub async fn is_exist_by_name(&self, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
+        let query = "SELECT id FROM honey WHERE name_jp = ?";
+        let result = sqlx::query_as::<_, (i32,)>(query)
+            .bind(&self.name_jp)
+            .fetch_optional(pool)
+            .await?;
+
+        Ok(result.is_some())
+    }
+
+    pub async fn find_by_id(id: i32, name: String, pool: &sqlx::SqlitePool) -> Option<Self> {
+        let query = "SELECT * FROM honey WHERE id = ? AND name_jp = ?";
+        let result = sqlx::query_as::<_, Honey>(query)
+            .bind(id)
+            .bind(name)
+            .fetch_optional(&*pool)
+            .await;
+
+        match result {
+            Ok(Some(honey)) => Some(honey),
+            Ok(None) => None,
+            Err(_) => None, // エラー処理は適宜実装
+        }
+    }
+
+    pub async fn insert(&self, pool: &sqlx::SqlitePool) -> Result<(), sqlx::Error> {
+        let query = r#"        
+            INSERT INTO honey (id, name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        "#;
+
+        let _ = sqlx::query(query)
+            .bind(self.id)
+            .bind(&self.name_jp)
+            .bind(&self.name_en)
+            .bind(self.beekeeper_id)
+            .bind(&self.origin_country)
+            .bind(&self.origin_region)
+            .bind(self.harvest_year)
+            .bind(&self.purchase_date)
+            .bind(&self.note)
+            .execute(pool).await;
+        Ok(())
+    }
+
+}
+
+pub async fn get_all(pool: &sqlx::SqlitePool) ->Result<Vec<Honey>, sqlx::Error>{
+    let honeies: Result<Vec<Honey>, sqlx::Error> = sqlx::query_as::<_, Honey>(
+        r#"SELECT id, name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note
+        FROM honey"#,
+    ).fetch_all(pool).await;
+    honeies
+}
+
+use crate::infrastructure::db::sqlx::beekeeper::Beekeeper as SqlBeekeeper;
 use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 use common_type::models::honey::Honey as ModelHoney;
-use crate::infrastructure::db::sqlx::beekeeper::Beekeeper as SqlBeekeeper;
 
 pub fn create_model_honey(sql_honey: Honey, beekeeper: Option<SqlBeekeeper>) -> ModelHoney {
     let _beekeeper: Option<ModelBeekeeper> = beekeeper.map(|b| ModelBeekeeper {

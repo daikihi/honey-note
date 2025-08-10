@@ -1,5 +1,5 @@
 use common_type::models::flowers::Flower as ModelFlower;
-use wasm_bindgen::{ JsValue};
+use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
     js_sys::{JsString, Reflect},
@@ -122,10 +122,9 @@ fn write_flowers_to_table(flowers: Vec<ModelFlower>) {
 fn print_message(message: &JsValue) {
     web_sys::console::log_2(&"Fetched data:".into(), &message);
 
-    
     use web_sys::console;
-    use web_sys::js_sys::{JSON};
-    
+    use web_sys::js_sys::JSON;
+
     match JSON::stringify_with_replacer_and_space(message, &JsValue::NULL, &JsValue::from_str("  "))
     {
         Ok(pretty) => console::log_1(&pretty),
