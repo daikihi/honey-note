@@ -1,6 +1,6 @@
 # honey-note
 
-This project managing your honeies. If you are a collector of honeies then you can manage your honies using this project.
+This project managing your honeys. If you are a collector of honeys then you can manage your honies using this project.
 
 # Overview of Design
 

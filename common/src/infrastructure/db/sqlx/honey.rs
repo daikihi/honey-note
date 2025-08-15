@@ -69,18 +69,18 @@ impl Honey {
             .bind(self.harvest_year)
             .bind(&self.purchase_date)
             .bind(&self.note)
-            .execute(pool).await;
+            .execute(pool)
+            .await;
         Ok(())
     }
-
 }
 
-pub async fn get_all(pool: &sqlx::SqlitePool) ->Result<Vec<Honey>, sqlx::Error>{
-    let honeies: Result<Vec<Honey>, sqlx::Error> = sqlx::query_as::<_, Honey>(
+pub async fn get_all(pool: &sqlx::SqlitePool) -> Result<Vec<Honey>, sqlx::Error> {
+    let honeys: Result<Vec<Honey>, sqlx::Error> = sqlx::query_as::<_, Honey>(
         r#"SELECT id, name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note
         FROM honey"#,
     ).fetch_all(pool).await;
-    honeies
+    honeys
 }
 
 use crate::infrastructure::db::sqlx::beekeeper::Beekeeper as SqlBeekeeper;
