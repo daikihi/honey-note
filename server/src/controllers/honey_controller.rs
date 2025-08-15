@@ -17,7 +17,10 @@ pub async fn get_all_honeys() -> Result<actix_web::HttpResponse, actix_web::Erro
     match request_dto {
         Ok(res) => {
             let use_case_result: GetAllHoneysResponseDto = get_all_honies::run(res).await;
-            log::info!("size of response is {}", use_case_result.honeys.iter().len());
+            log::info!(
+                "size of response is {}",
+                use_case_result.honeys.iter().len()
+            );
             get_all_honies_response_adapter(use_case_result)
         }
         Err(e) => Err(actix_web::error::ErrorInternalServerError("Fix here")),
