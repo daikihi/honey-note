@@ -92,7 +92,7 @@ pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>) {
             .await;
 
     for model_honey in model_honeys {
-        let _ = repository::honeies::insert_honey_if_not_exists(&model_honey, &pool).await;
+        let _ = repository::honeys::insert_honey_if_not_exists(&model_honey, &pool).await;
         log::info!("ハニーをデータベースに挿入: {:?}", model_honey);
     }
     log::info!("ハニーのデータベースへの挿入が完了しました");
