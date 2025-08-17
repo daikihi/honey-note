@@ -1,5 +1,6 @@
 use wasm_bindgen::prelude::*;
 
+
 mod commons;
 mod lists;
 mod models;
@@ -10,8 +11,9 @@ pub fn top_page_main() {
 }
 
 #[wasm_bindgen]
-pub fn honey_list_main() {
+pub async fn honey_list_main() {
     web_sys::console::log_1(&"Hello, Honey List!".into());
+    lists::honeys_list_page_main::run().await;
 }
 
 #[wasm_bindgen]
