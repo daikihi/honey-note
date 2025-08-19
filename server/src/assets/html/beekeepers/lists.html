@@ -8,6 +8,15 @@
   <style>
     @import url('/honey_note/css/common_list.css');
   </style>
+
+    <script type="module">
+    import init,  { beekeepers_list_main } from '/honey_note/javascript/front.js';
+    init().then(() => {
+      // WASMの初期化後に呼び出したい処理を書く
+      beekeepers_list_main();
+      console.log("WASM loaded!");
+    });
+  </script>
   </head>
   
   <body>
@@ -41,7 +50,7 @@
         <th>ID</th><th>養蜂場名</th><th>地域</th>
       </tr>
     </thead>
-    <tbody><!-- JS で生成 --></tbody>
+    <tbody id="beekeepers_list_table_body"><!-- JS で生成 --></tbody>
   </table>
 </main>
 

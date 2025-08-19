@@ -1,4 +1,4 @@
-use wasm_bindgen::{ JsValue};
+use wasm_bindgen::JsValue;
 use web_sys::{Document, Window};
 
 use crate::commons::{ajax::get_list_data, validators::is_valid_path};

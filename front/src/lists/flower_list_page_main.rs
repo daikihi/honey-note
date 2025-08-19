@@ -1,9 +1,5 @@
 use common_type::models::flowers::Flower as ModelFlower;
 use wasm_bindgen::JsValue;
-use web_sys::{
-    js_sys::{JsString, Reflect},
-    Request, RequestInit,
-};
 use web_sys::{Document, Window};
 
 use crate::commons::{self, ajax::get_list_data, validators::is_valid_path};
