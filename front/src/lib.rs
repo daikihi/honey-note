@@ -1,6 +1,5 @@
 use wasm_bindgen::prelude::*;
 
-
 mod commons;
 mod lists;
 mod models;
@@ -20,6 +19,12 @@ pub async fn honey_list_main() {
 pub async fn flower_list_main() {
     web_sys::console::log_1(&"Hello, Flower List!".into());
     lists::flower_list_page_main::run().await;
+}
+
+#[wasm_bindgen]
+pub async fn beekeepers_list_main() {
+    web_sys::console::log_1(&"Hello, Beekeepers List!".into());
+    lists::beekeepers_list_page_main::run().await;
 }
 
 #[wasm_bindgen]
