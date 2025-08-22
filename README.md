@@ -60,6 +60,23 @@ This batch doesn't care about name extensions of name. This file doesn't care ab
 $ RUST_LOG=info cargo run -p batchs --bin flower_loader flower_master_data_directory/file_name.csv database_file(sqlite file).db
 ```
 
+### beekeeper master data loader
+This process handles batch updates of master data for the beekeeper list. The input master file is in CSV format, with each line representing a beekeeper. The format for each line is as follows:
+
+```
+name_jp,name_en,prefecture_name,city_name
+名前,英語表記,都道府県,都市
+```
+
+All fields, except for name_jp (名前), can be left blank.
+
+We plan to create an input form on the front page, which will allow us to refresh the beekeeper database and restore its contents as needed. Currently, as this is a prototype, no production-ready code is assumed.
+
+ex.
+```bash
+RUST_LOG=info cargo run -p batchs --bin beekeeper_loader resources/master_data/beekeeper.csv resources/db/honey_note.db
+```
+
 ## web-server
 In this section, we show how to execute our web-server.
 

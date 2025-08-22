@@ -38,11 +38,33 @@ impl Prefecture {
             .map(|_| ())
     }
 
+    pub async fn get_prefecture_by_name(
+        prefecture_name: &str,
+        pool: &sqlx::SqlitePool,
+    ) -> Result<Prefecture, sqlx::Error> {
+        let query = "SELECT id, name_jp, name_en FROM prefecture WHERE name_jp = $1";
+        let prefecture: Prefecture = sqlx::query_as(query)
+            .bind(prefecture_name)
+            .fetch_one(pool)
+            .await?;
+        Ok(prefecture)
+    }
+
+    
+
     pub fn from_model(model: ModelPrefecture) -> Self {
         Prefecture {
             id: model.id,
             name_jp: model.name_jp.clone(),
             name_en: model.name_en.clone(),
+        }
+    }
+
+    pub fn to_model(&self) -> ModelPrefecture {
+        ModelPrefecture {
+            id: self.id,
+            name_jp: self.name_jp.clone(),
+            name_en: self.name_en.clone(),
         }
     }
 }
