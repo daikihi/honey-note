@@ -11,14 +11,19 @@ pub struct Beekeeper {
 }
 
 impl Beekeeper {
-    pub fn from_string_csv(line: &str) -> Self {
+    pub fn from_string_csv(
+        beekeeper_name: &str,
+        beekeeper_name_en: Option<&str>,
+        beekeeper_city: Option<&str>,
+        prefecture_id: Option<i32>,
+    ) -> Self {
         Beekeeper {
             id: None, // 新規作成時はIDはNone
-            name_jp: line.to_string(),
-            name_en: None,
+            name_jp: beekeeper_name.to_string(),
+            name_en: beekeeper_name_en.map(|s| s.to_string()),
             founding_year: None,
-            location_prefecture_id: None,
-            location_city: None,
+            location_prefecture_id: prefecture_id,
+            location_city: beekeeper_city.map(|s| s.to_string()),
             website_url: None,
             note: None,
         }

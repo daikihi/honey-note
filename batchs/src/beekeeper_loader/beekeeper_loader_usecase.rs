@@ -14,7 +14,46 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) {
     info!("master data {}", master_data);
     for line in master_data.lines() {
         info!("Processing line: {}", line);
-        let model_beekeeper = ModelBeekeeper::from_string_csv(line);
+        let beekeeper_master_data: Vec<&str> = line.split(',').collect();
+        if beekeeper_master_data.is_empty() {
+            continue;
+        }
+        let beekeeper_name: &str = beekeeper_master_data[0];
+        let beekeeper_name_en: Option<&str> = if beekeeper_master_data[1].is_empty() {
+            None
+        } else {
+            Some(beekeeper_master_data[1])
+        };
+        let beekeeper_prefecture: &str = beekeeper_master_data[2];
+        let beekeeper_city: Option<&str> = if beekeeper_master_data[3].is_empty() {
+            None
+        } else {
+            Some(beekeeper_master_data[3])
+        };
+
+        let prefecture_id = if beekeeper_prefecture.is_empty() {
+            None
+        } else {
+            let prefecture_opt = common::repository::prefectures::get_prefecture_by_name(
+                beekeeper_prefecture,
+                &connection_pool,
+            )
+            .await;
+            match prefecture_opt {
+                Ok(prefecture) => Some(prefecture.id),
+                Err(e) => {
+                    info!("Error getting prefecture ID: {}", e);
+                    None
+                }
+            }
+        };
+
+        let model_beekeeper = ModelBeekeeper::from_string_csv(
+            beekeeper_name,
+            beekeeper_name_en,
+            beekeeper_city,
+            prefecture_id,
+        );
 
         info!("Loaded beekeeper: {:?}", &model_beekeeper);
         let has_beekeeper =

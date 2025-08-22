@@ -67,6 +67,20 @@ pub async fn insert_prefecture(_model_prefecture: &PrefectureModel, pool: &sqlx:
         .expect("Failed to insert prefecture ");
 }
 
+pub async fn get_prefecture_by_name(
+    prefecture_name: &str,
+    pool: &sqlx::SqlitePool,
+) -> Result<PrefectureModel, AppError> {
+    let db_prefecture = prefecture::Prefecture::get_prefecture_by_name(prefecture_name, pool).await;
+    match db_prefecture {
+        Ok(pref) => Ok(pref.to_model()),
+        Err(e) => {
+            info!("Error getting prefecture ID: {}", e);
+            Err(AppError::DatabaseError(e.to_string()))
+        }
+    }
+}
+
 fn for_logging(db_prefecture: &prefecture::Prefecture, msg: &str) {
     info!("{}, {:?}", msg, db_prefecture);
 }
