@@ -25,6 +25,9 @@ $ sqlx migrate run --database-url sqlite:${PATH_TO_YOUR_SQLITE_DB_FILE}
 $ sqlx migrate run --database-url sqlite:./honey_note.db
 ```
 
+If you remove database file (sqlite3) when a honey-note server is running then you need to restart the server.
+Beucase the server has a database connection to old file.
+
 # Execution
 
 ## build
@@ -75,6 +78,12 @@ We plan to create an input form on the front page, which will allow us to refres
 ex.
 ```bash
 RUST_LOG=info cargo run -p batchs --bin beekeeper_loader resources/master_data/beekeeper.csv resources/db/honey_note.db
+```
+
+### honey master data loader
+
+```
+ RUST_LOG=info cargo run -p batchs --bin honey_loader resources/master_data/${honey_master_data_name}.jsonl  resources/db/${honey_db_name}.db
 ```
 
 ## web-server
