@@ -10,6 +10,8 @@ This project managing your honeys. If you are a collector of honeys then you can
 
 ![Overview Architecture](https://github.com/user-attachments/assets/330b914e-1d96-48c4-8480-9a4e344c53a8)
 
+Event storm diagram
+
 ![Events](https://github.com/user-attachments/assets/fb8d6349-a483-4388-942c-7e41c75982bf)
 
 # database migraion
