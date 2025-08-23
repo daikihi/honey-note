@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>HoneyNote | 蜂蜜の詳細</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --gold:#FFB703;
+      --blue:#219EBC;
+      --line:#E9C46A;
+      --cream:#FFF8ED;
+      --radius:8px;
+      font-family:"Inter","Noto Sans JP",sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--cream); color:#333; }
+
+    header {
+      background:#fff;
+      box-shadow:0 1px 4px rgba(0,0,0,.06);
+    }
+    header nav {
+      max-width:1000px;
+      height:64px;
+      margin:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 1rem;
+    }
+    .nav-left { display:flex; align-items:center; gap:1rem; }
+    nav a.logo {
+      display:flex; align-items:center; gap:0.5rem;
+      font-size:1.5rem; font-weight:700;
+      color:var(--gold); text-decoration:none;
+    }
+    .logo img { height:56px; }
+
+    main {
+      max-width:900px;
+      margin:2rem auto;
+      background:#fff;
+      padding:2rem;
+      border-radius:var(--radius);
+      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    h1 { font-size:1.8rem; margin-bottom:1rem; color:var(--blue); }
+
+    .section { margin-bottom:2rem; }
+    .section h2 {
+      font-size:1.2rem;
+      margin-bottom:.5rem;
+      color:#555;
+      border-left:4px solid var(--gold);
+      padding-left:0.5rem;
+    }
+    .info p { margin:0.3rem 0; }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      margin-top:1rem;
+    }
+    th, td {
+      border-bottom:1px solid var(--line);
+      padding:0.6rem;
+      text-align:left;
+      font-size:.9rem;
+    }
+    th { background:var(--cream); }
+    tr:hover { background:#FFF4C2; }
+
+    .actions {
+      margin-top:2rem;
+      display:flex;
+      gap:1rem;
+    }
+    .actions a {
+      padding:0.5rem 1rem;
+      border-radius:var(--radius);
+      background:var(--blue);
+      color:white;
+      text-decoration:none;
+      font-weight:600;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <nav>
+    <div class="nav-left">
+      <a class="logo" href="/">
+        <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
+        HoneyNote
+      </a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <h1>アカシア蜂蜜（Acacia Honey）</h1>
+
+  <!-- 基本情報 -->
+  <div class="section info">
+    <h2>基本情報</h2>
+    <p><strong>養蜂場：</strong><a href="/honey_note/beekeepers/show.html?id=5">青木養蜂場</a></p>
+    <p><strong>原産国：</strong>日本</p>
+    <p><strong>原産地域：</strong>長野県安曇野市</p>
+    <p><strong>採蜜年：</strong>2023年</p>
+    <p><strong>購入日：</strong>2024-05-12</p>
+    <p><strong>蜜源：</strong>
+      <a href="/honey_note/flowers/show.html?id=10">アカシア</a>,
+      <a href="/honey_note/flowers/show.html?id=11">クローバー</a>
+    </p>
+    <p><strong>補足：</strong>クセが少なく上品な甘さ。パンや紅茶に合う。</p>
+  </div>
+
+  <!-- バッチ情報 -->
+  <div class="section">
+    <h2>バッチ情報</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>測定日</th><th>色</th><th>味</th><th>結晶化状態</th><th>水分量(%)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2024-06-01</td>
+          <td>淡黄色</td>
+          <td>すっきり、ややフルーティー</td>
+          <td>液状</td>
+          <td>18.2</td>
+        </tr>
+        <tr>
+          <td>2025-01-15</td>
+          <td>やや濃い黄色</td>
+          <td>香りが強くなった</td>
+          <td>部分結晶</td>
+          <td>17.8</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="actions">
+    <a href="/honey_note/honeies/edit.html?id=7">編集する</a>
+    <a href="/honey_note/honey_batch_infos/new.html?honey_id=7">バッチ情報を追加</a>
+  </div>
+</main>
+</body>
+</html>

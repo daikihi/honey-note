@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>HoneyNote | 蜂蜜の編集</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --gold:#FFB703;
+      --blue:#219EBC;
+      --line:#E9C46A;
+      --cream:#FFF8ED;
+      --radius:8px;
+      font-family:"Inter","Noto Sans JP",sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--cream); color:#333; }
+
+    header {
+      background:#fff;
+      box-shadow:0 1px 4px rgba(0,0,0,.06);
+    }
+    header nav {
+      max-width:1000px;
+      height:64px;
+      margin:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 1rem;
+    }
+    .nav-left { display:flex; align-items:center; gap:1rem; }
+    nav a.logo {
+      display:flex; align-items:center; gap:0.5rem;
+      font-size:1.5rem; font-weight:700;
+      color:var(--gold); text-decoration:none;
+    }
+    .logo img { height:56px; }
+
+    main {
+      max-width:900px;
+      margin:2rem auto;
+      background:#fff;
+      padding:2rem;
+      border-radius:var(--radius);
+      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    h1 { font-size:1.8rem; margin-bottom:1rem; color:var(--blue); }
+
+    fieldset {
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:1rem 1.5rem;
+      margin-bottom:2rem;
+      background:#fffdf7;
+    }
+    legend {
+      font-weight:600;
+      padding:0 .5rem;
+      color:#555;
+      border-left:4px solid var(--gold);
+      margin-left:-.5rem;
+    }
+
+    label {
+      display:block;
+      margin-top:1rem;
+      font-weight:600;
+      font-size:.95rem;
+    }
+    input, select, textarea {
+      width:100%;
+      padding:.6rem;
+      margin-top:.3rem;
+      border:1px solid #ccc;
+      border-radius:var(--radius);
+      font-size:.95rem;
+    }
+    textarea { min-height:80px; }
+
+    .two-col {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:1rem;
+    }
+
+    .note {
+      font-size:.85rem;
+      color:#666;
+      margin-top:.3rem;
+    }
+
+    .actions {
+      display:flex;
+      gap:1rem;
+      justify-content:center;
+      margin-top:2rem;
+    }
+    .actions button {
+      padding:.7rem 1.2rem;
+      border-radius:var(--radius);
+      border:none;
+      font-weight:600;
+      cursor:pointer;
+      color:#fff;
+      background:var(--blue);
+    }
+    .actions button:hover { background:#197a91; }
+    .actions .cancel {
+      background:#aaa;
+    }
+    .actions .cancel:hover {
+      background:#888;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <nav>
+    <div class="nav-left">
+      <a class="logo" href="/">
+        <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
+        HoneyNote
+      </a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <h1>蜂蜜の編集</h1>
+
+  <form>
+    <!-- 基本情報 -->
+    <fieldset>
+      <legend>基本情報</legend>
+      <label>日本語名
+        <input type="text" name="name_jp" value="アカシアはちみつ">
+      </label>
+      <label>英語名
+        <input type="text" name="name_en" value="Acacia Honey">
+      </label>
+      <label>養蜂場
+        <select name="beekeeper_id">
+          <option value="">選択してください</option>
+          <option value="1" selected>青木養蜂場</option>
+          <option value="2">山形養蜂場</option>
+        </select>
+      </label>
+    </fieldset>
+
+    <!-- 原産地 -->
+    <fieldset>
+      <legend>原産地</legend>
+      <div class="two-col">
+        <div>
+          <label>国内（都道府県）
+            <select name="origin_prefecture">
+              <option value="">選択してください</option>
+              <option value="nagano" selected>長野県</option>
+              <option value="hokkaido">北海道</option>
+              <option value="aomori">青森県</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>海外（国・地域）
+            <input type="text" name="origin_country" placeholder="例: ハンガリー, カナダ">
+          </label>
+        </div>
+      </div>
+      <p class="note">※ 国内外の両方を入力可能です</p>
+    </fieldset>
+
+    <!-- 採蜜・購入 -->
+    <fieldset>
+      <legend>採蜜・購入情報</legend>
+      <div class="two-col">
+        <div>
+          <label>採蜜年
+            <input type="number" name="harvest_year" value="2023">
+          </label>
+        </div>
+        <div>
+          <label>購入日
+            <input type="date" name="purchase_date" value="2024-05-12">
+          </label>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- 蜜源の花 -->
+    <fieldset>
+      <legend>蜜源の花</legend>
+      <label>
+        <select name="flower_ids" multiple size="6">
+          <option value="1" selected>アカシア</option>
+          <option value="2">クローバー</option>
+          <option value="3">レンゲ</option>
+          <option value="4">ヒマワリ</option>
+          <option value="5">ラベンダー</option>
+        </select>
+      </label>
+      <p class="note">※ 複数選択可</p>
+    </fieldset>
+
+    <!-- バッチ情報 -->
+    <fieldset>
+      <legend>最新バッチ情報</legend>
+      <div class="two-col">
+        <div>
+          <label>色
+            <input type="text" name="color" value="淡黄色">
+          </label>
+        </div>
+        <div>
+          <label>結晶化の状態
+            <input type="text" name="crystallization_state" value="液状">
+          </label>
+        </div>
+      </div>
+      <label>味のメモ
+        <textarea name="taste">すっきり、ややフルーティー</textarea>
+      </label>
+      <label>水分量 (%)
+        <input type="number" step="0.1" name="moisture" value="18.2">
+      </label>
+    </fieldset>
+
+    <!-- 補足 -->
+    <fieldset>
+      <legend>補足</legend>
+      <textarea name="note">クセが少なく上品な甘さ。パンや紅茶に合う。</textarea>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit">保存</button>
+      <button type="button" class="cancel">キャンセル</button>
+    </div>
+  </form>
+</main>
+</body>
+</html>
