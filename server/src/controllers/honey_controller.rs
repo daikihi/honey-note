@@ -1,4 +1,4 @@
-use actix_web::get;
+use actix_web::{get, web};
 
 use crate::{
     controllers::adapters::honies::get_all_honies_adapter::{
@@ -25,4 +25,11 @@ pub async fn get_all_honeys() -> Result<actix_web::HttpResponse, actix_web::Erro
         }
         Err(e) => Err(actix_web::error::ErrorInternalServerError("Fix here")),
     }
+}
+
+#[get("/honey-note/api/honeys/{honey_id}")]
+pub async fn get_honey_details(path: web::Path<i32>) -> Result<actix_web::HttpResponse, actix_web::Error> {
+    let honey_id = path.into_inner();
+    log::info!("get_honey_details called {}", honey_id);
+    Ok(actix_web::HttpResponse::Ok().finish())
 }

@@ -14,6 +14,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(Logger::default()) // ← アクセスログ中間層
             .wrap(Cors::permissive())
+            .service(controllers::honey_controller::get_honey_details)
             .service(controllers::honey_controller::get_all_honeys)
             .service(controllers::health_checking::health_check)
             .service(controllers::prefecture_controller::get_all_prefectures)
