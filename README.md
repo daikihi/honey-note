@@ -30,6 +30,14 @@ Beucase the server has a database connection to old file.
 
 # Execution
 
+This project is mainly wirtten in rust. So, your environemt need to install rust environment.
+
+The basic installation of rust uses rustup package. For install, check rustup installation [rustup.rs](https://rustup.rs/)
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
 ## build
 
 ```bash
