@@ -107,6 +107,14 @@ front_bg.wasm      front_bg.wasm.d.ts front.d.ts         front.js           pack
 
 Then you will see above files in `server/src/assets/javascript` directory.
 
+# others
+
+if you are using wsl (ubuntu) then, you need to install gcc for cmpile our package.
+
+```bash
+sudo apt install gcc
+```
+
 
 # other information
 
