@@ -98,6 +98,14 @@ $honey_note_top_directory is not for server directory. this is to top directory 
 
 ### javascripts
 
+This subsection describe about how to build javascript from rust code.
+
+at the first time of execution, you need to install not only cargo but also wasm-pack to your environment.
+
+```bash
+cargo install wasm-pack
+```
+
 ```bash
 $ cd front/
 $ wasm-pack build --target web  --out-dir ../server/src/assets/javascript/
