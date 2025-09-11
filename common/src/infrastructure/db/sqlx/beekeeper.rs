@@ -38,6 +38,20 @@ impl Beekeeper {
         }
     }
 
+    pub async fn find_by_id(id: i32, pool: &sqlx::SqlitePool) -> Option<Self> {
+        let query = "SELECT * FROM beekeeper WHERE id = ?";
+        let result = sqlx::query_as::<_, Beekeeper>(query)
+            .bind(id)
+            .fetch_optional(&*pool)
+            .await;
+
+        match result {
+            Ok(Some(beekeeper)) => Some(beekeeper),
+            Ok(None) => None,
+            Err(_) => None, // エラー処理は適宜実装
+        }
+    }
+
     pub async fn get_all_beekeepers(
         pool: &sqlx::SqlitePool,
     ) -> Result<Vec<Beekeeper>, sqlx::Error> {

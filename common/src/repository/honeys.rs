@@ -1,15 +1,14 @@
-use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 use common_type::models::honey::Honey as ModelHoney;
 
 use crate::infrastructure::db::sqlx::beekeeper::Beekeeper;
-use crate::infrastructure::db::sqlx::honey::Honey;
+use crate::infrastructure::db::sqlx::honey::Honey as SqlHoney;
 use crate::infrastructure::db::sqlx::{beekeeper, honey};
 
 pub async fn insert_honey_if_not_exists(
     honey: &ModelHoney,
     pool: &sqlx::SqlitePool,
 ) -> Result<(), sqlx::Error> {
-    let sqlx_honey = Honey {
+    let sqlx_honey = SqlHoney {
         id: honey.id,
         name_jp: honey.name_jp.clone(),
         name_en: honey.name_en.clone(),
@@ -37,7 +36,7 @@ pub async fn insert_honey_if_not_exists(
 }
 
 pub async fn get_all_honies(pool: &sqlx::SqlitePool) -> Vec<ModelHoney> {
-    let sql_honeys: Result<Vec<Honey>, sqlx::Error> = honey::get_all(pool).await;
+    let sql_honeys: Result<Vec<SqlHoney>, sqlx::Error> = honey::get_all(pool).await;
     let sql_beekeepers: Result<Vec<beekeeper::Beekeeper>, sqlx::Error> =
         beekeeper::Beekeeper::get_all_beekeepers(pool).await;
     match sql_honeys {
@@ -55,7 +54,41 @@ pub async fn get_all_honies(pool: &sqlx::SqlitePool) -> Vec<ModelHoney> {
     }
 }
 
-fn create_model_honeys(sql_honeyies: Vec<Honey>, sql_bk: Vec<Beekeeper>) -> Vec<ModelHoney> {
+pub async fn get_honey_by_id(pool: &sqlx::SqlitePool, honey_id: i32) -> Option<ModelHoney> {
+    let sql_honey_opt: Option<SqlHoney> = SqlHoney::find_by_id(honey_id, pool).await;
+    match sql_honey_opt {
+        Some(h) => {
+            let bk_id = h.clone().beekeeper_id;
+            let bk: Option<Beekeeper> = match bk_id {
+                Some(id) => Beekeeper::find_by_id(id, pool).await,
+                None => None,
+            };
+            Some(honey::create_model_honey(h, bk))
+        }
+        None => None,
+    }
+}
+
+pub async fn get_honey_by_id_and_name(
+    pool: &sqlx::SqlitePool,
+    honey_id: i32,
+    name: String,
+) -> Option<ModelHoney> {
+    let sql_honey_opt: Option<SqlHoney> = SqlHoney::find_by_id_and_name(honey_id, name, pool).await;
+    match sql_honey_opt {
+        Some(h) => {
+            let bk_id = h.clone().beekeeper_id;
+            let bk: Option<Beekeeper> = match bk_id {
+                Some(id) => Beekeeper::find_by_id(id, pool).await,
+                None => None,
+            };
+            Some(honey::create_model_honey(h, bk))
+        }
+        None => None,
+    }
+}
+
+fn create_model_honeys(sql_honeyies: Vec<SqlHoney>, sql_bk: Vec<Beekeeper>) -> Vec<ModelHoney> {
     let model_honeyies: Vec<ModelHoney> = sql_honeyies
         .iter()
         .map(|h| {

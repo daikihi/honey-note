@@ -38,7 +38,25 @@ impl Honey {
         Ok(result.is_some())
     }
 
-    pub async fn find_by_id(id: i32, name: String, pool: &sqlx::SqlitePool) -> Option<Self> {
+    pub async fn find_by_id(honey_id: i32, pool: &sqlx::SqlitePool) -> Option<Self> {
+        let query = "SELECT * FROM honey WHERE id = ?";
+        let result = sqlx::query_as::<_, Honey>(query)
+            .bind(honey_id)
+            .fetch_optional(pool)
+            .await;
+
+        match result {
+            Ok(Some(honey)) => Some(honey),
+            Ok(None) => None,
+            Err(_) => None,
+        }
+    }
+
+    pub async fn find_by_id_and_name(
+        id: i32,
+        name: String,
+        pool: &sqlx::SqlitePool,
+    ) -> Option<Self> {
         let query = "SELECT * FROM honey WHERE id = ? AND name_jp = ?";
         let result = sqlx::query_as::<_, Honey>(query)
             .bind(id)

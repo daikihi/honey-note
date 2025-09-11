@@ -1,8 +1,10 @@
+pub mod front_app_model;
+
 use serde::{Deserialize, Serialize};
 
 use crate::models::beekeeper::Beekeeper;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Honey {
     pub id: Option<i32>,
     pub name_jp: String,
