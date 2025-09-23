@@ -1,5 +1,3 @@
-use common::infrastructure::db::sqlx::honey;
-
 use crate::use_case::get_honey_details::get_honey_details_dto::{
     GetHoneyDetailsRequestDto, GetHoneyDetailsResponseDto,
 };
