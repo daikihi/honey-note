@@ -69,7 +69,7 @@ fn write_honeys_to_table(honeys: Vec<ModelHoney>) {
             honey.id.unwrap_or(0)
         );
         row.set_inner_html(&format!(
-            "<a><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></a>",
+            "<td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td>",
             honey.id.unwrap_or(0),
             honey.name_jp,
             honey.name_en.unwrap_or_default(),
