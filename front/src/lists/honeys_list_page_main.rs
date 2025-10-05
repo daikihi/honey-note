@@ -89,7 +89,6 @@ fn write_honeys_to_table(honeys: Vec<ModelHoney>) {
         row.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())
             .unwrap();
 
-        // ここがポイント！クロージャを忘れることでJS側に保持させる
         closure.forget();
         tbody.append_child(&row).unwrap();
     }
