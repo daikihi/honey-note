@@ -1,4 +1,4 @@
-use wasm_bindgen::JsValue;
+use wasm_bindgen::{prelude::Closure, JsCast as _, JsValue};
 use web_sys::{Document, Window};
 
 use crate::commons::{ajax::get_list_data, validators::is_valid_path};
@@ -64,8 +64,12 @@ fn write_honeys_to_table(honeys: Vec<ModelHoney>) {
         web_sys::console::log_1(&"run main".into());
 
         let row = document.create_element("tr").unwrap();
+        let link_to = format!(
+            "/honey_note/honeys/detail.html?id={}",
+            honey.id.unwrap_or(0)
+        );
         row.set_inner_html(&format!(
-            "<td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>",
+            "<td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td>",
             honey.id.unwrap_or(0),
             honey.name_jp,
             honey.name_en.unwrap_or_default(),
@@ -73,6 +77,19 @@ fn write_honeys_to_table(honeys: Vec<ModelHoney>) {
             "",
             honey.purchase_date.unwrap_or_default()
         ));
+        let closure = Closure::wrap(Box::new(move || {
+            web_sys::window()
+                .unwrap()
+                .location()
+                .set_href(&link_to)
+                .unwrap();
+            web_sys::console::log_1(&"clicked!!!".into());
+        }) as Box<dyn FnMut()>);
+
+        row.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref())
+            .unwrap();
+
+        closure.forget();
         tbody.append_child(&row).unwrap();
     }
 }

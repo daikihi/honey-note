@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 mod commons;
+mod detail_and_edit;
 mod lists;
 mod models;
 
@@ -30,4 +31,10 @@ pub async fn beekeepers_list_main() {
 #[wasm_bindgen]
 pub fn filter_rows(keyword: &str, rows: Vec<String>) -> Vec<usize> {
     commons::filters::filter_rows(keyword, rows)
+}
+
+#[wasm_bindgen]
+pub fn honey_detail_page_main() {
+    web_sys::console::log_1(&"Hello, Honey Detail Page!!".into());
+    detail_and_edit::detail::honey_detail_page_main::run();
 }

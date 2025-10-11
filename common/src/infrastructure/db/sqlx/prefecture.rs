@@ -50,8 +50,6 @@ impl Prefecture {
         Ok(prefecture)
     }
 
-    
-
     pub fn from_model(model: ModelPrefecture) -> Self {
         Prefecture {
             id: model.id,

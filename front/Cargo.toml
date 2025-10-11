@@ -30,5 +30,6 @@ features = [
     "Response",
     "Document",
     "Element",
-    ]
+    "UrlSearchParams"
+]
 

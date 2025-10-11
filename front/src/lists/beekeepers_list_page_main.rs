@@ -22,12 +22,13 @@ async fn main_work() {
     let prefecture_list: Vec<ModelPrefecture> = match prefectures_result {
         Ok(value) => {
             match convert_js_value_to_prefecture_list_data(value).await {
-            Ok(data) => data,
-            Err(err) => {
-                // web_sys::console::error_1(&format!("Error fetching prefectures: {:?}", err).into());
-                vec![]
-            },
-        }},
+                Ok(data) => data,
+                Err(err) => {
+                    // web_sys::console::error_1(&format!("Error fetching prefectures: {:?}", err).into());
+                    vec![]
+                }
+            }
+        }
         Err(err) => {
             web_sys::console::error_1(&format!("Error fetching prefectures: {:?}", err).into());
             vec![]
@@ -111,12 +112,13 @@ fn write_beekeepers_to_table(beekeepers: Vec<ModelBeekeeper>, prefectures: Vec<M
     // This function would contain the logic to write the beekeepers data to a table in the UI.
     // For now, we will just log the data.
     for beekeeper in beekeepers {
-        let matched_prefecture: Option<&ModelPrefecture> = prefectures.iter().find(|p| {
-            match beekeeper.location_prefecture_id {
-                Some(id) => p.id == id,
-                None => false,
-            }
-        });
+        let matched_prefecture: Option<&ModelPrefecture> =
+            prefectures
+                .iter()
+                .find(|p| match beekeeper.location_prefecture_id {
+                    Some(id) => p.id == id,
+                    None => false,
+                });
         let row = document.create_element("tr").unwrap();
         row.set_inner_html(&format!(
             "<td>{}</td><td>{}</td><td>{}</td>",

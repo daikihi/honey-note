@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>HoneyNote | 蜂蜜の編集</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+    @import url('/honey_note/css/honey_edit.css');
+  </style>
+
+</head>
+<body>
+<header>
+  <nav>
+    <div class="nav-left">
+      <a class="logo" href="/">
+        <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
+        HoneyNote
+      </a>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <h1>蜂蜜の編集</h1>
+
+  <form>
+    <!-- 基本情報 -->
+    <fieldset>
+      <legend>基本情報</legend>
+      <label>日本語名
+        <input type="text" name="name_jp" value="アカシアはちみつ">
+      </label>
+      <label>英語名
+        <input type="text" name="name_en" value="Acacia Honey">
+      </label>
+      <label>養蜂場
+        <select name="beekeeper_id">
+          <option value="">選択してください</option>
+          <option value="1" selected>青木養蜂場</option>
+          <option value="2">山形養蜂場</option>
+        </select>
+      </label>
+    </fieldset>
+
+    <!-- 原産地 -->
+    <fieldset>
+      <legend>原産地</legend>
+      <div class="two-col">
+        <div>
+          <label>国内（都道府県）
+            <select name="origin_prefecture">
+              <option value="">選択してください</option>
+              <option value="nagano" selected>長野県</option>
+              <option value="hokkaido">北海道</option>
+              <option value="aomori">青森県</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>海外（国・地域）
+            <input type="text" name="origin_country" placeholder="例: ハンガリー, カナダ">
+          </label>
+        </div>
+      </div>
+      <p class="note">※ 国内外の両方を入力可能です</p>
+    </fieldset>
+
+    <!-- 採蜜・購入 -->
+    <fieldset>
+      <legend>採蜜・購入情報</legend>
+      <div class="two-col">
+        <div>
+          <label>採蜜年
+            <input type="number" name="harvest_year" value="2023">
+          </label>
+        </div>
+        <div>
+          <label>購入日
+            <input type="date" name="purchase_date" value="2024-05-12">
+          </label>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- 蜜源の花 -->
+    <fieldset>
+      <legend>蜜源の花</legend>
+      <label>
+        <select name="flower_ids" multiple size="6">
+          <option value="1" selected>アカシア</option>
+          <option value="2">クローバー</option>
+          <option value="3">レンゲ</option>
+          <option value="4">ヒマワリ</option>
+          <option value="5">ラベンダー</option>
+        </select>
+      </label>
+      <p class="note">※ 複数選択可</p>
+    </fieldset>
+
+    <!-- バッチ情報 -->
+    <fieldset>
+      <legend>最新バッチ情報</legend>
+      <div class="two-col">
+        <div>
+          <label>色
+            <input type="text" name="color" value="淡黄色">
+          </label>
+        </div>
+        <div>
+          <label>結晶化の状態
+            <input type="text" name="crystallization_state" value="液状">
+          </label>
+        </div>
+      </div>
+      <label>味のメモ
+        <textarea name="taste">すっきり、ややフルーティー</textarea>
+      </label>
+      <label>水分量 (%)
+        <input type="number" step="0.1" name="moisture" value="18.2">
+      </label>
+    </fieldset>
+
+    <!-- 補足 -->
+    <fieldset>
+      <legend>補足</legend>
+      <textarea name="note">クセが少なく上品な甘さ。パンや紅茶に合う。</textarea>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit">保存</button>
+      <button type="button" class="cancel">キャンセル</button>
+    </div>
+  </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,108 @@
+:root {
+    --gold:#FFB703;
+    --blue:#219EBC;
+    --line:#E9C46A;
+    --cream:#FFF8ED;
+    --radius:8px;
+    font-family:"Inter","Noto Sans JP",sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--cream); color:#333; }
+
+header {
+    background:#fff;
+    box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+header nav {
+    max-width:1000px;
+    height:64px;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 1rem;
+}
+.nav-left { display:flex; align-items:center; gap:1rem; }
+nav a.logo {
+    display:flex; align-items:center; gap:0.5rem;
+    font-size:1.5rem; font-weight:700;
+    color:var(--gold); text-decoration:none;
+}
+.logo img { height:56px; }
+
+main {
+    max-width:900px;
+    margin:2rem auto;
+    background:#fff;
+    padding:2rem;
+    border-radius:var(--radius);
+    box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+
+h1 { font-size:1.8rem; margin-bottom:1rem; color:var(--blue); }
+
+fieldset {
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:1rem 1.5rem;
+    margin-bottom:2rem;
+    background:#fffdf7;
+}
+legend {
+    font-weight:600;
+    padding:0 .5rem;
+    color:#555;
+    border-left:4px solid var(--gold);
+    margin-left:-.5rem;
+}
+
+label {
+    display:block;
+    margin-top:1rem;
+    font-weight:600;
+    font-size:.95rem;
+}
+input, select, textarea {
+    width:100%;
+    padding:.6rem;
+    margin-top:.3rem;
+    border:1px solid #ccc;
+    border-radius:var(--radius);
+    font-size:.95rem;
+}
+textarea { min-height:80px; }
+
+.two-col {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:1rem;
+}
+
+.note {
+    font-size:.85rem;
+    color:#666;
+    margin-top:.3rem;
+}
+
+.actions {
+    display:flex;
+    gap:1rem;
+    justify-content:center;
+    margin-top:2rem;
+}
+.actions button {
+    padding:.7rem 1.2rem;
+    border-radius:var(--radius);
+    border:none;
+    font-weight:600;
+    cursor:pointer;
+    color:#fff;
+    background:var(--blue);
+}
+.actions button:hover { background:#197a91; }
+.actions .cancel {
+    background:#aaa;
+}
+.actions .cancel:hover {
+    background:#888;
+}
