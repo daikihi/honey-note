@@ -12,5 +12,6 @@ log = "0.4.27"
 sqlx = { version = "0.8", default-features = false, features = ["sqlite", "derive"] }
 tokio = { version = "1", features = ["full"] }
 once_cell = "1.19"
+config = "0.13"
 serde = { version = "1", features = ["derive"] }
 thiserror = "1.0"
