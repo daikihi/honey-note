@@ -20,15 +20,13 @@ async fn main_work() {
 
     let prefectures_result: Result<JsValue, JsValue> = get_list_data(_prefectures_api_path).await;
     let prefecture_list: Vec<ModelPrefecture> = match prefectures_result {
-        Ok(value) => {
-            match convert_js_value_to_prefecture_list_data(value).await {
-                Ok(data) => data,
-                Err(err) => {
-                    web_sys::console::error_1(&format!("Error fetching prefectures: {:?}", err).into());
-                    vec![]
-                }
+        Ok(value) => match convert_js_value_to_prefecture_list_data(value).await {
+            Ok(data) => data,
+            Err(err) => {
+                web_sys::console::error_1(&format!("Error fetching prefectures: {:?}", err).into());
+                vec![]
             }
-        }
+        },
         Err(err) => {
             web_sys::console::error_1(&format!("Error fetching prefectures: {:?}", err).into());
             vec![]
