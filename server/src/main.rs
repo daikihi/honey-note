@@ -18,7 +18,7 @@ async fn main() -> std::io::Result<()> {
         Some(c) => {
             HttpServer::new(|| {
                 App::new()
-                    .wrap(Logger::default()) // ← アクセスログ中間層
+                    .wrap(Logger::default()) // ← for access logs
                     .wrap(Cors::permissive())
                     .service(controllers::honey_controller::get_all_honeys)
                     .service(controllers::health_checking::health_check)
