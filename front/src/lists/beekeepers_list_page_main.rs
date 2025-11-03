@@ -15,7 +15,7 @@ pub async fn run() {
 }
 
 async fn main_work() {
-    let _beekeepers_api_path: &str = "/honey-note/api/beekeepers";
+    let _BEEKEEPER_API_PATH: &str = "/honey-note/api/beekeepers";
     let _prefectures_api_path: &str = "/honey-note/api/prefectures";
 
     let prefectures_result: Result<JsValue, JsValue> = get_list_data(_prefectures_api_path).await;
@@ -33,7 +33,7 @@ async fn main_work() {
         }
     };
 
-    let result: Result<JsValue, JsValue> = get_list_data(_beekeepers_api_path).await;
+    let result: Result<JsValue, JsValue> = get_list_data(_BEEKEEPER_API_PATH).await;
     match result {
         Ok(value) => {
             web_sys::console::log_1(&format!("Beekeepers List Data: {:?}", value).into());
