@@ -28,6 +28,8 @@ mod test_beekeeper_load {
 
     #[tokio::test]
     async fn test_beekeeper_load_run() {
+        // 正常なCSVファイルを読み込み、データベースに養蜂場情報が正しく登録されることを確認する
+        // Load a valid CSV file and verify that the beekeeper information is correctly registered in the database.
         let db_url = "sqlite::memory:";
         let pool = setup_test_db(db_url).await;
 
@@ -62,6 +64,8 @@ mod test_beekeeper_load {
 
     #[tokio::test]
     async fn test_beekeeper_load_empty_csv() {
+        // 空のCSVファイルを読み込んだ際に、バリデーションエラーが発生することを確認する
+        // Verify that a validation error occurs when an empty CSV file is loaded.
         let db_url = "sqlite::memory:";
         let pool = setup_test_db(db_url).await;
 
@@ -81,6 +85,8 @@ mod test_beekeeper_load {
 
     #[tokio::test]
     async fn test_beekeeper_load_invalid_csv_format() {
+        // 不正なフォーマットのCSVファイルを読み込んだ際に、バリデーションエラーが発生することを確認する
+        // Verify that a validation error occurs when a CSV file with an invalid format is loaded.
         let db_url = "sqlite::memory:";
         let pool = setup_test_db(db_url).await;
 
@@ -101,6 +107,8 @@ mod test_beekeeper_load {
 
     #[tokio::test]
     async fn test_beekeeper_load_missing_prefecture() {
+        // 存在しない都道府県名を含むCSVを読み込んだ際に、エラーが発生することを確認する
+        // Verify that an error occurs when loading a CSV containing a non-existent prefecture name.
         let db_url = "sqlite::memory:";
         let pool = setup_test_db(db_url).await;
 

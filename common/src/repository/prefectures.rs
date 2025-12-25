@@ -117,6 +117,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_insert_and_has_prefecture() {
+        // 都道府県情報の登録と、登録した情報の存在確認が正しく行えることをテストする
+        // Test that prefecture information can be inserted and its existence can be correctly verified.
         let pool = setup_db().await;
         let test_prefecture = test_prefecture();
 
