@@ -21,6 +21,11 @@ async fn main() {
     println!("beekeeper_loader 終了");
 }
 
+
+#[cfg(test)]
+#[path = "../../test/mod.rs"] // test ディレクトリの mod.rs を読み込む
+mod test;
+
 #[cfg(test)]
 #[path = "../../test/beekeeper_loader/main_test.rs"]
 mod test_beekeeper_load;

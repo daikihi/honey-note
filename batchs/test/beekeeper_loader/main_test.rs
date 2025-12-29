@@ -8,22 +8,11 @@ mod test_beekeeper_load {
     use std::io::Write;
     use tempfile::NamedTempFile;
 
+
+    use crate::test::common::batch_test_base;
+
     async fn setup_test_db(db_url: &str) -> SqlitePool {
-        use sqlx::sqlite::SqlitePoolOptions;
-        
-        let pool = SqlitePoolOptions::new()
-            .min_connections(1)
-            .connect(db_url)
-            .await
-            .expect("Failed to connect to SQLite");
-        
-        // Run migrations
-        sqlx::migrate!("../resources/db/migrations")
-            .run(&pool)
-            .await
-            .expect("Failed to run migrations");
-        
-        pool
+        batch_test_base::test_batch::setup_test_db(db_url).await
     }
 
     #[tokio::test]
