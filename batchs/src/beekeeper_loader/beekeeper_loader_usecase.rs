@@ -1,22 +1,31 @@
 use crate::beekeeper_loader_request::BeekeeperLoaderRequestDto;
+use common::errors::AppError;
 use common::infrastructure::gateway::filesystem::load_master_data::load_master_data;
 use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
-use log::info;
+use log::{error, info};
 
-pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) {
+pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) -> Result<(), AppError> {
     let file_name = request_dto.file_name;
-    let db_file_name = request_dto.db_file_name;
-
-    let connection_pool =
-        common::infrastructure::db::sqlx::get_sqlite_pool(db_file_name.to_string());
+    let connection_pool = request_dto.pool;
 
     let master_data: String = load_master_data(file_name);
+    if master_data.is_empty() {
+        return Err(AppError::InvalidInput(format!(
+            "Master data is empty or could not be read: {}",
+            file_name
+        )));
+    }
+
     info!("master data {}", master_data);
     for line in master_data.lines() {
         info!("Processing line: {}", line);
         let beekeeper_master_data: Vec<&str> = line.split(',').collect();
-        if beekeeper_master_data.is_empty() {
-            continue;
+        if beekeeper_master_data.len() < 4 {
+            error!("Invalid CSV format at line: {}", line);
+            return Err(AppError::InvalidInput(format!(
+                "Invalid CSV format: {}",
+                line
+            )));
         }
         let beekeeper_name: &str = beekeeper_master_data[0];
         let beekeeper_name_en: Option<&str> = if beekeeper_master_data[1].is_empty() {
@@ -42,8 +51,8 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) {
             match prefecture_opt {
                 Ok(prefecture) => Some(prefecture.id),
                 Err(e) => {
-                    info!("Error getting prefecture ID: {}", e);
-                    None
+                    error!("Error getting prefecture ID for {}: {}", beekeeper_prefecture, e);
+                    return Err(e);
                 }
             }
         };
@@ -67,4 +76,5 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) {
             continue;
         }
     }
+    Ok(())
 }

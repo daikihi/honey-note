@@ -1,5 +1,3 @@
-use wasm_bindgen::prelude::*;
-
 pub fn filter_rows(keyword: &str, rows: Vec<String>) -> Vec<usize> {
     let keyword_lower = keyword.to_lowercase();
     rows.iter()

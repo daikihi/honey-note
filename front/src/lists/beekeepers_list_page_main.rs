@@ -15,27 +15,25 @@ pub async fn run() {
 }
 
 async fn main_work() {
-    let _beekeepers_api_path: &str = "/honey-note/api/beekeepers";
+    let _BEEKEEPER_API_PATH: &str = "/honey-note/api/beekeepers";
     let _prefectures_api_path: &str = "/honey-note/api/prefectures";
 
     let prefectures_result: Result<JsValue, JsValue> = get_list_data(_prefectures_api_path).await;
     let prefecture_list: Vec<ModelPrefecture> = match prefectures_result {
-        Ok(value) => {
-            match convert_js_value_to_prefecture_list_data(value).await {
-                Ok(data) => data,
-                Err(err) => {
-                    // web_sys::console::error_1(&format!("Error fetching prefectures: {:?}", err).into());
-                    vec![]
-                }
+        Ok(value) => match convert_js_value_to_prefecture_list_data(value).await {
+            Ok(data) => data,
+            Err(err) => {
+                web_sys::console::error_1(&format!("Error fetching prefectures: {:?}", err).into());
+                vec![]
             }
-        }
+        },
         Err(err) => {
             web_sys::console::error_1(&format!("Error fetching prefectures: {:?}", err).into());
             vec![]
         }
     };
 
-    let result: Result<JsValue, JsValue> = get_list_data(_beekeepers_api_path).await;
+    let result: Result<JsValue, JsValue> = get_list_data(_BEEKEEPER_API_PATH).await;
     match result {
         Ok(value) => {
             web_sys::console::log_1(&format!("Beekeepers List Data: {:?}", value).into());

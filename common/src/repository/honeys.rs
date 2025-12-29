@@ -102,9 +102,9 @@ fn create_model_honeys(sql_honeyies: Vec<SqlHoney>, sql_bk: Vec<Beekeeper>) -> V
                     }
                 })
                 .collect();
-            let bk_opt = bk_vec.first().map(|b| b.clone());
+            let bk_opt = bk_vec.first().map(|&b| (*b).clone());
             use crate::infrastructure::db::sqlx::honey as sqlx_honey_package;
-            sqlx_honey_package::create_model_honey(h.clone(), bk_opt.cloned())
+            sqlx_honey_package::create_model_honey(h.clone(), bk_opt)
         })
         .collect();
     model_honeyies

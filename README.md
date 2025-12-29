@@ -30,6 +30,14 @@ Beucase the server has a database connection to old file.
 
 # Execution
 
+This project is mainly wirtten in rust. So, your environemt need to install rust environment.
+
+The basic installation of rust uses rustup package. For install, check rustup installation [rustup.rs](https://rustup.rs/)
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
 ## build
 
 ```bash
@@ -98,6 +106,14 @@ $honey_note_top_directory is not for server directory. this is to top directory 
 
 ### javascripts
 
+This subsection describe about how to build javascript from rust code.
+
+at the first time of execution, you need to install not only cargo but also wasm-pack to your environment.
+
+```bash
+cargo install wasm-pack
+```
+
 ```bash
 $ cd front/
 $ wasm-pack build --target web  --out-dir ../server/src/assets/javascript/
@@ -106,6 +122,14 @@ front_bg.wasm      front_bg.wasm.d.ts front.d.ts         front.js           pack
 ```
 
 Then you will see above files in `server/src/assets/javascript` directory.
+
+# others
+
+if you are using wsl (ubuntu) then, you need to install gcc for cmpile our package.
+
+```bash
+sudo apt install gcc
+```
 
 
 # other information

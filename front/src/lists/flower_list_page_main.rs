@@ -2,7 +2,7 @@ use common_type::models::flowers::Flower as ModelFlower;
 use wasm_bindgen::JsValue;
 use web_sys::{Document, Window};
 
-use crate::commons::{self, ajax::get_list_data, validators::is_valid_path};
+use crate::commons::{ajax::get_list_data, validators::is_valid_path};
 
 pub async fn run() {
     if is_valid_path("/honey_note/flowers/lists.html") {
