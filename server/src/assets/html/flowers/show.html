@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>HoneyNote | 花の詳細</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --gold:#FFB703;
+      --blue:#219EBC;
+      --line:#E9C46A;
+      --cream:#FFF8ED;
+      --radius:8px;
+      font-family:"Inter","Noto Sans JP",sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--cream); color:#333; }
+
+    header {
+      background:#fff;
+      box-shadow:0 1px 4px rgba(0,0,0,.06);
+    }
+    header nav {
+      max-width:1000px;
+      height:64px;
+      margin:auto;
+      display:flex;
+      align-items:center;
+      padding:0 1rem;
+    }
+    nav a.logo {
+      display:flex; align-items:center; gap:0.5rem;
+      font-size:1.5rem; font-weight:700;
+      color:var(--gold); text-decoration:none;
+    }
+    .logo img { height:56px; }
+
+    main {
+      max-width:900px;
+      margin:2rem auto;
+      background:#fff;
+      padding:2rem;
+      border-radius:var(--radius);
+      box-shadow:0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    h1 {
+      font-size:1.8rem;
+      margin-bottom:1rem;
+      color:var(--blue);
+    }
+
+    .section {
+      margin-bottom:2rem;
+    }
+    .section h2 {
+      font-size:1.2rem;
+      margin-bottom:.5rem;
+      color:#555;
+      border-left:4px solid var(--gold);
+      padding-left:0.5rem;
+    }
+
+    .info-grid {
+      display:grid;
+      grid-template-columns: 160px 1fr;
+      row-gap:0.6rem;
+      column-gap:1rem;
+      font-size:.95rem;
+    }
+    .info-grid .label {
+      color:#666;
+      font-weight:600;
+    }
+
+    .tag-list {
+      display:flex;
+      flex-wrap:wrap;
+      gap:.5rem;
+    }
+    .tag {
+      background:#FFF4C2;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:.2rem .6rem;
+      font-size:.85rem;
+    }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      margin-top:1rem;
+    }
+    th, td {
+      border-bottom:1px solid var(--line);
+      padding:0.6rem;
+      text-align:left;
+      font-size:.9rem;
+    }
+    th {
+      background:var(--cream);
+      width:30%;
+    }
+
+    .actions {
+      margin-top:2rem;
+      display:flex;
+      gap:1rem;
+      justify-content:flex-end;
+    }
+    .actions a {
+      padding:0.5rem 1rem;
+      border-radius:var(--radius);
+      text-decoration:none;
+      font-weight:600;
+    }
+    .btn-edit {
+      background:var(--blue);
+      color:white;
+    }
+    .btn-back {
+      background:#eee;
+      color:#333;
+    }
+
+    /* edit を意識した将来拡張用 */
+    .hint {
+      font-size:.8rem;
+      color:#888;
+      margin-top:.3rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <a class="logo" href="/">
+      <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
+      HoneyNote
+    </a>
+  </nav>
+</header>
+
+<main>
+  <h1>アカシア（Acacia）</h1>
+
+  <!-- 基本情報 -->
+  <div class="section">
+    <h2>基本情報</h2>
+    <div class="info-grid">
+      <div class="label">和名</div>
+      <div>アカシア</div>
+
+      <div class="label">学名</div>
+      <div>Robinia pseudoacacia</div>
+
+      <div class="label">分類</div>
+      <div>マメ科 ハリエンジュ属</div>
+
+      <div class="label">開花時期</div>
+      <div>5月〜6月</div>
+
+      <div class="label">主な分布</div>
+      <div>日本全国（本州以北に多い）</div>
+
+      <div class="label">蜜量</div>
+      <div>多い</div>
+
+      <div class="label">結晶化傾向</div>
+      <div>しにくい</div>
+    </div>
+  </div>
+
+  <!-- 蜂蜜への影響 -->
+  <div class="section">
+    <h2>蜂蜜の特徴</h2>
+    <table>
+      <tr>
+        <th>色</th>
+        <td>非常に淡い黄色〜透明</td>
+      </tr>
+      <tr>
+        <th>香り</th>
+        <td>穏やか、ほのかにフローラル</td>
+      </tr>
+      <tr>
+        <th>味</th>
+        <td>クセが少なく上品な甘さ</td>
+      </tr>
+      <tr>
+        <th>主な用途</th>
+        <td>紅茶、ヨーグルト、パン</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 関連情報 -->
+  <div class="section">
+    <h2>関連情報</h2>
+
+    <div class="info-grid">
+      <div class="label">主な養蜂場</div>
+      <div>
+        <a href="/honey_note/beekeepers/show.html?id=5">青木養蜂場</a> ほか
+      </div>
+
+      <div class="label">使用されている蜂蜜</div>
+      <div>
+        <a href="/honey_note/honeies/show.html?id=7">アカシア蜂蜜（2023）</a>
+      </div>
+
+      <div class="label">タグ</div>
+      <div class="tag-list">
+        <span class="tag">単花蜜</span>
+        <span class="tag">定番</span>
+        <span class="tag">初心者向け</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 補足 -->
+  <div class="section">
+    <h2>メモ</h2>
+    <p>
+      日本で最も流通量の多い蜂蜜の蜜源。
+      採蜜時期が安定しており、品質のブレが少ない。
+    </p>
+    <div class="hint">
+      ※ この項目は edit 時に textarea を想定
+    </div>
+  </div>
+
+  <div class="actions">
+    <a class="btn-back" href="/honey_note/flowers/index.html">一覧に戻る</a>
+    <a class="btn-edit" href="/honey_note/flowers/edit.html?id=10">編集する</a>
+  </div>
+
+</main>
+
+</body>
+</html>
