@@ -174,7 +174,38 @@
             background: #FFE08A;
         }
 
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .color-preview {
+            width: 80px;
+            height: 48px;
+            border-radius: var(--radius);
+            border: 1px solid #ccc;
+            background: #FFD966;
+        }
+
+
     </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const colorInput = document.getElementById("color_hex");
+            const preview = document.getElementById("color_preview");
+
+            if (!colorInput || !preview) return;
+
+            // 初期値も反映
+            preview.style.backgroundColor = colorInput.value;
+
+            colorInput.addEventListener("input", () => {
+                preview.style.backgroundColor = colorInput.value;
+            });
+        });
+    </script>
 </head>
 <body>
 
@@ -266,7 +297,10 @@
                             <option value="dark_amber">濃い茶色寄り（暗め）</option>
                         </select>
 
-                        <input type="color" name="color_hex" id="color_hex" value="#FFD966">
+                        <div class="color-picker">
+                            <input type="color" name="color_hex" id="color_hex" value="#FFD966">
+                            <div id="color_preview" class="color-preview"></div>
+                        </div>
 
                         <input type="text" name="color_note" id="color_note"
                                placeholder="補足（例：非常に透明、光沢あり）"
