@@ -64,9 +64,17 @@ fn write_honeys_to_table(honeys: Vec<ModelHoney>) {
         web_sys::console::log_1(&"run main".into());
 
         let row = document.create_element("tr").unwrap();
+        let id = honey.id.unwrap_or(0);
+        let link = format!("/honey_note/honeys/show.html?id={}", id);
         row.set_inner_html(&format!(
-            "<td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>",
-            honey.id.unwrap_or(0),
+            "<td><a href=\"{0}\">{1}</a></td>\
+     <td><a href=\"{0}\">{2}</a></td>\
+     <td><a href=\"{0}\">{3}</a></td>\
+     <td><a href=\"{0}\">{4}</a></td>\
+     <td><a href=\"{0}\">{5}</a></td>\
+     <td><a href=\"{0}\">{6}</a></td>",
+            link,
+            id,
             honey.name_jp,
             honey.name_en.unwrap_or_default(),
             honey.beekkeeper.map(|b| b.name_jp).unwrap_or_default(),
