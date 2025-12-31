@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>HoneyNote | 蜂蜜の編集</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --gold:#FFB703;
+            --blue:#219EBC;
+            --line:#E9C46A;
+            --cream:#FFF8ED;
+            --radius:8px;
+            font-family:"Inter","Noto Sans JP",sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--cream); color:#333; }
+
+        header {
+            background:#fff;
+            box-shadow:0 1px 4px rgba(0,0,0,.06);
+        }
+        header nav {
+            max-width:1000px;
+            height:64px;
+            margin:auto;
+            display:flex;
+            align-items:center;
+            padding:0 1rem;
+        }
+        nav a.logo {
+            display:flex; align-items:center; gap:0.5rem;
+            font-size:1.5rem; font-weight:700;
+            color:var(--gold); text-decoration:none;
+        }
+        .logo img { height:56px; }
+
+        main {
+            max-width:900px;
+            margin:2rem auto;
+            background:#fff;
+            padding:2rem;
+            border-radius:var(--radius);
+            box-shadow:0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            font-size:1.8rem;
+            margin-bottom:1rem;
+            color:var(--blue);
+        }
+
+        .section {
+            margin-bottom:2rem;
+        }
+        .section h2 {
+            font-size:1.2rem;
+            margin-bottom:.5rem;
+            color:#555;
+            border-left:4px solid var(--gold);
+            padding-left:0.5rem;
+        }
+
+        .info-grid {
+            display:grid;
+            grid-template-columns: 160px 1fr;
+            row-gap:0.6rem;
+            column-gap:1rem;
+            font-size:.95rem;
+        }
+        .label {
+            color:#666;
+            font-weight:600;
+        }
+
+        input, select, textarea {
+            font-size:1rem;
+            padding:.3rem .5rem;
+            border:1px solid #ccc;
+            border-radius:var(--radius);
+            width:100%;
+        }
+        textarea {
+            min-height:80px;
+            resize:vertical;
+        }
+
+        table {
+            width:100%;
+            border-collapse:collapse;
+            margin-top:1rem;
+        }
+        th, td {
+            border-bottom:1px solid var(--line);
+            padding:0.6rem;
+            text-align:left;
+            font-size:.9rem;
+        }
+        th {
+            background:var(--cream);
+            width:30%;
+        }
+
+        .tag-list {
+            display:flex;
+            gap:.5rem;
+            flex-wrap:wrap;
+        }
+        .tag {
+            background:#FFF4C2;
+            border:1px solid var(--line);
+            border-radius:999px;
+            padding:.2rem .6rem;
+            font-size:.85rem;
+        }
+
+        .actions {
+            margin-top:2rem;
+            display:flex;
+            justify-content:flex-end;
+            gap:1rem;
+        }
+        .actions button, .actions a {
+            padding:0.5rem 1rem;
+            border-radius:var(--radius);
+            text-decoration:none;
+            font-weight:600;
+            border:none;
+            cursor:pointer;
+        }
+        .btn-save {
+            background:var(--blue);
+            color:white;
+        }
+        .btn-cancel {
+            background:#eee;
+            color:#333;
+        }
+
+        .hint {
+            font-size:.8rem;
+            color:#888;
+            margin-top:.3rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        select, textarea {
+            width: 100%;
+            margin-top: 0.3rem;
+            padding: 0.4rem;
+            border-radius: var(--radius);
+            border: 1px solid #ccc;
+            font-family: inherit;
+        }
+
+        .observation-actions {
+            margin-top: 0.8rem;
+        }
+
+        .btn-add {
+            background: #FFF4C2;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .btn-add:hover {
+            background: #FFE08A;
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <nav>
+        <a class="logo" href="/">
+            <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
+            HoneyNote
+        </a>
+    </nav>
+</header>
+
+<main>
+    <h1>蜂蜜の編集</h1>
+    <!--  need update api endpoint on action  -->
+    <form method="post" action="/honey_note/honeies/update.html">
+        <!-- 基本情報 -->
+        <div class="section">
+            <h2>基本情報</h2>
+            <div class="info-grid">
+                <div class="label">名称</div>
+                <div><input type="text" name="name_jp" id="name_jp" required></div>
+
+                <div class="label">養蜂場</div>
+                <div>
+                    <!-- Need filter function for option value, because there are too many beekeepers -->
+                    <select name="beekeeper_name" id="beekeeper_name" required>
+                        <option value="">選択してください</option>
+                        <!-- サーバー側で選択肢を埋める -->
+                        <!--          <option value="1">養蜂家A</option>
+                                 <option value="2">養蜂家B</option> -->
+                    </select>
+                </div>
+
+                <div class="label">採蜜年</div>
+                <div><input type="number" name="harvest_year" id="harvest_year" min="1900" max="2100"></div>
+
+                <div class="label">原産国</div>
+                <div><input type="text" name="country" id="country"></div>
+
+                <div class="label">原産地域</div>
+                <div><input type="text" name="region" id="prefecture"></div>
+
+                <div class="label">蜜源植物</div>
+                <div>
+                    <select name="flower_name[]" id="flower_name" multiple required>
+                        <option value="">選択してください</option>
+                        <!-- サーバー側で選択肢を埋める -->
+                    </select>
+                    <div class="hint">※ 複数選択できます（CtrlまたはCmdキーを押しながら選択）</div>
+                </div>
+
+                <div class="label">単花／百花</div>
+                <div>
+                    <select name="type" id="honey_flower_type">
+                        <option value="">選択してください</option>
+                        <option value="単花蜜">単花蜜</option>
+                        <option value="百花蜜">百花蜜</option>
+                    </select>
+                </div>
+
+                <div class="label">容量</div>
+                <div><input type="text" name="volume" id="honey_volume"></div>
+
+                <div class="label">購入日</div>
+                <div><input type="date" name="purchase_date" id="purchase_date"></div>
+
+                <div class="label">登録日時</div>
+                <div><input type="datetime-local" name="created_at" id="created_at"></div>
+
+                <div class="label">更新日時</div>
+                <div><input type="datetime-local" name="updated_at" id="updated_at"></div>
+            </div>
+        </div>
+
+        <!-- 風味・特徴 -->
+        <div class="section">
+            <h2>風味・特徴</h2>
+            <table>
+                <tr>
+                    <th>色</th>
+                    <td>
+                        <select name="color_category" id="color_category">
+                            <option value="">選択してください</option>
+                            <option value="water_white">ほぼ無色・透明</option>
+                            <option value="extra_light_amber">とても薄い黄金色（明るい）</option>
+                            <option value="light_amber">薄い黄金色</option>
+                            <option value="amber">しっかりした黄金色</option>
+                            <option value="dark_amber">濃い茶色寄り（暗め）</option>
+                        </select>
+
+                        <input type="color" name="color_hex" id="color_hex" value="#FFD966">
+
+                        <input type="text" name="color_note" id="color_note"
+                               placeholder="補足（例：非常に透明、光沢あり）"
+                        >
+                    </td>
+                </tr>
+                <tr>
+                    <th>香り</th>
+                    <td>
+                        <label>
+                            香りの強さ
+                            <select name="aroma_intensity" id="aroma_intensity" required>
+                                <option value="">選択してください</option>
+                                <option value="very_light">ほとんど感じない</option>
+                                <option value="light">やさしい</option>
+                                <option value="moderate">はっきり</option>
+                                <option value="strong">強い</option>
+                                <option value="distinctive">とても個性的</option>
+                            </select>
+                        </label>
+                        <label>
+                            香りの系統（任意）
+                            <select name="aroma_type" id="aroma_type">
+                                <option value="">（未選択）</option>
+                                <option value="floral">花のような香り</option>
+                                <option value="fruity">果実のような香り</option>
+                                <option value="herbal">草・ハーブ系</option>
+                                <option value="woody">木・樹脂のような香り</option>
+                                <option value="rich">コクのある甘い香り</option>
+                                <option value="fermented">発酵感・熟成感</option>
+                            </select>
+                        </label>
+                        <label>
+                            香りメモ（任意）
+                            <textarea name="aroma_note" id="aroma_note" rows="3"
+                                      placeholder="例：開封直後は控えめだが、口に含むと花の香りが広がる">
+                            </textarea>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <th>味</th>
+                    <td>
+                        <label>
+                            甘さの強さ
+                            <select name="sweetness_intensity" id="sweetness_intensity" required>
+                                <option value="">選択してください</option>
+                                <option value="very_light">ほとんど甘くない</option>
+                                <option value="light">控えめ</option>
+                                <option value="moderate">ちょうどよい</option>
+                                <option value="strong">かなり甘い</option>
+                                <option value="very_strong">非常に甘い</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            酸味
+                            <select name="acidity" id="acidity">
+                                <option value="">（感じない／未評価）</option>
+                                <option value="none">ほぼ感じない</option>
+                                <option value="light">わずかに感じる</option>
+                                <option value="moderate">はっきり感じる</option>
+                                <option value="strong">強く感じる</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            口当たり
+                            <select name="mouthfeel" id="mouthfeel">
+                                <option value="">選択してください</option>
+                                <option value="light">さらっとしている</option>
+                                <option value="moderate">なめらか</option>
+                                <option value="thick">とろみがある</option>
+                                <option value="very_thick">かなり重たい</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            後味
+                            <select name="finish" id="finish">
+                                <option value="">選択してください</option>
+                                <option value="clean">すっきり消える</option>
+                                <option value="gentle">やさしく残る</option>
+                                <option value="long">余韻が長い</option>
+                                <option value="distinctive">個性的な余韻</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            味のメモ
+                            <textarea name="taste_note" id="taste_note" rows="4"
+                                      placeholder="例：最初はやさしい甘さ、後半にかけて酸味が出てくる。紅茶に合う。">
+                            </textarea>
+                        </label>
+                    </td>
+                </tr>
+                <tr>
+                    <th>結晶化</th>
+                    <td>
+                        <label>
+                            結晶化の進行度
+                            <select name="crystallization_level" id="crystallization_level">
+                                <option value="">選択してください</option>
+                                <option value="liquid">完全に液状</option>
+                                <option value="slightly">うっすら結晶化</option>
+                                <option value="partial">部分的に結晶化</option>
+                                <option value="mostly">ほぼ結晶化</option>
+                                <option value="solid">完全に結晶化</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            結晶の質感
+                            <select name="crystal_texture" id="crystal_texture">
+                                <option value="">選択してください</option>
+                                <option value="smooth">なめらか（微細）</option>
+                                <option value="creamy">クリーミー</option>
+                                <option value="grainy">ざらざら</option>
+                                <option value="hard">硬い・シャリシャリ</option>
+                            </select>
+                        </label>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 管理・評価 -->
+        <div class="section">
+            <h2>管理・評価</h2>
+            <div class="info-grid">
+                <label>
+                    好み度
+                    <select name="preference" id="preference">
+                        <option value="">選択してください</option>
+                        <option value="1">あまり好みではない</option>
+                        <option value="2">やや好みではない</option>
+                        <option value="3">普通</option>
+                        <option value="4">好き</option>
+                        <option value="5">とても好き</option>
+                    </select>
+                </label>
+            </div>
+            <div class="label">主な用途</div>
+            <div><input type="text" name="usage" id="usage"></div>
+
+            <div class="label">タグ</div>
+            <div>
+                <input type="text" name="tags" id="tags">
+                <div class="hint">カンマ区切りで入力</div>
+            </div>
+        </div>
+        </div>
+
+        <!-- 観測記録 -->
+        <div class="section">
+            <h2>観測記録</h2>
+
+            <table id="observation-table">
+                <thead>
+                <tr>
+                    <th>観測日</th>
+                    <th>状態の変化</th>
+                    <th>味・香りの印象</th>
+                    <th>メモ</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td><input type="date" name="observation_date_1" id="observation_date_1"></td>
+
+                    <td>
+                        <select name="observation_state_1" id="observation_state_1">
+                            <option value="">選択してください</option>
+                            <option value="liquid">液状</option>
+                            <option value="slightly_crystallized">うっすら結晶</option>
+                            <option value="creamy">クリーミー</option>
+                            <option value="mostly_solid">ほぼ固形</option>
+                        </select>
+                    </td>
+
+                    <td>
+                        <input
+                                type="text"
+                                name="observation_taste_1"
+                                id="observation_taste_1"
+                                placeholder="例：香りが落ち着き、甘さがまろやか">
+                    </td>
+
+                    <td>
+                        <input
+                                type="text"
+                                name="observation_note_1"
+                                id="observation_note_1"
+                                placeholder="例：冬になって結晶化が進んだ">
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <div class="observation-actions">
+                <button
+                        type="button"
+                        class="btn-add"
+                        id="btn_add_observation"
+                        onclick="addObservationRow()">
+                    ＋ 観測を追加
+                </button>
+            </div>
+
+            <div class="hint">
+                ※ 食べたとき・気づいたときに記録するメモです
+            </div>
+        </div>
+
+
+        <!-- メモ -->
+        <div class="section">
+            <h2>メモ</h2>
+            <textarea name="memo" id="memo"></textarea>
+            <div class="hint">
+                ※ textareaで編集
+            </div>
+        </div>
+
+        <div class="actions">
+            <a class="btn-cancel" href="/honey_note/honeies/index.html">キャンセル</a>
+            <button class="btn-save" type="submit">保存</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>
