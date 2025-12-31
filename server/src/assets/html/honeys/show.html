@@ -1,273 +1,282 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>HoneyNote | 蜂蜜の詳細</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    :root {
-      --gold:#FFB703;
-      --blue:#219EBC;
-      --line:#E9C46A;
-      --cream:#FFF8ED;
-      --radius:8px;
-      font-family:"Inter","Noto Sans JP",sans-serif;
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { background:var(--cream); color:#333; }
+    <meta charset="UTF-8">
+    <title>HoneyNote | 蜂蜜の詳細</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --gold:#FFB703;
+            --blue:#219EBC;
+            --line:#E9C46A;
+            --cream:#FFF8ED;
+            --radius:8px;
+            font-family:"Inter","Noto Sans JP",sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--cream); color:#333; }
 
-    header {
-      background:#fff;
-      box-shadow:0 1px 4px rgba(0,0,0,.06);
-    }
-    header nav {
-      max-width:1000px;
-      height:64px;
-      margin:auto;
-      display:flex;
-      align-items:center;
-      padding:0 1rem;
-    }
-    nav a.logo {
-      display:flex; align-items:center; gap:0.5rem;
-      font-size:1.5rem; font-weight:700;
-      color:var(--gold); text-decoration:none;
-    }
-    .logo img { height:56px; }
+        header {
+            background:#fff;
+            box-shadow:0 1px 4px rgba(0,0,0,.06);
+        }
+        header nav {
+            max-width:1000px;
+            height:64px;
+            margin:auto;
+            display:flex;
+            align-items:center;
+            padding:0 1rem;
+        }
+        nav a.logo {
+            display:flex; align-items:center; gap:0.5rem;
+            font-size:1.5rem; font-weight:700;
+            color:var(--gold); text-decoration:none;
+        }
+        .logo img { height:56px; }
 
-    main {
-      max-width:900px;
-      margin:2rem auto;
-      background:#fff;
-      padding:2rem;
-      border-radius:var(--radius);
-      box-shadow:0 2px 8px rgba(0,0,0,0.05);
-    }
+        main {
+            max-width:900px;
+            margin:2rem auto;
+            background:#fff;
+            padding:2rem;
+            border-radius:var(--radius);
+            box-shadow:0 2px 8px rgba(0,0,0,0.05);
+        }
 
-    h1 {
-      font-size:1.8rem;
-      margin-bottom:1rem;
-      color:var(--blue);
-    }
+        h1 {
+            font-size:1.8rem;
+            margin-bottom:1rem;
+            color:var(--blue);
+        }
 
-    .section {
-      margin-bottom:2rem;
-    }
-    .section h2 {
-      font-size:1.2rem;
-      margin-bottom:.5rem;
-      color:#555;
-      border-left:4px solid var(--gold);
-      padding-left:0.5rem;
-    }
+        .section {
+            margin-bottom:2rem;
+        }
+        .section h2 {
+            font-size:1.2rem;
+            margin-bottom:.5rem;
+            color:#555;
+            border-left:4px solid var(--gold);
+            padding-left:0.5rem;
+        }
 
-    .info-grid {
-      display:grid;
-      grid-template-columns: 160px 1fr;
-      row-gap:0.6rem;
-      column-gap:1rem;
-      font-size:.95rem;
-    }
-    .label {
-      color:#666;
-      font-weight:600;
-    }
+        .info-grid {
+            display:grid;
+            grid-template-columns: 160px 1fr;
+            row-gap:0.6rem;
+            column-gap:1rem;
+            font-size:.95rem;
+        }
+        .label {
+            color:#666;
+            font-weight:600;
+        }
 
-    table {
-      width:100%;
-      border-collapse:collapse;
-      margin-top:1rem;
-    }
-    th, td {
-      border-bottom:1px solid var(--line);
-      padding:0.6rem;
-      text-align:left;
-      font-size:.9rem;
-    }
-    th {
-      background:var(--cream);
-      width:30%;
-    }
+        table {
+            width:100%;
+            border-collapse:collapse;
+            margin-top:1rem;
+        }
+        th, td {
+            border-bottom:1px solid var(--line);
+            padding:0.6rem;
+            text-align:left;
+            font-size:.9rem;
+        }
+        th {
+            background:var(--cream);
+            width:30%;
+        }
 
-    .tag-list {
-      display:flex;
-      gap:.5rem;
-      flex-wrap:wrap;
-    }
-    .tag {
-      background:#FFF4C2;
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:.2rem .6rem;
-      font-size:.85rem;
-    }
+        .tag-list {
+            display:flex;
+            gap:.5rem;
+            flex-wrap:wrap;
+        }
+        .tag {
+            background:#FFF4C2;
+            border:1px solid var(--line);
+            border-radius:999px;
+            padding:.2rem .6rem;
+            font-size:.85rem;
+        }
 
-    .actions {
-      margin-top:2rem;
-      display:flex;
-      justify-content:flex-end;
-      gap:1rem;
-    }
-    .actions a {
-      padding:0.5rem 1rem;
-      border-radius:var(--radius);
-      text-decoration:none;
-      font-weight:600;
-    }
-    .btn-edit {
-      background:var(--blue);
-      color:white;
-    }
-    .btn-back {
-      background:#eee;
-      color:#333;
-    }
+        .actions {
+            margin-top:2rem;
+            display:flex;
+            justify-content:flex-end;
+            gap:1rem;
+        }
+        .actions a {
+            padding:0.5rem 1rem;
+            border-radius:var(--radius);
+            text-decoration:none;
+            font-weight:600;
+        }
+        .btn-edit {
+            background:var(--blue);
+            color:white;
+        }
+        .btn-back {
+            background:#eee;
+            color:#333;
+        }
 
-    .hint {
-      font-size:.8rem;
-      color:#888;
-      margin-top:.3rem;
-    }
-  </style>
+        .hint {
+            font-size:.8rem;
+            color:#888;
+            margin-top:.3rem;
+        }
+    </style>
 </head>
 <body>
 
 <header>
-  <nav>
-    <a class="logo" href="/">
-      <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
-      HoneyNote
-    </a>
-  </nav>
+    <nav>
+        <a class="logo" href="/">
+            <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
+            HoneyNote
+        </a>
+    </nav>
 </header>
 
 <main>
-  <h1>アカシア蜂蜜（Acacia Honey）</h1>
+    <h1>アカシア蜂蜜（Acacia Honey）</h1>
 
-  <!-- 基本情報 -->
-  <div class="section">
-    <h2>基本情報</h2>
-    <div class="info-grid">
-      <div class="label">名称</div>
-      <div>アカシア蜂蜜</div>
+    <!-- 基本情報 -->
+    <div class="section">
+        <h2>基本情報</h2>
+        <div class="info-grid">
+            <div class="label">名称</div>
+            <div>アカシア蜂蜜</div>
 
-      <div class="label">養蜂場</div>
-      <div>
-        <a href="/honey_note/beekeepers/show.html?id=5">青木養蜂場</a>
-      </div>
+            <div class="label">養蜂場</div>
+            <div>
+                <a href="/honey_note/beekeepers/show.html?id=5">青木養蜂場</a>
+            </div>
 
-      <div class="label">採蜜年</div>
-      <div>2023年</div>
+            <div class="label">採蜜年</div>
+            <div>2023年</div>
 
-      <div class="label">原産国</div>
-      <div>日本</div>
+            <div class="label">原産国</div>
+            <div>日本</div>
 
-      <div class="label">原産地域</div>
-      <div>長野県 安曇野市</div>
+            <div class="label">原産地域</div>
+            <div>長野県 安曇野市</div>
 
-      <div class="label">蜜源植物</div>
-      <div>
-        <a href="/honey_note/flowers/show.html?id=10">アカシア</a>
-      </div>
+            <div class="label">蜜源植物</div>
+            <div>
+                <a href="/honey_note/flowers/show.html?id=10">アカシア</a>
+            </div>
 
-      <div class="label">単花／百花</div>
-      <div>単花蜜</div>
+            <div class="label">単花／百花</div>
+            <div>単花蜜</div>
 
-      <div class="label">購入日</div>
-      <div>2024-05-12</div>
+            <div class="label">容量</div>
+            <div>300g</div>
+
+            <div class="label">購入日</div>
+            <div>2024-05-12</div>
+
+            <div class="label">登録日時</div>
+            <div>2024-05-13 10:22</div>
+
+            <div class="label">更新日時</div>
+            <div>2024-06-01 09:15</div>
+        </div>
     </div>
-  </div>
 
-  <!-- 風味・特徴 -->
-  <div class="section">
-    <h2>風味・特徴</h2>
-    <table>
-      <tr>
-        <th>色</th>
-        <td>非常に淡い黄金色</td>
-      </tr>
-      <tr>
-        <th>香り</th>
-        <td>穏やか、ほのかに花の香り</td>
-      </tr>
-      <tr>
-        <th>味</th>
-        <td>クセがなく上品な甘さ</td>
-      </tr>
-      <tr>
-        <th>結晶化</th>
-        <td>しにくい</td>
-      </tr>
-    </table>
-  </div>
-
-  <!-- 管理・評価 -->
-  <div class="section">
-    <h2>管理・評価</h2>
-    <div class="info-grid">
-      <div class="label">個人評価</div>
-      <div>★★★★★</div>
-
-      <div class="label">主な用途</div>
-      <div>紅茶、ヨーグルト、トースト</div>
-
-      <div class="label">タグ</div>
-      <div class="tag-list">
-        <span class="tag">定番</span>
-        <span class="tag">クセなし</span>
-        <span class="tag">初心者向け</span>
-      </div>
+    <!-- 風味・特徴 -->
+    <div class="section">
+        <h2>風味・特徴</h2>
+        <table>
+            <tr>
+                <th>色</th>
+                <td>非常に淡い黄金色</td>
+            </tr>
+            <tr>
+                <th>香り</th>
+                <td>穏やか、ほのかに花の香り</td>
+            </tr>
+            <tr>
+                <th>味</th>
+                <td>クセがなく上品な甘さ</td>
+            </tr>
+            <tr>
+                <th>結晶化</th>
+                <td>しにくい</td>
+            </tr>
+        </table>
     </div>
-  </div>
 
-  <!-- バッチ情報 -->
-  <div class="section">
-    <h2>バッチ情報</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>測定日</th>
-          <th>状態</th>
-          <th>水分量(%)</th>
-          <th>メモ</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>2024-06-01</td>
-          <td>液状</td>
-          <td>18.2</td>
-          <td>初期状態、香り穏やか</td>
-        </tr>
-        <tr>
-          <td>2025-01-15</td>
-          <td>部分結晶</td>
-          <td>17.8</td>
-          <td>香りが強くなった</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="hint">
-      ※ edit 時は行追加・編集を想定
+    <!-- 管理・評価 -->
+    <div class="section">
+        <h2>管理・評価</h2>
+        <div class="info-grid">
+            <div class="label">個人評価</div>
+            <div>★★★★★</div>
+
+            <div class="label">主な用途</div>
+            <div>紅茶、ヨーグルト、トースト</div>
+
+            <div class="label">タグ</div>
+            <div class="tag-list">
+                <span class="tag">定番</span>
+                <span class="tag">クセなし</span>
+                <span class="tag">初心者向け</span>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- メモ -->
-  <div class="section">
-    <h2>メモ</h2>
-    <p>
-      非常に扱いやすい蜂蜜。品質が安定しており、
-      来客用にも安心して出せる。
-    </p>
-    <div class="hint">
-      ※ edit 時は textarea
+    <!-- バッチ情報 -->
+    <div class="section">
+        <h2>バッチ情報</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>測定日</th>
+                <th>状態</th>
+                <th>水分量(%)</th>
+                <th>メモ</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>2024-06-01</td>
+                <td>液状</td>
+                <td>18.2</td>
+                <td>初期状態、香り穏やか</td>
+            </tr>
+            <tr>
+                <td>2025-01-15</td>
+                <td>部分結晶</td>
+                <td>17.8</td>
+                <td>香りが強くなった</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="hint">
+            ※ edit 時は行追加・編集を想定
+        </div>
     </div>
-  </div>
 
-  <div class="actions">
-    <a class="btn-back" href="/honey_note/honeies/index.html">一覧に戻る</a>
-    <a class="btn-edit" href="/honey_note/honeies/edit.html?id=7">編集する</a>
-  </div>
+    <!-- メモ -->
+    <div class="section">
+        <h2>メモ</h2>
+        <p>
+            非常に扱いやすい蜂蜜。品質が安定しており、
+            来客用にも安心して出せる。
+        </p>
+        <div class="hint">
+            ※ edit 時は textarea
+        </div>
+    </div>
+
+    <div class="actions">
+        <a class="btn-back" href="/honey_note/honeies/index.html">一覧に戻る</a>
+        <a class="btn-edit" href="/honey_note/honeies/edit.html?id=7">編集する</a>
+    </div>
 
 </main>
 </body>
