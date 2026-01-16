@@ -3,3 +3,8 @@ pub mod flowers;
 pub mod honey;
 pub mod prefectures;
 pub mod honey_input;
+pub mod honey_input_types;
+pub mod observation_input;
+pub mod color_feature;
+pub mod honey_input_basic;
+pub mod honey_input_dynamic;
