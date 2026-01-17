@@ -9,6 +9,7 @@ use crate::{
     },
 };
 use common_type::request::honey::edit::HoneyEditRequest;
+use common_type::request::honey::new::HoneyNewRequest;
 
 #[get("/honey-note/api/honeys")]
 pub async fn get_all_honeys() -> Result<actix_web::HttpResponse, actix_web::Error> {
@@ -29,14 +30,14 @@ pub async fn get_all_honeys() -> Result<actix_web::HttpResponse, actix_web::Erro
 }
 
 // 新規作成APIフレーム
-// #[put("/honey-note/api/honey/new")]
-// pub async fn put_new_honey(
-//     req: HttpRequest,
-//     payload: Json<HoneyInputNewRequest>,
-// ) -> Result<HttpResponse, Error> {
-//     // TODO: 新規作成ロジックを実装
-//     Ok(HttpResponse::Ok().finish())
-// }
+#[put("/honey-note/api/honey/new")]
+pub async fn put_new_honey(
+    req: HttpRequest,
+    payload: Json<HoneyNewRequest>,
+) -> Result<HttpResponse, Error> {
+    // TODO: 新規作成ロジックを実装
+    Ok(HttpResponse::Ok().finish())
+}
 
 // 編集APIフレーム
 #[put("/honey-note/api/honey/edit")]
