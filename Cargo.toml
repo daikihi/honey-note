@@ -1,12 +1,15 @@
 [workspace]
 members = [
-    "batchs",
-    "common",
     "common-type",
+    "common",
     "front",
-    "server"
+    "server",
+    "batchs"
 ]
-resolver = "2" 
+
+[workspace.dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1.0", features = ["derive"] }
 
 [workspace.package]
 version = "0.1.0"
