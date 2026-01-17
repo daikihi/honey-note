@@ -2,10 +2,10 @@ use serde::{Serialize, Deserialize};
 use chrono::{DateTime, FixedOffset};
 use super::color_feature::ColorFeature;
 use super::observation_input::ObservationInput;
-use super::honey_input_types::{AromaIntensity, AromaType, AromaNote, SweetnessIntensity, Acidity, Mouthfeel, Finish, TasteNote, CrystallizationLevel, CrystalTexture, Usage, Tags, Memo};
+use super::honey_detail_types::{AromaIntensity, AromaType, AromaNote, SweetnessIntensity, Acidity, Mouthfeel, Finish, TasteNote, CrystallizationLevel, CrystalTexture, Usage, Tags, Memo};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HoneyInputDynamic {
+pub struct HoneyDetailDynamic {
     pub color_feature: Option<ColorFeature>,
     pub aroma_intensity: Option<AromaIntensity>,
     pub aroma_type: Option<AromaType>,

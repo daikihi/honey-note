@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-pub(crate) use super::honey_input_types::{Category, Hex, ColorNote};
+pub(crate) use super::honey_detail_types::{Category, Hex, ColorNote};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColorFeature {

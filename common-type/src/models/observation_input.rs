@@ -3,7 +3,7 @@
 
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, FixedOffset};
-pub(crate) use super::honey_input_types::{State, Taste, ObservationNote};
+pub(crate) use super::honey_detail_types::{State, Taste, ObservationNote};
 
 /// 観察記録の入力値
 ///

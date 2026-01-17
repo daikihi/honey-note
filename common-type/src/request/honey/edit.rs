@@ -11,7 +11,7 @@ use serde::{Serialize, Deserialize};
 use chrono::{DateTime, FixedOffset};
 use super::basic::HoneyEditBasicRequest;
 use super::dynamic::HoneyEditDynamicRequest;
-use crate::models::honey_input::HoneyInput;
+use crate::models::honey_detail::HoneyDetail;
 
 /// はちみつ編集リクエストDTO
 ///
@@ -34,8 +34,8 @@ pub struct HoneyEditRequest {
 
 impl HoneyEditRequest {
     /// HoneyEditRequest → モデル型への変換
-    pub fn to_honey_input(&self) -> HoneyInput {
-        HoneyInput {
+    pub fn to_honey_input(&self) -> HoneyDetail {
+        HoneyDetail {
             basic: self.basic.to_honey_input_basic(),
             dynamic: self.dynamic.iter().map(|d| d.to_honey_input_dynamic()).collect(),
             created_at: None,
@@ -43,7 +43,7 @@ impl HoneyEditRequest {
         }
     }
     /// モデル型 → HoneyEditRequest への変換
-    pub fn from_honey_input(input: &HoneyInput, id: i64) -> Self {
+    pub fn from_honey_input(input: &HoneyDetail, id: i64) -> Self {
         HoneyEditRequest {
             id,
             basic: HoneyEditBasicRequest::from_honey_input_basic(&input.basic),

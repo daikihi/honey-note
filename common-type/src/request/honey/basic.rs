@@ -8,8 +8,8 @@
 
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, FixedOffset};
-use crate::models::honey_input_basic::HoneyInputBasic;
-use crate::models::honey_input_types::{HoneyNameJp, BeekeeperName, Country, Region, FlowerName, HoneyType, Volume};
+use crate::models::honey_detail_basic::HoneyDetailBasic;
+use crate::models::honey_detail_types::{HoneyNameJp, BeekeeperName, Country, Region, FlowerName, HoneyType, Volume};
 
 /// はちみつ編集リクエストの基本情報DTO
 ///
@@ -46,8 +46,8 @@ pub struct HoneyEditBasicRequest {
 
 impl HoneyEditBasicRequest {
     /// HoneyEditBasicRequest → モデル型への変換
-    pub fn to_honey_input_basic(&self) -> HoneyInputBasic {
-        HoneyInputBasic {
+    pub fn to_honey_input_basic(&self) -> HoneyDetailBasic {
+        HoneyDetailBasic {
             name_jp: HoneyNameJp(self.name_jp.clone().unwrap_or_default()),
             beekeeper_name: self.beekeeper_name.clone().map(BeekeeperName),
             harvest_year: self.harvest_year.as_ref().and_then(|s| s.parse::<i32>().ok()),
@@ -60,7 +60,7 @@ impl HoneyEditBasicRequest {
         }
     }
     /// モデル型 → HoneyEditBasicRequest への変換
-    pub fn from_honey_input_basic(basic: &HoneyInputBasic) -> Self {
+    pub fn from_honey_input_basic(basic: &HoneyDetailBasic) -> Self {
         HoneyEditBasicRequest {
             name_jp: Some(basic.name_jp.0.clone()),
             beekeeper_name: basic.beekeeper_name.as_ref().map(|b| b.0.clone()),

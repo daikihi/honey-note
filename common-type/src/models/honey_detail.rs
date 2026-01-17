@@ -8,21 +8,21 @@
 
 use chrono::{DateTime, FixedOffset};
 use serde::{Serialize, Deserialize};
-use crate::models::honey_input_basic::HoneyInputBasic;
-use crate::models::honey_input_dynamic::HoneyInputDynamic;
+use crate::models::honey_detail_basic::HoneyDetailBasic;
+use crate::models::honey_detail_dynamic::HoneyDetailDynamic;
 
 /// 1件のはちみつデータの全入力情報をまとめるモデル
 ///
-/// - basic: 基本情報（HoneyInputBasic）
-/// - dynamic: 色・香り・味・観察記録などの動的情報（HoneyInputDynamic）のリスト
+/// - basic: 基本情報（HoneyDetailBasic）
+/// - dynamic: 色・香り・味・観察記録などの動的情報（HoneyDetailDynamic）のリスト
 /// - created_at: レコード作成日時
 /// - updated_at: レコード更新日時
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HoneyInput {
+pub struct HoneyDetail {
     /// 基本情報（名前、養蜂家、産地など）
-    pub basic: HoneyInputBasic,
+    pub basic: HoneyDetailBasic,
     /// 色・香り・味・観察記録などの動的情報（複数）
-    pub dynamic: Vec<HoneyInputDynamic>,
+    pub dynamic: Vec<HoneyDetailDynamic>,
     /// レコード作成日時
     pub created_at: Option<DateTime<FixedOffset>>,
     /// レコード更新日時

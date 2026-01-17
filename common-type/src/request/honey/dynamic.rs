@@ -7,7 +7,7 @@
 //! - 変換: to_honey_input_dynamic, from_honey_input_dynamic で内部モデルと相互変換
 
 use serde::{Serialize, Deserialize};
-use crate::models::honey_input_dynamic::HoneyInputDynamic;
+use crate::models::honey_detail_dynamic::HoneyDetailDynamic;
 use crate::models::color_feature as model_color_feature;
 use crate::models::observation_input as model_observation_input;
 
@@ -140,30 +140,30 @@ impl ObservationInputRequest {
 
 impl HoneyEditDynamicRequest {
     /// HoneyEditDynamicRequest → モデル型への変換
-    pub fn to_honey_input_dynamic(&self) -> HoneyInputDynamic {
-        HoneyInputDynamic {
+    pub fn to_honey_input_dynamic(&self) -> HoneyDetailDynamic {
+        HoneyDetailDynamic {
             color_feature: self.color_feature.as_ref().map(|cf| cf.to_model()),
-            aroma_intensity: self.aroma_intensity.clone().map(|s| crate::models::honey_input_types::AromaIntensity(s)),
-            aroma_type: self.aroma_type.clone().map(|s| crate::models::honey_input_types::AromaType(s)),
-            aroma_note: self.aroma_note.clone().map(|s| crate::models::honey_input_types::AromaNote(s)),
-            sweetness_intensity: self.sweetness_intensity.clone().map(|s| crate::models::honey_input_types::SweetnessIntensity(s)),
-            acidity: self.acidity.clone().map(|s| crate::models::honey_input_types::Acidity(s)),
-            mouthfeel: self.mouthfeel.clone().map(|s| crate::models::honey_input_types::Mouthfeel(s)),
-            finish: self.finish.clone().map(|s| crate::models::honey_input_types::Finish(s)),
-            taste_note: self.taste_note.clone().map(|s| crate::models::honey_input_types::TasteNote(s)),
-            crystallization_level: self.crystallization_level.clone().map(|s| crate::models::honey_input_types::CrystallizationLevel(s)),
-            crystal_texture: self.crystal_texture.clone().map(|s| crate::models::honey_input_types::CrystalTexture(s)),
+            aroma_intensity: self.aroma_intensity.clone().map(|s| crate::models::honey_detail_types::AromaIntensity(s)),
+            aroma_type: self.aroma_type.clone().map(|s| crate::models::honey_detail_types::AromaType(s)),
+            aroma_note: self.aroma_note.clone().map(|s| crate::models::honey_detail_types::AromaNote(s)),
+            sweetness_intensity: self.sweetness_intensity.clone().map(|s| crate::models::honey_detail_types::SweetnessIntensity(s)),
+            acidity: self.acidity.clone().map(|s| crate::models::honey_detail_types::Acidity(s)),
+            mouthfeel: self.mouthfeel.clone().map(|s| crate::models::honey_detail_types::Mouthfeel(s)),
+            finish: self.finish.clone().map(|s| crate::models::honey_detail_types::Finish(s)),
+            taste_note: self.taste_note.clone().map(|s| crate::models::honey_detail_types::TasteNote(s)),
+            crystallization_level: self.crystallization_level.clone().map(|s| crate::models::honey_detail_types::CrystallizationLevel(s)),
+            crystal_texture: self.crystal_texture.clone().map(|s| crate::models::honey_detail_types::CrystalTexture(s)),
             preference: self.preference,
-            usage: self.usage.clone().map(|s| crate::models::honey_input_types::Usage(s)),
-            tags: self.tags.clone().map(|s| crate::models::honey_input_types::Tags(s)),
+            usage: self.usage.clone().map(|s| crate::models::honey_detail_types::Usage(s)),
+            tags: self.tags.clone().map(|s| crate::models::honey_detail_types::Tags(s)),
             observations: self.observations.iter().map(|o| o.to_model()).collect(),
-            memo: self.memo.clone().map(|s| crate::models::honey_input_types::Memo(s)),
+            memo: self.memo.clone().map(|s| crate::models::honey_detail_types::Memo(s)),
             created_at: None,
             updated_at: None,
         }
     }
     /// モデル型 → HoneyEditDynamicRequest への変換
-    pub fn from_honey_input_dynamic(model: &HoneyInputDynamic) -> Self {
+    pub fn from_honey_input_dynamic(model: &HoneyDetailDynamic) -> Self {
         HoneyEditDynamicRequest {
             color_feature: model.color_feature.as_ref().map(|cf| ColorFeature::from_model(cf)),
             aroma_intensity: model.aroma_intensity.as_ref().map(|a| a.0.clone()),

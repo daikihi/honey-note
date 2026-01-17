@@ -1,9 +1,9 @@
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, FixedOffset};
-use super::honey_input_types::{HoneyNameJp, BeekeeperName, Country, Region, FlowerName, HoneyType, Volume};
+use super::honey_detail_types::{HoneyNameJp, BeekeeperName, Country, Region, FlowerName, HoneyType, Volume};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct HoneyInputBasic {
+pub struct HoneyDetailBasic {
     pub name_jp: HoneyNameJp,
     pub beekeeper_name: Option<BeekeeperName>,
     pub harvest_year: Option<i32>,
