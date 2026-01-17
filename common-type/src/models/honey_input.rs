@@ -28,3 +28,4 @@ pub struct HoneyInput {
     /// レコード更新日時
     pub updated_at: Option<DateTime<FixedOffset>>,
 }
+
