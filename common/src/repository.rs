@@ -5,3 +5,4 @@ pub mod beekeepers;
 pub mod flowers;
 pub mod honeys;
 pub mod prefectures;
+pub mod honey_repository;

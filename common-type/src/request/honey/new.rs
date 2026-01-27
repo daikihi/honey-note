@@ -21,8 +21,8 @@ pub struct HoneyNewRequest {
 }
 
 impl HoneyNewRequest {
-    /// HoneyNewRequest → モデル型への変換
-    pub fn to_honey_input(&self) -> HoneyDetail {
+    /// HoneyNewRequest → ドメインモデル型（HoneyDetail）への変換
+    pub fn to_honey_detail(&self) -> HoneyDetail {
         HoneyDetail {
             basic: self.basic.to_honey_input_basic(),
             dynamic: self.dynamic.iter().map(|d| d.to_honey_input_dynamic()).collect(),
@@ -30,12 +30,22 @@ impl HoneyNewRequest {
             updated_at: None,
         }
     }
-    /// モデル型 → HoneyNewRequest への変換
-    pub fn from_honey_input(input: &HoneyDetail) -> Self {
+    /// ドメインモデル型（HoneyDetail）→ HoneyNewRequest への変換
+    pub fn from_honey_detail(input: &HoneyDetail) -> Self {
         HoneyNewRequest {
             basic: HoneyEditBasicRequest::from_honey_input_basic(&input.basic),
             dynamic: input.dynamic.iter().map(|d| HoneyEditDynamicRequest::from_honey_input_dynamic(d)).collect(),
             created_at: input.created_at,
         }
+    }
+    /// （非推奨）HoneyInput型への変換。今後はto_honey_detailを使うこと。
+    #[deprecated]
+    pub fn to_honey_input(&self) -> HoneyDetail {
+        self.to_honey_detail()
+    }
+    /// （非推奨）HoneyInput型からの変換。今後はfrom_honey_detailを使うこと。
+    #[deprecated]
+    pub fn from_honey_input(input: &HoneyDetail) -> Self {
+        Self::from_honey_detail(input)
     }
 }

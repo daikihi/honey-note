@@ -1,8 +1,25 @@
 use common_type::models::honey::Honey as ModelHoney;
+use common_type::models::honey_detail::HoneyDetail;
 
 use crate::infrastructure::db::sqlx::beekeeper::Beekeeper;
 use crate::infrastructure::db::sqlx::honey::Honey;
 use crate::infrastructure::db::sqlx::{beekeeper, honey};
+
+pub trait HoneyRepository: Send + Sync {
+    async fn insert_honey(&self, honey: HoneyDetail) -> Result<i64, String>;
+    async fn exists_honey(&self, honey: &HoneyDetail) -> Result<bool, String>;
+}
+
+pub struct HoneyRepositoryMock;
+
+impl HoneyRepository for HoneyRepositoryMock {
+    async fn insert_honey(&self, _honey: HoneyDetail) -> Result<i64, String> {
+        Ok(1)
+    }
+    async fn exists_honey(&self, _honey: &HoneyDetail) -> Result<bool, String> {
+        Ok(false) // 常に新規として扱う（テスト用）
+    }
+}
 
 pub async fn insert_honey_if_not_exists(
     honey: &ModelHoney,

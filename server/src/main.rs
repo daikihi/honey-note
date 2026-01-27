@@ -25,6 +25,8 @@ async fn main() -> std::io::Result<()> {
                     .service(controllers::prefecture_controller::get_all_prefectures)
                     .service(controllers::beekeeper_controller::get_all_beekeepers)
                     .service(controllers::flower_controller::get_all_flowers)
+                    .service(controllers::honey_controller::put_new_honey)
+                    .service(controllers::honey_controller::put_edit_honey)
                     .service(Files::new(
                         "/honey_note/javascript",
                         "server/src/assets/javascript",

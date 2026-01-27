@@ -1,5 +1,6 @@
 use actix_web::{get, put, web, HttpResponse, Error, HttpRequest};
 use web::Json;
+use common::repository::honeys::HoneyRepositoryMock;
 use crate::{
     controllers::adapters::honies::get_all_honies_adapter::{
         get_all_honeis_request_adapter, get_all_honies_response_adapter,
@@ -7,6 +8,8 @@ use crate::{
     use_case::get_all_honies::get_all_honies_dto::{
         GetAllHoneysRequestDto, GetAllHoneysResponseDto,
     },
+    use_case::put_new_honey::put_new_honey_dto::{PutNewHoneyRequestDto, PutNewHoneyResponseDto},
+    use_case::put_new_honey_use_case,
 };
 use common_type::request::honey::edit::HoneyEditRequest;
 use common_type::request::honey::new::HoneyNewRequest;
@@ -35,8 +38,20 @@ pub async fn put_new_honey(
     req: HttpRequest,
     payload: Json<HoneyNewRequest>,
 ) -> Result<HttpResponse, Error> {
-    // TODO: 新規作成ロジックを実装
-    Ok(HttpResponse::Ok().finish())
+    // DTO変換
+    let dto = PutNewHoneyRequestDto { new: payload.into_inner() };
+    println!("request = {:?}", dto);
+    // Repositoryのモックを生成
+    let repo = HoneyRepositoryMock;
+    // UseCase呼び出し
+    let result: PutNewHoneyResponseDto = put_new_honey_use_case::run(&repo, dto).await;
+    if result.success {
+        println!("ok response = {:?}", result);
+        Ok(HttpResponse::Ok().json(result))
+    } else {
+        println!("bad response = {:?}", result);
+        Ok(HttpResponse::BadRequest().json(result))
+    }
 }
 
 // 編集APIフレーム
