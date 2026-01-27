@@ -1,17 +1,13 @@
+pub mod get_all_beekeepers_dto;
 use common::errors::AppError;
-
+use common::repository::beekeepers::BeekeeperRepository;
 use crate::use_case::get_all_beekeepers::get_all_beekeepers_dto::GetAllBeekeepersResponseDto;
 
-pub mod get_all_beekeepers_dto;
-
-pub async fn run(
-    dto: get_all_beekeepers_dto::GetAllBeekeepersRequestDto,
+pub async fn run<T: BeekeeperRepository>(
+    repo: &T,
+    _dto: get_all_beekeepers_dto::GetAllBeekeepersRequestDto,
 ) -> Result<get_all_beekeepers_dto::GetAllBeekeepersResponseDto, AppError> {
-    let _ = dto; // Now dto is empty
-    let file_name = common::infrastructure::db::sqlx::DB_FILE_NAME;
-    let pool = common::infrastructure::db::sqlx::get_sqlite_pool(file_name.to_string());
-
-    let beekeepers = common::repository::beekeepers::get_all_beekeepers(&pool).await;
+    let beekeepers = repo.get_all_beekeepers().await;
     match beekeepers {
         Ok(beekeepers) => {
             let response: GetAllBeekeepersResponseDto = GetAllBeekeepersResponseDto { beekeepers };

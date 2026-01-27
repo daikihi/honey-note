@@ -1,8 +1,72 @@
 use common_type::models::honey::Honey as ModelHoney;
+use common_type::models::honey_detail::HoneyDetail;
 
 use crate::infrastructure::db::sqlx::beekeeper::Beekeeper;
 use crate::infrastructure::db::sqlx::honey::Honey;
 use crate::infrastructure::db::sqlx::{beekeeper, honey};
+
+pub trait HoneyRepository: Send + Sync {
+    async fn insert_honey(&self, honey: HoneyDetail) -> Result<i64, String>;
+    async fn exists_honey(&self, honey: &HoneyDetail) -> Result<bool, String>;
+    async fn get_all_honeys(&self) -> Result<Vec<ModelHoney>, String>;
+}
+
+pub struct HoneyRepositorySqlite {
+    pub pool: sqlx::SqlitePool,
+}
+
+impl HoneyRepository for HoneyRepositorySqlite {
+    async fn insert_honey(&self, honey: HoneyDetail) -> Result<i64, String> {
+        let sqlx_honey = Honey {
+            id: None,
+            name_jp: honey.basic.name_jp.0.clone(),
+            name_en: None, // HoneyDetailBasicにname_enがないため
+            beekeeper_id: None, // 名前からIDを引く必要があるが、一旦None
+            origin_country: honey.basic.country.map(|c| c.0),
+            origin_region: honey.basic.region.map(|r| r.0),
+            harvest_year: honey.basic.harvest_year,
+            purchase_date: honey.basic.purchase_date.map(|d| d.to_rfc3339()),
+            note: None,
+        };
+
+        sqlx_honey
+            .insert_and_return_id(&self.pool)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    async fn exists_honey(&self, honey: &HoneyDetail) -> Result<bool, String> {
+        Honey::is_exist_by_name_static(&honey.basic.name_jp.0, &self.pool)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    async fn get_all_honeys(&self) -> Result<Vec<ModelHoney>, String> {
+        let sql_honeys: Result<Vec<Honey>, sqlx::Error> = honey::get_all(&self.pool).await;
+        let sql_beekeepers: Result<Vec<beekeeper::Beekeeper>, sqlx::Error> =
+            beekeeper::Beekeeper::get_all_beekeepers(&self.pool).await;
+
+        match (sql_honeys, sql_beekeepers) {
+            (Ok(v), Ok(bks)) => Ok(create_model_honeys(v, bks)),
+            (Err(e), _) => Err(format!("database error (honeys): {:?}", e)),
+            (_, Err(e)) => Err(format!("database error (beekeepers): {:?}", e)),
+        }
+    }
+}
+
+pub struct HoneyRepositoryMock;
+
+impl HoneyRepository for HoneyRepositoryMock {
+    async fn insert_honey(&self, _honey: HoneyDetail) -> Result<i64, String> {
+        Ok(1)
+    }
+    async fn exists_honey(&self, _honey: &HoneyDetail) -> Result<bool, String> {
+        Ok(false) // 常に新規として扱う（テスト用）
+    }
+    async fn get_all_honeys(&self) -> Result<Vec<ModelHoney>, String> {
+        Ok(vec![])
+    }
+}
 
 pub async fn insert_honey_if_not_exists(
     honey: &ModelHoney,
@@ -19,14 +83,14 @@ pub async fn insert_honey_if_not_exists(
         purchase_date: honey.purchase_date.clone(),
         note: honey.note.clone(),
     };
-    match sqlx_honey.is_exist_by_name(pool).await {
+    match Honey::is_exist_by_name_static(&sqlx_honey.name_jp, pool).await {
         Ok(true) => {
             log::info!("honey {:?} は既に存在しています。", sqlx_honey.name_jp);
             Ok(())
         }
         Ok(false) => {
             log::info!("honey {:?} は、DB に書き込みます", sqlx_honey.name_jp);
-            sqlx_honey.insert(pool).await
+            sqlx_honey.insert_and_return_id(pool).await.map(|_| ())
         }
         Err(e) => {
             log::error!("DB 読み込みに失敗しました");

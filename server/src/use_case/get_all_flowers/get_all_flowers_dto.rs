@@ -1,8 +1,6 @@
 use common_type::models::flowers::Flower as ModelFlower;
 
-pub struct GetAllFlowersRequestDto {
-    pub pool: sqlx::SqlitePool,
-}
+pub struct GetAllFlowersRequestDto {}
 
 #[derive()]
 pub struct GetAllFlowersResponseDto {

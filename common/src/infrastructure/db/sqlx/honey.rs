@@ -28,39 +28,23 @@ impl Honey {
         }
     }
 
-    pub async fn is_exist_by_name(&self, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
-        let query = "SELECT id FROM honey WHERE name_jp = ?";
-        let result = sqlx::query_as::<_, (i32,)>(query)
-            .bind(&self.name_jp)
-            .fetch_optional(pool)
+    pub async fn is_exist_by_name_static(name_jp: &str, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
+        let query = "SELECT EXISTS(SELECT 1 FROM honey WHERE name_jp = ?)";
+        let result: (i64,) = sqlx::query_as(query)
+            .bind(name_jp)
+            .fetch_one(pool)
             .await?;
 
-        Ok(result.is_some())
+        Ok(result.0 != 0)
     }
 
-    pub async fn find_by_id(id: i32, name: String, pool: &sqlx::SqlitePool) -> Option<Self> {
-        let query = "SELECT * FROM honey WHERE id = ? AND name_jp = ?";
-        let result = sqlx::query_as::<_, Honey>(query)
-            .bind(id)
-            .bind(name)
-            .fetch_optional(&*pool)
-            .await;
-
-        match result {
-            Ok(Some(honey)) => Some(honey),
-            Ok(None) => None,
-            Err(_) => None, // エラー処理は適宜実装
-        }
-    }
-
-    pub async fn insert(&self, pool: &sqlx::SqlitePool) -> Result<(), sqlx::Error> {
+    pub async fn insert_and_return_id(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
         let query = r#"        
-            INSERT INTO honey (id, name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO honey (name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         "#;
 
-        let _ = sqlx::query(query)
-            .bind(self.id)
+        let result = sqlx::query(query)
             .bind(&self.name_jp)
             .bind(&self.name_en)
             .bind(self.beekeeper_id)
@@ -70,8 +54,9 @@ impl Honey {
             .bind(&self.purchase_date)
             .bind(&self.note)
             .execute(pool)
-            .await;
-        Ok(())
+            .await?;
+        
+        Ok(result.last_insert_rowid())
     }
 }
 
