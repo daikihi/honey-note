@@ -10,6 +10,37 @@ pub trait HoneyRepository: Send + Sync {
     async fn exists_honey(&self, honey: &HoneyDetail) -> Result<bool, String>;
 }
 
+pub struct HoneyRepositorySqlite {
+    pub pool: sqlx::SqlitePool,
+}
+
+impl HoneyRepository for HoneyRepositorySqlite {
+    async fn insert_honey(&self, honey: HoneyDetail) -> Result<i64, String> {
+        let sqlx_honey = Honey {
+            id: None,
+            name_jp: honey.basic.name_jp.0.clone(),
+            name_en: None, // HoneyDetailBasicにname_enがないため
+            beekeeper_id: None, // 名前からIDを引く必要があるが、一旦None
+            origin_country: honey.basic.country.map(|c| c.0),
+            origin_region: honey.basic.region.map(|r| r.0),
+            harvest_year: honey.basic.harvest_year,
+            purchase_date: honey.basic.purchase_date.map(|d| d.to_rfc3339()),
+            note: None,
+        };
+
+        sqlx_honey
+            .insert_and_return_id(&self.pool)
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    async fn exists_honey(&self, honey: &HoneyDetail) -> Result<bool, String> {
+        Honey::is_exist_by_name_static(&honey.basic.name_jp.0, &self.pool)
+            .await
+            .map_err(|e| e.to_string())
+    }
+}
+
 pub struct HoneyRepositoryMock;
 
 impl HoneyRepository for HoneyRepositoryMock {
@@ -36,14 +67,14 @@ pub async fn insert_honey_if_not_exists(
         purchase_date: honey.purchase_date.clone(),
         note: honey.note.clone(),
     };
-    match sqlx_honey.is_exist_by_name(pool).await {
+    match Honey::is_exist_by_name_static(&sqlx_honey.name_jp, pool).await {
         Ok(true) => {
             log::info!("honey {:?} は既に存在しています。", sqlx_honey.name_jp);
             Ok(())
         }
         Ok(false) => {
             log::info!("honey {:?} は、DB に書き込みます", sqlx_honey.name_jp);
-            sqlx_honey.insert(pool).await
+            sqlx_honey.insert_and_return_id(pool).await.map(|_| ())
         }
         Err(e) => {
             log::error!("DB 読み込みに失敗しました");

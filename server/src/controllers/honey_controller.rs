@@ -1,6 +1,6 @@
 use actix_web::{get, put, web, HttpResponse, Error, HttpRequest};
 use web::Json;
-use common::repository::honeys::HoneyRepositoryMock;
+use common::repository::honeys::{HoneyRepositoryMock, HoneyRepositorySqlite};
 use crate::{
     controllers::adapters::honies::get_all_honies_adapter::{
         get_all_honeis_request_adapter, get_all_honies_response_adapter,
@@ -37,12 +37,13 @@ pub async fn get_all_honeys() -> Result<actix_web::HttpResponse, actix_web::Erro
 pub async fn put_new_honey(
     req: HttpRequest,
     payload: Json<HoneyNewRequest>,
+    pool: web::Data<sqlx::SqlitePool>,
 ) -> Result<HttpResponse, Error> {
     // DTO変換
     let dto = PutNewHoneyRequestDto { new: payload.into_inner() };
     println!("request = {:?}", dto);
-    // Repositoryのモックを生成
-    let repo = HoneyRepositoryMock;
+    // Repositoryの実装を生成
+    let repo = HoneyRepositorySqlite { pool: pool.get_ref().clone() };
     // UseCase呼び出し
     let result: PutNewHoneyResponseDto = put_new_honey_use_case::run(&repo, dto).await;
     if result.success {

@@ -3,7 +3,7 @@ mod use_case;
 
 use actix_cors::Cors;
 use actix_files::Files;
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::{middleware::Logger, web, App, HttpServer};
 use common::libs::config::models::server::load_config;
 use common::libs::config::models::server::Server;
 
@@ -16,8 +16,12 @@ async fn main() -> std::io::Result<()> {
 
     match server_env_opt {
         Some(c) => {
-            HttpServer::new(|| {
+            let path = common::infrastructure::db::sqlx::DB_FILE_NAME;
+            let pool = common::infrastructure::db::sqlx::get_sqlite_pool(path.to_string());
+
+            HttpServer::new(move || {
                 App::new()
+                    .app_data(web::Data::new(pool.clone()))
                     .wrap(Logger::default()) // ← for access logs
                     .wrap(Cors::permissive())
                     .service(controllers::honey_controller::get_all_honeys)
