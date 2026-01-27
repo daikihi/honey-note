@@ -1,14 +1,16 @@
 use actix_web::{error, get, web};
-use common::infrastructure::db::sqlx;
-use common::repository::prefectures::get_all_prefectures as repository_get_all_prefectures;
 use common_type::models::prefectures::Prefecture as PrefectureModel;
+use common::repository::prefectures::PrefectureRepositorySqlite;
+use crate::use_case::get_all_prefectures as get_all_prefectures_use_case;
+
 #[get("/honey-note/api/prefectures")]
-pub async fn get_all_prefectures() -> actix_web::Result<actix_web::web::Json<Vec<PrefectureModel>>>
-{
-    // should move to parameter of program or somethins static place
-    let file_name = sqlx::DB_FILE_NAME;
-    let pool = sqlx::get_sqlite_pool(file_name.to_string());
-    match repository_get_all_prefectures(&pool).await {
+pub async fn get_all_prefectures(
+    pool: web::Data<sqlx::SqlitePool>,
+) -> actix_web::Result<actix_web::web::Json<Vec<PrefectureModel>>> {
+    let repo = PrefectureRepositorySqlite {
+        pool: pool.get_ref().clone(),
+    };
+    match get_all_prefectures_use_case::run(&repo).await {
         Ok(_prefectures) => Ok(web::Json(_prefectures)),
         Err(e) => {
             log::error!("Failed to fetch prefectures: {}", e);

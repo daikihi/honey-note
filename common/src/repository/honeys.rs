@@ -8,6 +8,7 @@ use crate::infrastructure::db::sqlx::{beekeeper, honey};
 pub trait HoneyRepository: Send + Sync {
     async fn insert_honey(&self, honey: HoneyDetail) -> Result<i64, String>;
     async fn exists_honey(&self, honey: &HoneyDetail) -> Result<bool, String>;
+    async fn get_all_honeys(&self) -> Result<Vec<ModelHoney>, String>;
 }
 
 pub struct HoneyRepositorySqlite {
@@ -39,6 +40,18 @@ impl HoneyRepository for HoneyRepositorySqlite {
             .await
             .map_err(|e| e.to_string())
     }
+
+    async fn get_all_honeys(&self) -> Result<Vec<ModelHoney>, String> {
+        let sql_honeys: Result<Vec<Honey>, sqlx::Error> = honey::get_all(&self.pool).await;
+        let sql_beekeepers: Result<Vec<beekeeper::Beekeeper>, sqlx::Error> =
+            beekeeper::Beekeeper::get_all_beekeepers(&self.pool).await;
+
+        match (sql_honeys, sql_beekeepers) {
+            (Ok(v), Ok(bks)) => Ok(create_model_honeys(v, bks)),
+            (Err(e), _) => Err(format!("database error (honeys): {:?}", e)),
+            (_, Err(e)) => Err(format!("database error (beekeepers): {:?}", e)),
+        }
+    }
 }
 
 pub struct HoneyRepositoryMock;
@@ -49,6 +62,9 @@ impl HoneyRepository for HoneyRepositoryMock {
     }
     async fn exists_honey(&self, _honey: &HoneyDetail) -> Result<bool, String> {
         Ok(false) // 常に新規として扱う（テスト用）
+    }
+    async fn get_all_honeys(&self) -> Result<Vec<ModelHoney>, String> {
+        Ok(vec![])
     }
 }
 
