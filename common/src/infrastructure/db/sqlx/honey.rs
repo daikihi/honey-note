@@ -101,6 +101,77 @@ pub fn create_model_honey(sql_honey: Honey, beekeeper: Option<SqlBeekeeper>) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sqlx::SqlitePool;
+
+    async fn setup_db() -> SqlitePool {
+        let pool = SqlitePool::connect(":memory:").await.unwrap();
+        sqlx::query(
+            "CREATE TABLE honey (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name_jp TEXT NOT NULL,
+                name_en TEXT,
+                beekeeper_id INTEGER,
+                origin_country TEXT,
+                origin_region TEXT,
+                harvest_year INTEGER,
+                purchase_date TEXT,
+                note TEXT
+            )",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        pool
+    }
+
+    #[tokio::test]
+    async fn test_insert_and_exists() {
+        let pool = setup_db().await;
+        let honey = Honey {
+            id: None,
+            name_jp: "テストはちみつ".to_string(),
+            name_en: Some("Test Honey".to_string()),
+            beekeeper_id: None,
+            origin_country: None,
+            origin_region: None,
+            harvest_year: Some(2023),
+            purchase_date: None,
+            note: None,
+        };
+
+        // 存在確認（初期状態）
+        let exists = Honey::is_exist_by_name_static("テストはちみつ", &pool).await.unwrap();
+        assert!(!exists);
+
+        // 挿入
+        let id = honey.insert_and_return_id(&pool).await.unwrap();
+        assert!(id > 0);
+
+        // 存在確認（挿入後）
+        let exists = Honey::is_exist_by_name_static("テストはちみつ", &pool).await.unwrap();
+        assert!(exists);
+    }
+
+    #[tokio::test]
+    async fn test_get_all() {
+        let pool = setup_db().await;
+        let honey = Honey {
+            id: None,
+            name_jp: "はちみつ1".to_string(),
+            name_en: None,
+            beekeeper_id: None,
+            origin_country: None,
+            origin_region: None,
+            harvest_year: None,
+            purchase_date: None,
+            note: None,
+        };
+        honey.insert_and_return_id(&pool).await.unwrap();
+
+        let all = get_all(&pool).await.unwrap();
+        assert_eq!(all.len(), 1);
+        assert_eq!(all[0].name_jp, "はちみつ1");
+    }
 
     #[test]
     fn test_create_model_honey() {
