@@ -7,7 +7,7 @@
 //! - 変換: to_honey_input_basic, from_honey_input_basic で内部モデルと相互変換
 
 use serde::{Serialize, Deserialize};
-use chrono::{DateTime, FixedOffset};
+use chrono::{DateTime};
 use crate::models::honey_detail_basic::HoneyDetailBasic;
 use crate::models::honey_detail_types::{HoneyNameJp, BeekeeperName, Country, Region, FlowerName, HoneyType, Volume};
 
