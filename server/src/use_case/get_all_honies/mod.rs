@@ -6,13 +6,10 @@ pub async fn run<T: HoneyRepository>(
     repo: &T,
     _request_dto: GetAllHoneysRequestDto,
 ) -> GetAllHoneysResponseDto {
-    let honeys = match repo.get_all_honeys().await {
-        Ok(h) => h,
-        Err(e) => {
-            log::error!("Error fetching honeys: {}", e);
-            vec![]
-        }
-    };
+    let honeys = repo.get_all_honeys().await.unwrap_or_else(|e| {
+        log::error!("Error fetching honeys: {}", e);
+        vec![]
+    });
     GetAllHoneysResponseDto { honeys }
 }
 
