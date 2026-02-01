@@ -54,3 +54,109 @@ pub async fn put_edit_honey(
     // TODO: 編集ロジックを実装
     Ok(HttpResponse::Ok().finish())
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{test, App, web};
+    use sqlx::SqlitePool;
+    use common_type::request::honey::new::HoneyNewRequest;
+    use common_type::request::honey::basic::HoneyEditBasicRequest;
+
+    async fn setup_db() -> SqlitePool {
+        let pool = SqlitePool::connect(":memory:").await.unwrap();
+        sqlx::query(
+            "CREATE TABLE honey (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                name_jp         TEXT NOT NULL,
+                name_en         TEXT,
+                beekeeper_id    INTEGER,
+                origin_country  TEXT,
+                origin_region   TEXT,
+                harvest_year    INTEGER,
+                purchase_date   DATE,
+                note            TEXT
+            );",
+        )
+            .execute(&pool)
+            .await
+            .unwrap();
+        pool
+    }
+
+    fn create_test_request(name: &str) -> HoneyNewRequest {
+        HoneyNewRequest {
+            basic: HoneyEditBasicRequest {
+                name_jp: Some(name.to_string()),
+                beekeeper_name: None,
+                harvest_year: None,
+                country: None,
+                region: None,
+                flower_names: vec![],
+                honey_type: None,
+                volume: None,
+                purchase_date: None,
+            },
+            dynamic: vec![],
+            created_at: None,
+        }
+    }
+
+    #[actix_web::test]
+    async fn test_put_new_honey_success() {
+        let pool = setup_db().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .service(put_new_honey)
+        ).await;
+
+        let payload = create_test_request("新しくはちみつ");
+        let req = test::TestRequest::put()
+            .uri("/honey-note/api/honey/new")
+            .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+
+        let body: PutNewHoneyResponseDto = test::read_body_json(resp).await;
+        assert!(body.success);
+        assert!(body.id.is_some());
+    }
+
+    #[actix_web::test]
+    async fn test_put_new_honey_already_exists() {
+        let pool = setup_db().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .service(put_new_honey)
+        ).await;
+
+        let payload = create_test_request("既存のはちみつ");
+
+        // 1回目：成功するはず
+        let req1 = test::TestRequest::put()
+            .uri("/honey-note/api/honey/new")
+            .set_json(&payload)
+            .to_request();
+        let resp1 = test::call_service(&app, req1).await;
+        assert!(resp1.status().is_success());
+
+        // 2回目：同じ名前なので失敗するはず
+        let req2 = test::TestRequest::put()
+            .uri("/honey-note/api/honey/new")
+            .set_json(&payload)
+            .to_request();
+        let resp2 = test::call_service(&app, req2).await;
+
+        assert_eq!(resp2.status(), actix_web::http::StatusCode::BAD_REQUEST);
+
+        let body: PutNewHoneyResponseDto = test::read_body_json(resp2).await;
+        assert!(!body.success);
+        assert_eq!(body.error_message, Some("既に同じはちみつデータが存在します".to_string()));
+    }
+//     @todo 同じ値でも名前が違えば登録できるというテストを書く
+}
