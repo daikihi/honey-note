@@ -7,6 +7,7 @@ use crate::{
 };
 use common_type::request::honey::edit::HoneyEditRequest;
 use common_type::request::honey::new::HoneyNewRequest;
+use crate::middleware::LoggedJson;
 
 #[get("/honey-note/api/honeys")]
 pub async fn get_all_honeys(
@@ -26,7 +27,7 @@ pub async fn get_all_honeys(
 #[put("/honey-note/api/honey/new")]
 pub async fn put_new_honey(
     _req: HttpRequest,
-    payload: Json<HoneyNewRequest>,
+    payload: LoggedJson<HoneyNewRequest>,
     pool: web::Data<sqlx::SqlitePool>,
 ) -> Result<HttpResponse, Error> {
     // DTO変換
@@ -49,7 +50,7 @@ pub async fn put_new_honey(
 #[put("/honey-note/api/honey/edit")]
 pub async fn put_edit_honey(
     _req: HttpRequest,
-    _payload: Json<HoneyEditRequest>,
+    _payload: LoggedJson<HoneyEditRequest>,
 ) -> Result<HttpResponse, Error> {
     // TODO: 編集ロジックを実装
     Ok(HttpResponse::Ok().finish())

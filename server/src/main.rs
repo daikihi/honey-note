@@ -1,5 +1,6 @@
 mod controllers;
 mod use_case;
+mod middleware;
 
 use actix_cors::Cors;
 use actix_files::Files;
