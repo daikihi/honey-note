@@ -30,6 +30,9 @@ mod tests {
         async fn has_flower(&self, _flower: &common_type::models::flowers::Flower) -> Result<bool, AppError> {
             Ok(true)
         }
+        async fn get_flower_id_by_name(&self, _name: &str) -> Option<i32> {
+            Some(1)
+        }
     }
 
     #[tokio::test]

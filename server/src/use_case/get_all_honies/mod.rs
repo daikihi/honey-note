@@ -49,6 +49,25 @@ mod tests {
                 },
             ])
         }
+        async fn get_honey_by_id(&self, _id: i64) -> Result<HoneyDetail, String> {
+            use common_type::request::honey::basic::HoneyEditBasicRequest;
+            Ok(HoneyDetail {
+                basic: HoneyEditBasicRequest {
+                    name_jp: Some("Mock".to_string()),
+                    beekeeper_name: None,
+                    harvest_year: None,
+                    country: None,
+                    region: None,
+                    flower_names: vec![],
+                    honey_type: None,
+                    volume: None,
+                    purchase_date: None,
+                }.to_honey_input_basic(),
+                dynamic: vec![],
+                created_at: None,
+                updated_at: None,
+            })
+        }
     }
 
     #[tokio::test]
