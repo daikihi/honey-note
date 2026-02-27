@@ -42,13 +42,22 @@ mod tests {
                 },
             ])
         }
-        async fn get_beekeeper_id_by_name(&self, _name: &str) -> Option<i32> {
+        async fn get_beekeeper_id_by_name<'a, E>(&self, _name: &str, _executor: E) -> Option<i32>
+        where
+            E: sqlx::Executor<'a, Database = sqlx::Sqlite>
+        {
             Some(1)
         }
-        async fn insert_beekeeper(&self, _beekeeper: &Beekeeper) -> Result<(), AppError> {
+        async fn insert_beekeeper<'a, E>(&self, _beekeeper: &Beekeeper, _executor: E) -> Result<(), AppError>
+        where
+            E: sqlx::Executor<'a, Database = sqlx::Sqlite>
+        {
             Ok(())
         }
-        async fn has_beekeeper(&self, _beekeeper: &Beekeeper) -> bool {
+        async fn has_beekeeper<'a, E>(&self, _beekeeper: &Beekeeper, _executor: E) -> bool
+        where
+            E: sqlx::Executor<'a, Database = sqlx::Sqlite>
+        {
             true
         }
     }
