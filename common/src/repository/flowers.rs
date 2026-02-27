@@ -5,9 +5,15 @@ use common_type::models::flowers::Flower as ModelFlower;
 
 pub trait FlowerRepository: Send + Sync {
     async fn get_all_flowers(&self) -> Result<Vec<ModelFlower>, AppError>;
-    async fn insert_flower(&self, flower: &ModelFlower) -> Result<(), AppError>;
-    async fn has_flower(&self, flower: &ModelFlower) -> Result<bool, AppError>;
-    async fn get_flower_id_by_name(&self, name: &str) -> Option<i32>;
+    async fn insert_flower<'a, E>(&self, flower: &ModelFlower, executor: E) -> Result<(), AppError>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
+    async fn has_flower<'a, E>(&self, flower: &ModelFlower, executor: E) -> Result<bool, AppError>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
+    async fn get_flower_id_by_name<'a, E>(&self, name: &str, executor: E) -> Option<i32>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
 }
 
 pub struct FlowerRepositorySqlite {
@@ -26,29 +32,38 @@ impl FlowerRepository for FlowerRepositorySqlite {
         }
     }
 
-    async fn insert_flower(&self, flower: &ModelFlower) -> Result<(), AppError> {
+    async fn insert_flower<'a, E>(&self, flower: &ModelFlower, executor: E) -> Result<(), AppError>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
         info!("insert_flower: flower={:?}", flower);
         let insert_flower =
             crate::infrastructure::db::sqlx::flower::InsertFlower::from_model_flower(flower);
         insert_flower
-            .insert_flower(&self.pool)
+            .insert_flower(executor)
             .await
             .map_err(|e| AppError::DatabaseError(e.to_string()))
     }
 
-    async fn has_flower(&self, flower: &ModelFlower) -> Result<bool, AppError> {
+    async fn has_flower<'a, E>(&self, flower: &ModelFlower, executor: E) -> Result<bool, AppError>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
         let insert_flower =
             crate::infrastructure::db::sqlx::flower::InsertFlower::from_model_flower(flower);
         insert_flower
-            .has_flower(&self.pool)
+            .has_flower(executor)
             .await
             .map_err(|e| AppError::DatabaseError(e.to_string()))
     }
 
-    async fn get_flower_id_by_name(&self, name: &str) -> Option<i32> {
+    async fn get_flower_id_by_name<'a, E>(&self, name: &str, executor: E) -> Option<i32>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
         let query = "SELECT id FROM flower WHERE name_jp = $1";
         let result: Result<(i32,), sqlx::Error> =
-            sqlx::query_as(query).bind(name).fetch_one(&self.pool).await;
+            sqlx::query_as(query).bind(name).fetch_one(executor).await;
 
         match result {
             Ok((id,)) => Some(id),
@@ -57,24 +72,28 @@ impl FlowerRepository for FlowerRepositorySqlite {
     }
 }
 
-pub async fn insert_flower(
+pub async fn insert_flower<'a, E>(
     flower: &ModelFlower,
-    pool: &sqlx::SqlitePool,
-) -> Result<(), sqlx::Error> {
-    let repo = FlowerRepositorySqlite { pool: pool.clone() };
-    repo.insert_flower(flower)
-        .await
-        .map_err(|e| sqlx::Error::Protocol(e.to_string())) // Rough mapping
+    executor: E,
+) -> Result<(), sqlx::Error>
+where
+    E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+{
+    let insert_flower =
+        crate::infrastructure::db::sqlx::flower::InsertFlower::from_model_flower(flower);
+    insert_flower.insert_flower(executor).await
 }
 
-pub async fn has_flower(
+pub async fn has_flower<'a, E>(
     flower: &ModelFlower,
-    pool: &sqlx::SqlitePool,
-) -> Result<bool, sqlx::Error> {
-    let repo = FlowerRepositorySqlite { pool: pool.clone() };
-    repo.has_flower(flower)
-        .await
-        .map_err(|e| sqlx::Error::Protocol(e.to_string()))
+    executor: E,
+) -> Result<bool, sqlx::Error>
+where
+    E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+{
+    let insert_flower =
+        crate::infrastructure::db::sqlx::flower::InsertFlower::from_model_flower(flower);
+    insert_flower.has_flower(executor).await
 }
 
 pub async fn get_all_flowers(pool: &sqlx::SqlitePool) -> Result<Vec<ModelFlower>, AppError> {

@@ -12,17 +12,23 @@ pub struct InsertFlower {
 }
 
 impl InsertFlower {
-    pub async fn has_flower(self: &Self, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
+    pub async fn has_flower<'a, E>(self: &Self, executor: E) -> Result<bool, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
         let flower_name_jp = self.name_jp.clone();
         let query = "SELECT EXISTS(SELECT 1 FROM flower WHERE name_jp = $1)";
         let exists: (i64,) = sqlx::query_as(query)
             .bind(flower_name_jp)
-            .fetch_one(pool)
+            .fetch_one(executor)
             .await?;
         Ok(exists.0 != 0)
     }
 
-    pub async fn insert_flower(&self, pool: &sqlx::SqlitePool) -> Result<(), sqlx::Error> {
+    pub async fn insert_flower<'a, E>(&self, executor: E) -> Result<(), sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
         let query = "INSERT INTO flower (name_jp, name_en, scientific_name, short_note, flower_type, image_path, note) VALUES ($1, $2, $3, $4, $5, $6, $7)";
         sqlx::query(query)
             .bind(&self.name_jp)
@@ -32,7 +38,7 @@ impl InsertFlower {
             .bind(&self.flower_type)
             .bind(&self.image_path)
             .bind(&self.note)
-            .execute(pool)
+            .execute(executor)
             .await
             .map(|_| ())
     }

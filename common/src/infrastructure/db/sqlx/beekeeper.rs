@@ -27,10 +27,13 @@ impl Beekeeper {
         }
     }
 
-    pub async fn get_beekeeper_id_by_name(name: &str, pool: &sqlx::SqlitePool) -> Option<i32> {
+    pub async fn get_beekeeper_id_by_name<'a, E>(name: &str, executor: E) -> Option<i32>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
         let query = "SELECT id FROM beekeeper WHERE name_jp = $1";
         let result: Result<(i32,), sqlx::Error> =
-            sqlx::query_as(query).bind(name).fetch_one(pool).await;
+            sqlx::query_as(query).bind(name).fetch_one(executor).await;
 
         match result {
             Ok((id,)) => Some(id),
@@ -73,16 +76,22 @@ impl BeekeeperForInsert {
         }
     }
 
-    pub async fn has_beekeeper(&self, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
+    pub async fn has_beekeeper<'a, E>(&self, executor: E) -> Result<bool, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
         let query = "SELECT EXISTS(SELECT 1 FROM beekeeper WHERE name_jp = $1)";
         let exists: (i64,) = sqlx::query_as(query)
             .bind(&self.name_jp)
-            .fetch_one(pool)
+            .fetch_one(executor)
             .await?;
         Ok(exists.0 != 0)
     }
 
-    pub async fn insert_beekeeper(&self, pool: &sqlx::SqlitePool) -> Result<(), sqlx::Error> {
+    pub async fn insert_beekeeper<'a, E>(&self, executor: E) -> Result<(), sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
         let query = "INSERT INTO beekeeper (name_jp, name_en, founding_year, location_prefecture_id, location_city, website_url, note) VALUES ($1, $2, $3, $4, $5, $6, $7)";
         sqlx::query(query)
             .bind(&self.name_jp)
@@ -92,7 +101,7 @@ impl BeekeeperForInsert {
             .bind(&self.location_city)
             .bind(&self.website_url)
             .bind(&self.note)
-            .execute(pool)
+            .execute(executor)
             .await
             .map(|_| ())
     }
