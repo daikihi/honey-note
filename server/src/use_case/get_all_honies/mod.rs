@@ -25,8 +25,14 @@ mod tests {
         async fn insert_honey(&self, _honey: HoneyDetail) -> Result<i64, String> {
             Ok(1)
         }
+        async fn update_honey(&self, _id: i64, _honey: HoneyDetail) -> Result<(), String> {
+            Ok(())
+        }
         async fn exists_honey(&self, _honey: &HoneyDetail) -> Result<bool, String> {
             Ok(false)
+        }
+        async fn exists_honey_by_id(&self, _id: i64) -> Result<bool, String> {
+            Ok(true)
         }
         async fn get_all_honeys(&self) -> Result<Vec<Honey>, String> {
             Ok(vec![
