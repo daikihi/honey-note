@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>HoneyNote | 蜂蜜の編集</title>
+    <title>HoneyNote | 蜂蜜の新規登録</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         :root {
@@ -191,6 +191,14 @@
 
     </style>
 
+    <script type="module">
+        import init, { honey_edit_and_new_main } from '/honey_note/javascript/front.js';
+        init().then(() => {
+            honey_edit_and_new_main();
+            console.log("WASM loaded on new.html!");
+        });
+    </script>
+
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const colorInput = document.getElementById("color_hex");
@@ -218,16 +226,15 @@
     </nav>
 </header>
 
-<main>
-    <h1>蜂蜜の編集</h1>
-    <!--  need update api endpoint on action  -->
-    <form method="post" action="/honey_note/honeies/update.html">
-        <!-- 基本情報 -->
-        <div class="section">
-            <h2>基本情報</h2>
-            <div class="info-grid">
-                <div class="label">名称 <span style="color: red;">*</span></div>
-                <div><input type="text" name="name_jp" id="name_jp" required></div>
+    <main>
+        <h1>蜂蜜の新規登録</h1>
+        <form method="post" action="/honey_note/honeys/new.html">
+            <!-- 基本情報 -->
+            <div class="section">
+                <h2>基本情報</h2>
+                <div class="info-grid">
+                    <div class="label">名称 <span style="color: red;">*</span></div>
+                    <div><input type="text" name="name_jp" id="name_jp" required placeholder="例：アカシア蜂蜜"></div>
 
                     <div class="label">養蜂場 <span style="color: red;">*</span></div>
                     <div>
@@ -236,35 +243,32 @@
                             <button type="button" id="btn_add_beekeeper" style="width: auto; padding: 0 10px; font-size: 0.8rem;">新規追加</button>
                         </div>
                         <select name="beekeeper_name" id="beekeeper_name" required style="width: 100%; height: 100px;" size="5">
-                            <option value="">選択してください</option>
-                            <!-- サーバー側で選択肢を埋める -->
-                            <!--          <option value="1">養蜂家A</option>
-                                     <option value="2">養蜂家B</option> -->
+                            <option value="">養蜂場を選択してください</option>
                         </select>
                     </div>
 
-                <div class="label">採蜜年</div>
-                <div><input type="number" name="harvest_year" id="harvest_year" min="1900" max="2100"></div>
+                    <div class="label">採蜜年</div>
+                    <div><input type="number" name="harvest_year" id="harvest_year" min="1900" max="2100"></div>
 
-                <div class="label">原産国</div>
-                <div><input type="text" name="country" id="country"></div>
+                    <div class="label">原産国</div>
+                    <div><input type="text" name="country" id="country"></div>
 
-                <div class="label">原産地域</div>
-                <div><input type="text" name="region" id="prefecture"></div>
+                    <div class="label">原産地域</div>
+                    <div><input type="text" name="region" id="prefecture"></div>
 
-                <div class="label">蜜源植物 <span style="color: red;">*</span></div>
-                <div>
-                    <div class="search-container" style="display: flex; gap: 5px; margin-bottom: 5px;">
-                        <input type="text" id="flower_search" placeholder="蜜源植物を検索..." style="flex: 1;">
-                        <button type="button" id="btn_add_flower" style="width: auto; padding: 0 10px; font-size: 0.8rem;">新規追加</button>
+                    <div class="label">蜜源植物 <span style="color: red;">*</span></div>
+                    <div>
+                        <div class="search-container" style="display: flex; gap: 5px; margin-bottom: 5px;">
+                            <input type="text" id="flower_search" placeholder="蜜源植物を検索..." style="flex: 1;">
+                            <button type="button" id="btn_add_flower" style="width: auto; padding: 0 10px; font-size: 0.8rem;">新規追加</button>
+                        </div>
+                        <select name="flower_name[]" id="flower_name" multiple required style="width: 100%; height: 100px;">
+                            <option value="">選択してください</option>
+                            <!-- サーバー側またはWASMで選択肢を埋める -->
+                        </select>
+                        <div class="hint">※ 検索で見つからない場合は検索窓に入力して「新規追加」ボタンを押してください</div>
+                        <div class="hint">※ 複数選択できます（CtrlまたはCmdキーを押しながら選択）</div>
                     </div>
-                    <select name="flower_name[]" id="flower_name" multiple required style="width: 100%; height: 100px;">
-                        <option value="">選択してください</option>
-                        <!-- サーバー側で選択肢を埋める -->
-                    </select>
-                    <div class="hint">※ 検索で見つからない場合は検索窓に入力して「新規追加」ボタンを押してください</div>
-                    <div class="hint">※ 複数選択できます（CtrlまたはCmdキーを押しながら選択）</div>
-                </div>
 
                 <div class="label">単花／百花</div>
                 <div>
@@ -534,7 +538,7 @@
 
         <div class="actions">
             <a class="btn-cancel" href="/honey_note/honeies/index.html">キャンセル</a>
-            <button class="btn-save" type="submit">保存</button>
+            <button class="btn-save" type="button">保存</button>
         </div>
     </form>
 </main>

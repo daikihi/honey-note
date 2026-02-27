@@ -1,13 +1,38 @@
 use wasm_bindgen::prelude::*;
 use web_sys::{HtmlInputElement, HtmlSelectElement, HtmlTextAreaElement, Window};
 use common_type::request::honey::edit::HoneyEditRequest;
+use common_type::request::honey::new::HoneyNewRequest;
 use common_type::request::honey::basic::HoneyEditBasicRequest;
 use common_type::request::honey::dynamic::{HoneyEditDynamicRequest, ColorFeature, ObservationInputRequest};
+use crate::edit_and_new::new_mode;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{Request, RequestInit, Response};
 
 pub fn setup_edit_mode(_window: &Window, document: &web_sys::Document) {
+    let pathname = _window.location().pathname().unwrap_or_default();
+    let is_edit = pathname.contains("/edit.html");
+
+    if is_edit {
+        if let Ok(url) = web_sys::Url::new(&_window.location().href().expect("failed to get href")) {
+            let params = url.search_params();
+            if let Some(id_str) = params.get("id") {
+                if let Some(h1) = document.get_elements_by_tag_name("h1").item(0) {
+                    h1.set_inner_html(&format!("蜂蜜の編集 (ID: {})", id_str));
+                }
+            }
+        }
+        
+        // 編集モードでもマスタデータの取得と検索・新規追加機能をセットアップ
+        let document_clone = document.clone();
+        wasm_bindgen_futures::spawn_local(async move {
+            let _ = new_mode::fetch_and_populate_masters(&document_clone).await;
+        });
+        new_mode::setup_beekeeper_search(document);
+        new_mode::setup_flower_search(document);
+        new_mode::setup_add_new_handlers(document);
+    }
+
     let save_button = document.get_element_by_id("btn_save")
         .or_else(|| {
             // Check if there is a button with class btn-save
@@ -42,11 +67,6 @@ async fn handle_save() -> Result<(), JsValue> {
     let window = web_sys::window().expect("no global `window` exists");
     let document = window.document().expect("should have a document on window");
 
-    // Extract ID from URL (e.g., /edit.html?id=1)
-    let url = web_sys::Url::new(&window.location().href().expect("failed to get href"))?;
-    let params = url.search_params();
-    let id_str = params.get("id").ok_or_else(|| JsValue::from_str("Missing ID in URL"))?;
-    let id: i64 = id_str.parse().map_err(|_| JsValue::from_str("Invalid ID format"))?;
 
     // Collect Basic Info
     let name_jp = get_input_value(&document, "name_jp");
@@ -131,20 +151,44 @@ async fn handle_save() -> Result<(), JsValue> {
         memo,
     }];
 
-    let request_payload = HoneyEditRequest {
-        id,
-        basic,
-        dynamic,
-        updated_at: None,
+    let pathname = window.location().pathname().unwrap_or_default();
+    let is_new = pathname.contains("/new.html");
+
+    let (api_url, method, json_body) = if is_new {
+        let request_payload = HoneyNewRequest {
+            basic,
+            dynamic,
+            created_at: None,
+        };
+        (
+            "/honey-note/api/honey/new",
+            "PUT",
+            serde_json::to_string(&request_payload).map_err(|e| JsValue::from_str(&e.to_string()))?
+        )
+    } else {
+        // Extract ID from URL (e.g., /edit.html?id=1)
+        let url = web_sys::Url::new(&window.location().href().expect("failed to get href"))?;
+        let params = url.search_params();
+        let id_str = params.get("id").ok_or_else(|| JsValue::from_str("Missing ID in URL"))?;
+        let id: i64 = id_str.parse().map_err(|_| JsValue::from_str("Invalid ID format"))?;
+
+        let request_payload = HoneyEditRequest {
+            id,
+            basic,
+            dynamic,
+            updated_at: None,
+        };
+        (
+            "/honey-note/api/honey/edit",
+            "PUT",
+            serde_json::to_string(&request_payload).map_err(|e| JsValue::from_str(&e.to_string()))?
+        )
     };
 
-    // Send PUT request
-    let api_url = "/honey-note/api/honey/edit";
+    // Send request
     let opts = RequestInit::new();
-    opts.set_method("PUT");
+    opts.set_method(method);
     opts.set_mode(web_sys::RequestMode::Cors);
-
-    let json_body = serde_json::to_string(&request_payload).map_err(|e| JsValue::from_str(&e.to_string()))?;
     opts.set_body(&JsValue::from_str(&json_body));
 
     let request = Request::new_with_str_and_init(api_url, &opts)?;

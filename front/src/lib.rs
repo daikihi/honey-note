@@ -36,6 +36,7 @@ pub async fn beekeepers_list_main() {
 /**
  *  For Edit and new Pages
  */
+#[wasm_bindgen]
 pub fn honey_edit_and_new_main() {
     web_sys::console::log_1(&"Hello, Honey Edit and New!".into());
     edit_and_new::honey_edit_and_new_main::run();
