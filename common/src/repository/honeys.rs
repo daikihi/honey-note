@@ -11,6 +11,7 @@ pub trait HoneyRepository: Send + Sync {
     async fn exists_honey(&self, honey: &HoneyDetail) -> Result<bool, String>;
     async fn exists_honey_by_id(&self, id: i64) -> Result<bool, String>;
     async fn get_all_honeys(&self) -> Result<Vec<ModelHoney>, String>;
+    async fn get_honey_by_id(&self, id: i64) -> Result<HoneyDetail, String>;
 }
 
 pub struct HoneyRepositorySqlite {
@@ -155,6 +156,74 @@ impl HoneyRepository for HoneyRepositorySqlite {
             (_, Err(e)) => Err(format!("database error (beekeepers): {:?}", e)),
         }
     }
+
+    async fn get_honey_by_id(&self, id: i64) -> Result<HoneyDetail, String> {
+        use chrono::{DateTime, FixedOffset};
+        use common_type::models::honey_detail::HoneyDetail;
+        use common_type::models::honey_detail_basic::HoneyDetailBasic;
+        use common_type::models::honey_detail_dynamic::HoneyDetailDynamic;
+        use common_type::models::honey_detail_types::{BeekeeperName, Country, FlowerName, HoneyNameJp, HoneyType, Region, Volume};
+
+        // 1) honey行を取得
+        let row: Result<Honey, sqlx::Error> = sqlx::query_as::<_, Honey>(
+            r#"SELECT id, name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note FROM honey WHERE id = ?"#
+        )
+        .bind(id as i32)
+        .fetch_one(&self.pool)
+        .await;
+
+        let h = row.map_err(|e| format!("NoSuchHoneyIdExist: {:?}", e))?;
+
+        // 2) 養蜂場名の解決
+        let beekeeper_name_opt: Option<BeekeeperName> = match h.beekeeper_id {
+            Some(bk_id) => {
+                let r: Result<(String,), sqlx::Error> = sqlx::query_as("SELECT name_jp FROM beekeeper WHERE id = ?")
+                    .bind(bk_id)
+                    .fetch_one(&self.pool)
+                    .await;
+                match r { Ok((name,)) => Some(BeekeeperName(name)), Err(_) => None }
+            }
+            None => None,
+        };
+
+        // 3) 花名一覧の取得
+        let flower_rows: Result<Vec<(String,)>, sqlx::Error> = sqlx::query_as(
+            r#"SELECT f.name_jp FROM honey_flower hf JOIN flower f ON f.id = hf.flower_id WHERE hf.honey_id = ?"#
+        )
+        .bind(h.id.unwrap_or_default())
+        .fetch_all(&self.pool)
+        .await;
+        let flower_names: Vec<FlowerName> = match flower_rows {
+            Ok(v) => v.into_iter().map(|(n,)| FlowerName(n)).collect(),
+            Err(_) => vec![],
+        };
+
+        // 4) 購入日の変換（RFC3339 → DateTime<FixedOffset>）
+        let purchase_dt: Option<DateTime<FixedOffset>> = match h.purchase_date {
+            Some(ref s) => chrono::DateTime::parse_from_rfc3339(s).ok(),
+            None => None,
+        };
+
+        // 5) HoneyDetail 構築（dynamicは未保存のため空）
+        let basic = HoneyDetailBasic {
+            name_jp: HoneyNameJp(h.name_jp.clone()),
+            beekeeper_name: beekeeper_name_opt,
+            harvest_year: h.harvest_year,
+            country: h.origin_country.clone().map(Country),
+            region: h.origin_region.clone().map(Region),
+            flower_names,
+            honey_type: None::<HoneyType>,
+            volume: None::<Volume>,
+            purchase_date: purchase_dt,
+        };
+        let detail = HoneyDetail {
+            basic,
+            dynamic: Vec::<HoneyDetailDynamic>::new(),
+            created_at: None,
+            updated_at: None,
+        };
+        Ok(detail)
+    }
 }
 
 pub struct HoneyRepositoryMock;
@@ -174,6 +243,24 @@ impl HoneyRepository for HoneyRepositoryMock {
     }
     async fn get_all_honeys(&self) -> Result<Vec<ModelHoney>, String> {
         Ok(vec![])
+    }
+    async fn get_honey_by_id(&self, id: i64) -> Result<HoneyDetail, String> {
+        use common_type::models::honey_detail::HoneyDetail;
+        use common_type::models::honey_detail_basic::HoneyDetailBasic;
+        use common_type::models::honey_detail_dynamic::HoneyDetailDynamic;
+        use common_type::models::honey_detail_types::{HoneyNameJp};
+        let basic = HoneyDetailBasic {
+            name_jp: HoneyNameJp(format!("Mock Honey {}", id)),
+            beekeeper_name: None,
+            harvest_year: None,
+            country: None,
+            region: None,
+            flower_names: vec![],
+            honey_type: None,
+            volume: None,
+            purchase_date: None,
+        };
+        Ok(HoneyDetail { basic, dynamic: Vec::<HoneyDetailDynamic>::new(), created_at: None, updated_at: None })
     }
 }
 

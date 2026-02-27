@@ -142,33 +142,36 @@
 </header>
 
 <main>
-    <h1>アカシア蜂蜜（Acacia Honey）</h1>
+    <script type="module">
+      import init, { honey_show_main } from '/honey_note/javascript/front.js';
+      init().then(() => {
+        honey_show_main();
+        console.log('WASM loaded on show.html!');
+      });
+    </script>
+    <h1 id="honey_title">蜂蜜の詳細</h1>
 
     <!-- 基本情報 -->
     <div class="section">
         <h2>基本情報</h2>
         <div class="info-grid">
             <div class="label">名称</div>
-            <div>アカシア蜂蜜</div>
+            <div id="field_name_jp">-</div>
 
             <div class="label">養蜂場</div>
-            <div>
-                <a href="/honey_note/beekeepers/show.html?id=5">青木養蜂場</a>
-            </div>
+            <div id="field_beekeeper">-</div>
 
             <div class="label">採蜜年</div>
-            <div>2023年</div>
+            <div id="field_harvest_year">-</div>
 
             <div class="label">原産国</div>
-            <div>日本</div>
+            <div id="field_country">-</div>
 
             <div class="label">原産地域</div>
-            <div>長野県 安曇野市</div>
+            <div id="field_region">-</div>
 
             <div class="label">蜜源植物</div>
-            <div>
-                <a href="/honey_note/flowers/show.html?id=10">アカシア</a>
-            </div>
+            <div class="tag-list" id="field_flowers"></div>
 
             <div class="label">単花／百花</div>
             <div>単花蜜</div>
@@ -177,7 +180,7 @@
             <div>300g</div>
 
             <div class="label">購入日</div>
-            <div>2024-05-12</div>
+            <div id="field_purchase_date">-</div>
 
             <div class="label">登録日時</div>
             <div>2024-05-13 10:22</div>
@@ -275,9 +278,26 @@
 
     <div class="actions">
         <a class="btn-back" href="/honey_note/honeys/lists.html">一覧に戻る</a>
-        <a class="btn-edit" href="/honey_note/honeys/edit.html?id=7">編集する</a>
+        <a class="btn-edit" id="btn_edit_link" href="/honey_note/honeys/edit.html">編集する</a>
     </div>
 
 </main>
+<script>
+  // 現在の詳細ページのURLクエリから id を取り出し、編集リンクに継承する
+  (function(){
+    try {
+      const url = new URL(window.location.href);
+      const id = url.searchParams.get('id');
+      if (id) {
+        const a = document.getElementById('btn_edit_link');
+        if (a) {
+          a.href = `/honey_note/honeys/edit.html?id=${encodeURIComponent(id)}`;
+        }
+      }
+    } catch (e) {
+      console.error('failed to setup edit link', e);
+    }
+  })();
+</script>
 </body>
 </html>

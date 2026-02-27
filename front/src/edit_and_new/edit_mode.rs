@@ -22,11 +22,17 @@ pub fn setup_edit_mode(_window: &Window, document: &web_sys::Document) {
                 }
             }
         }
-        
-        // 編集モードでもマスタデータの取得と検索・新規追加機能をセットアップ
+
+        // 編集モードでもマスタデータの取得と検索・新規追加機能をセットアップし、元データでフォームを初期化
         let document_clone = document.clone();
+        let window_clone = _window.clone();
         wasm_bindgen_futures::spawn_local(async move {
+            // 1) マスタの読み込み（セレクトの選択肢を先に用意）
             let _ = new_mode::fetch_and_populate_masters(&document_clone).await;
+            // 2) 既存データでフォーム初期化
+            if let Err(e) = prefill_existing_honey(&window_clone, &document_clone).await {
+                web_sys::console::error_1(&JsValue::from_str(&format!("prefill failed: {:?}", e)));
+            }
         });
         new_mode::setup_beekeeper_search(document);
         new_mode::setup_flower_search(document);
@@ -61,6 +67,49 @@ pub fn setup_edit_mode(_window: &Window, document: &web_sys::Document) {
     } else {
         web_sys::console::warn_1(&"Save button not found".into());
     }
+}
+
+async fn prefill_existing_honey(window: &Window, document: &web_sys::Document) -> Result<(), JsValue> {
+    // URL から id を取得
+    let url = web_sys::Url::new(&window.location().href().expect("failed to get href"))?;
+    let params = url.search_params();
+    let id_str = params.get("id").ok_or_else(|| JsValue::from_str("Missing ID in URL"))?;
+    let target_id: i32 = id_str.parse().map_err(|_| JsValue::from_str("Invalid ID format"))?;
+
+    // 単品取得 API からデータ取得
+    let api = format!("/honey-note/api/honey/{}", target_id);
+    let resp_val = crate::commons::ajax::get_list_data(&api).await?;
+    use wasm_bindgen::JsCast;
+    use web_sys::Response;
+    let resp: Response = resp_val.dyn_into().map_err(|_| JsValue::from_str("Expected Response"))?;
+    
+    if !resp.ok() {
+        return Err(JsValue::from_str(&format!("Failed to fetch honey detail: {}", resp.status())));
+    }
+
+    let json = JsFuture::from(resp.json()?).await?;
+    let h: common_type::models::honey_detail::HoneyDetail = serde_wasm_bindgen::from_value(json)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse honey detail: {:?}", e)))?;
+
+    // 基本情報の初期化
+    set_input_value(document, "name_jp", &h.basic.name_jp.0);
+    if let Some(country) = &h.basic.country { set_input_value(document, "country", &country.0); }
+    if let Some(region) = &h.basic.region { set_input_value(document, "prefecture", &region.0); }
+    if let Some(year) = h.basic.harvest_year { set_input_value(document, "harvest_year", &year.to_string()); }
+    if let Some(pd) = &h.basic.purchase_date {
+        // date input 用に YYYY-MM-DD へ整形
+        let date_str = pd.to_rfc3339()[0..10].to_string();
+        set_input_value(document, "purchase_date", &date_str);
+    }
+    if let Some(bk) = &h.basic.beekeeper_name { 
+        set_select_value(document, "beekeeper_name", &bk.0); 
+    }
+
+    // 蜜源植物（複数選択）の初期化
+    let flower_names: Vec<String> = h.basic.flower_names.iter().map(|f| f.0.clone()).collect();
+    set_multi_select_values(document, "flower_name", &flower_names);
+
+    Ok(())
 }
 
 async fn handle_save() -> Result<(), JsValue> {
@@ -203,6 +252,34 @@ async fn handle_save() -> Result<(), JsValue> {
     }
 
     Ok(())
+}
+
+fn set_input_value(document: &web_sys::Document, id: &str, value: &str) {
+    if let Some(el) = document.get_element_by_id(id).and_then(|el| el.dyn_into::<HtmlInputElement>().ok()) {
+        el.set_value(value);
+    }
+}
+
+fn set_select_value(document: &web_sys::Document, id: &str, value: &str) {
+    if let Some(el) = document.get_element_by_id(id).and_then(|el| el.dyn_into::<HtmlSelectElement>().ok()) {
+        el.set_value(value);
+    }
+}
+
+fn set_multi_select_values(document: &web_sys::Document, id: &str, values: &[String]) {
+    if let Some(el) = document.get_element_by_id(id).and_then(|el| el.dyn_into::<HtmlSelectElement>().ok()) {
+        let options = el.options();
+        for i in 0..options.length() {
+            if let Some(option) = options.item(i).and_then(|o| o.dyn_into::<web_sys::HtmlOptionElement>().ok()) {
+                let val = option.value();
+                if values.contains(&val) {
+                    option.set_selected(true);
+                } else {
+                    option.set_selected(false);
+                }
+            }
+        }
+    }
 }
 
 fn get_input_value(document: &web_sys::Document, id: &str) -> String {

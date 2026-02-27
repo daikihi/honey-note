@@ -6,6 +6,7 @@ use crate::{
     use_case::put_new_honey as put_new_honey_use_case,
     use_case::put_edit_honey::put_edit_honey_dto::{PutEditHoneyRequestDto, PutEditHoneyResponseDto},
     use_case::put_edit_honey as put_edit_honey_use_case,
+    use_case::get_honey_by_id as get_honey_by_id_use_case,
 };
 use common_type::request::honey::edit::HoneyEditRequest;
 use common_type::request::honey::new::HoneyNewRequest;
@@ -22,6 +23,29 @@ pub async fn get_all_honeys(
     let use_case_result = get_all_honies_use_case::run(&repo, request_dto).await;
     log::info!("size of response is {}", use_case_result.honeys.iter().len());
     Ok(actix_web::HttpResponse::Ok().json(use_case_result.honeys))
+}
+
+#[get("/honey-note/api/honey/{id}")]
+pub async fn get_honey_by_id(
+    path: web::Path<i64>,
+    pool: web::Data<sqlx::SqlitePool>,
+) -> Result<HttpResponse, Error> {
+    let id = path.into_inner();
+    let repo = HoneyRepositorySqlite { pool: pool.get_ref().clone() };
+    let dto = get_honey_by_id_use_case::get_honey_by_id_dto::GetHoneyByIdRequestDto { id };
+    let result = get_honey_by_id_use_case::run(&repo, dto).await;
+
+    if result.success {
+        // クライアントへは HoneyDetail をそのまま返却（Optionをアンラップ）
+        if let Some(h) = result.honey {
+            Ok(HttpResponse::Ok().json(h))
+        } else {
+            Ok(HttpResponse::NotFound().json(result))
+        }
+    } else {
+        // 見つからない場合は404相当で返す
+        Ok(HttpResponse::NotFound().json(result))
+    }
 }
 
 // 新規作成APIフレーム

@@ -191,6 +191,14 @@
 
     </style>
 
+    <script type="module">
+        import init, { honey_edit_and_new_main } from '/honey_note/javascript/front.js';
+        init().then(() => {
+            honey_edit_and_new_main();
+            console.log("WASM loaded on edit.html!");
+        });
+    </script>
+
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             const colorInput = document.getElementById("color_hex");
@@ -533,8 +541,8 @@
         </div>
 
         <div class="actions">
-            <a class="btn-cancel" href="/honey_note/honeies/index.html">キャンセル</a>
-            <button class="btn-save" type="submit">保存</button>
+            <a class="btn-cancel" href="/honey_note/honeys/lists.html">キャンセル</a>
+            <button class="btn-save" type="button">保存</button>
         </div>
     </form>
 </main>

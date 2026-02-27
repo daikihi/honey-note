@@ -4,6 +4,7 @@ mod commons;
 mod lists;
 mod models;
 mod edit_and_new;
+mod show;
 
 #[wasm_bindgen]
 pub fn top_page_main() {
@@ -40,6 +41,12 @@ pub async fn beekeepers_list_main() {
 pub fn honey_edit_and_new_main() {
     web_sys::console::log_1(&"Hello, Honey Edit and New!".into());
     edit_and_new::honey_edit_and_new_main::run();
+}
+
+#[wasm_bindgen]
+pub async fn honey_show_main() {
+    web_sys::console::log_1(&"Hello, Honey Show!".into());
+    show::honey_show_page_main::run().await;
 }
 
 
