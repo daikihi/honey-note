@@ -28,27 +28,36 @@ impl Honey {
         }
     }
 
-    pub async fn is_exist_by_name_static(name_jp: &str, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
+    pub async fn is_exist_by_name_static<'a, E>(name_jp: &str, executor: E) -> Result<bool, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
         let query = "SELECT EXISTS(SELECT 1 FROM honey WHERE name_jp = ?)";
         let result: (i64,) = sqlx::query_as(query)
             .bind(name_jp)
-            .fetch_one(pool)
+            .fetch_one(executor)
             .await?;
 
         Ok(result.0 != 0)
     }
 
-    pub async fn is_exist_by_id_static(id: i32, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
+    pub async fn is_exist_by_id_static<'a, E>(id: i32, executor: E) -> Result<bool, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
         let query = "SELECT EXISTS(SELECT 1 FROM honey WHERE id = ?)";
         let result: (i64,) = sqlx::query_as(query)
             .bind(id)
-            .fetch_one(pool)
+            .fetch_one(executor)
             .await?;
 
         Ok(result.0 != 0)
     }
 
-    pub async fn update(&self, pool: &sqlx::SqlitePool) -> Result<(), sqlx::Error> {
+    pub async fn update<'a, E>(&self, executor: E) -> Result<(), sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
         let query = r#"
             UPDATE honey
             SET name_jp = ?, name_en = ?, beekeeper_id = ?, origin_country = ?, origin_region = ?, harvest_year = ?, purchase_date = ?, note = ?
@@ -65,13 +74,16 @@ impl Honey {
             .bind(&self.purchase_date)
             .bind(&self.note)
             .bind(self.id)
-            .execute(pool)
+            .execute(executor)
             .await?;
 
         Ok(())
     }
 
-    pub async fn insert_and_return_id(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
+    pub async fn insert_and_return_id<'a, E>(&self, executor: E) -> Result<i64, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
         let query = r#"        
             INSERT INTO honey (name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -86,9 +98,38 @@ impl Honey {
             .bind(self.harvest_year)
             .bind(&self.purchase_date)
             .bind(&self.note)
-            .execute(pool)
+            .execute(executor)
             .await?;
         
+        Ok(result.last_insert_rowid())
+    }
+
+    pub async fn insert_and_return_id_with_check<'a, E>(
+        &self,
+        executor: E,
+    ) -> Result<i64, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
+        let query = r#"        
+            INSERT INTO honey (name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note)
+            SELECT ?, ?, ?, ?, ?, ?, ?, ?
+            WHERE NOT EXISTS (SELECT 1 FROM honey WHERE name_jp = ?)
+        "#;
+
+        let result = sqlx::query(query)
+            .bind(&self.name_jp)
+            .bind(&self.name_en)
+            .bind(self.beekeeper_id)
+            .bind(&self.origin_country)
+            .bind(&self.origin_region)
+            .bind(self.harvest_year)
+            .bind(&self.purchase_date)
+            .bind(&self.note)
+            .bind(&self.name_jp)
+            .execute(executor)
+            .await?;
+
         Ok(result.last_insert_rowid())
     }
 }

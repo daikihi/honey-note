@@ -17,6 +17,7 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) -> Result<(), AppEr
     }
 
     info!("master data {}", master_data);
+    let mut tx = connection_pool.begin().await.map_err(|e| AppError::DatabaseError(e.to_string()))?;
     for line in master_data.lines() {
         info!("Processing line: {}", line);
         let beekeeper_master_data: Vec<&str> = line.split(',').collect();
@@ -66,15 +67,16 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) -> Result<(), AppEr
 
         info!("Loaded beekeeper: {:?}", &model_beekeeper);
         let has_beekeeper =
-            common::repository::beekeepers::has_beekeeper(&model_beekeeper, &connection_pool).await;
+            common::repository::beekeepers::has_beekeeper(&model_beekeeper, &mut *tx).await;
         if !has_beekeeper {
             info!("Inserting new beekeeper: {:?}", &model_beekeeper);
-            common::repository::beekeepers::insert_beekeeper(&model_beekeeper, &connection_pool)
+            let _ = common::repository::beekeepers::insert_beekeeper(&model_beekeeper, &mut *tx)
                 .await;
         } else {
             info!("Beekeeper already exists: {:?}", &model_beekeeper);
             continue;
         }
     }
+    tx.commit().await.map_err(|e| AppError::DatabaseError(e.to_string()))?;
     Ok(())
 }

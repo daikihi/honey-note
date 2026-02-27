@@ -3,7 +3,6 @@ use common_type::models::beekeeper::Beekeeper;
 
 use crate::honey_loader_models::JsonHoney;
 use crate::{honey_loader_gateway, honey_loader_request};
-use futures::stream::{self, StreamExt}; // 必要なライブラリをインポート
 
 pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>) {
     // ログ出力
@@ -31,6 +30,8 @@ pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>) {
         .filter(|b| b != &"".to_string())
         .collect::<Vec<_>>();
 
+    let mut tx = pool.begin().await.expect("データベース接続に失敗しました");
+
     for beekeeper in beekeepers {
         let bk = &Beekeeper {
             id: None,
@@ -43,57 +44,55 @@ pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>) {
             note: None,
         };
 
-        let is_exist = common::repository::beekeepers::has_beekeeper(bk, &pool).await;
+        let is_exist = common::repository::beekeepers::has_beekeeper(bk, &mut *tx).await;
 
         if !is_exist {
-            common::repository::beekeepers::insert_beekeeper(bk, &pool).await;
+            let _ = common::repository::beekeepers::insert_beekeeper(bk, &mut *tx).await;
             log::info!("養蜂家をデータベースに挿入: {:?}", beekeeper);
         } else {
             log::info!("養蜂家は既に存在します: {:?}", beekeeper);
         }
     }
 
-    let model_honeys: Vec<common_type::models::honey::Honey> =
-        stream::iter(_non_empty_honeys.iter())
-            .then(|json_honey| {
-                let pool_clone = pool.clone(); // `pool` のクローンを作成
-                async move {
-                    let beekeeper_id = common::repository::beekeepers::get_beekeeper_id_by_name(
-                        &json_honey.beekeeper.clone().unwrap_or_default(),
-                        &pool_clone, // クローンを使用
-                    )
-                    .await;
-
-                    common_type::models::honey::Honey {
-                        id: Some(json_honey.id),
-                        name_jp: json_honey.name.clone().unwrap_or_default(),
-                        name_en: None,
-                        beekkeeper: json_honey.beekeeper.clone().map(|b| {
-                            common_type::models::beekeeper::Beekeeper {
-                                id: beekeeper_id,
-                                name_jp: b,
-                                name_en: None,
-                                founding_year: None,
-                                location_prefecture_id: None,
-                                location_city: None,
-                                website_url: None,
-                                note: None,
-                            }
-                        }),
-                        origin_country: json_honey.country.clone(),
-                        origin_region: json_honey.prefecture.clone(),
-                        harvest_year: None,
-                        purchase_date: None,
-                        note: None,
-                    }
-                }
-            })
-            .collect::<Vec<_>>() // Vecに収集
+    let model_honeys: Vec<common_type::models::honey::Honey> = {
+        let mut results = Vec::new();
+        for json_honey in _non_empty_honeys {
+            let beekeeper_id = common::repository::beekeepers::get_beekeeper_id_by_name(
+                &json_honey.beekeeper.clone().unwrap_or_default(),
+                &mut *tx,
+            )
             .await;
 
+            results.push(common_type::models::honey::Honey {
+                id: Some(json_honey.id),
+                name_jp: json_honey.name.clone().unwrap_or_default(),
+                name_en: None,
+                beekkeeper: json_honey.beekeeper.clone().map(|b| {
+                    common_type::models::beekeeper::Beekeeper {
+                        id: beekeeper_id,
+                        name_jp: b,
+                        name_en: None,
+                        founding_year: None,
+                        location_prefecture_id: None,
+                        location_city: None,
+                        website_url: None,
+                        note: None,
+                    }
+                }),
+                origin_country: json_honey.country.clone(),
+                origin_region: json_honey.prefecture.clone(),
+                harvest_year: None,
+                purchase_date: None,
+                note: None,
+            });
+        }
+        results
+    };
+
     for model_honey in model_honeys {
-        let _ = repository::honeys::insert_honey_if_not_exists(&model_honey, &pool).await;
+        let _ = repository::honeys::insert_honey_if_not_exists(&model_honey, &mut *tx).await;
         log::info!("ハニーをデータベースに挿入: {:?}", model_honey);
     }
+    tx.commit().await.expect("Failed to commit transaction");
     log::info!("ハニーのデータベースへの挿入が完了しました");
 }

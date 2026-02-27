@@ -24,23 +24,25 @@ impl HoneyRepository for HoneyRepositorySqlite {
         use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
         use common_type::models::flowers::create_model_flower_from_name;
 
+        let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
+
         // 1) 養蜂場IDの解決（なければ作成）
         let mut beekeeper_id_opt: Option<i32> = None;
         if let Some(bk_name) = honey.basic.beekeeper_name.clone() {
             let name = bk_name.0;
             if !name.is_empty() {
                 // 既存確認
-                let existing = bk_repo::get_beekeeper_id_by_name(&name, &self.pool).await;
+                let existing = bk_repo::get_beekeeper_id_by_name(&name, &mut *tx).await;
                 match existing {
                     Some(id) => beekeeper_id_opt = Some(id),
                     None => {
                         // 新規作成
                         let model_bk = ModelBeekeeper::from_string_csv(&name, None, None, None);
-                        if !bk_repo::has_beekeeper(&model_bk, &self.pool).await {
-                            let _ = bk_repo::insert_beekeeper(&model_bk, &self.pool).await;
+                        if !bk_repo::has_beekeeper(&model_bk, &mut *tx).await {
+                            let _ = bk_repo::insert_beekeeper(&model_bk, &mut *tx).await;
                         }
                         // 再取得
-                        beekeeper_id_opt = bk_repo::get_beekeeper_id_by_name(&name, &self.pool).await;
+                        beekeeper_id_opt = bk_repo::get_beekeeper_id_by_name(&name, &mut *tx).await;
                     }
                 }
             }
@@ -60,7 +62,7 @@ impl HoneyRepository for HoneyRepositorySqlite {
         };
 
         let honey_id = sqlx_honey
-            .insert_and_return_id(&self.pool)
+            .insert_and_return_id(&mut *tx)
             .await
             .map_err(|e| e.to_string())?;
 
@@ -73,22 +75,22 @@ impl HoneyRepository for HoneyRepositorySqlite {
             let mut flower_id_opt = {
                 let row: Result<(i32,), sqlx::Error> = sqlx::query_as("SELECT id FROM flower WHERE name_jp = $1")
                     .bind(&name)
-                    .fetch_one(&self.pool)
+                    .fetch_one(&mut *tx)
                     .await;
                 match row { Ok((id,)) => Some(id), Err(_) => None }
             };
 
             if flower_id_opt.is_none() {
                 let model = create_model_flower_from_name(&name);
-                match fl_repo::has_flower(&model, &self.pool).await {
+                match fl_repo::has_flower(&model, &mut *tx).await {
                     Ok(false) => {
-                        let _ = fl_repo::insert_flower(&model, &self.pool).await;
+                        let _ = fl_repo::insert_flower(&model, &mut *tx).await;
                     }
                     _ => {}
                 }
                 let row: Result<(i32,), sqlx::Error> = sqlx::query_as("SELECT id FROM flower WHERE name_jp = $1")
                     .bind(&name)
-                    .fetch_one(&self.pool)
+                    .fetch_one(&mut *tx)
                     .await;
                 if let Ok((id,)) = row { flower_id_opt = Some(id); }
             }
@@ -97,24 +99,28 @@ impl HoneyRepository for HoneyRepositorySqlite {
                 let exists: (i64,) = sqlx::query_as("SELECT COUNT(1) FROM honey_flower WHERE honey_id = $1 AND flower_id = $2")
                     .bind(honey_id)
                     .bind(flower_id)
-                    .fetch_one(&self.pool)
+                    .fetch_one(&mut *tx)
                     .await
                     .map_err(|e| e.to_string())?;
                 if exists.0 == 0 {
                     sqlx::query("INSERT INTO honey_flower (honey_id, flower_id) VALUES ($1, $2)")
                         .bind(honey_id)
                         .bind(flower_id)
-                        .execute(&self.pool)
+                        .execute(&mut *tx)
                         .await
                         .map_err(|e| e.to_string())?;
                 }
             }
         }
 
+        tx.commit().await.map_err(|e| e.to_string())?;
+
         Ok(honey_id)
     }
 
     async fn update_honey(&self, id: i64, honey: HoneyDetail) -> Result<(), String> {
+        let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
+
         let sqlx_honey = Honey {
             id: Some(id as i32),
             name_jp: honey.basic.name_jp.0.clone(),
@@ -128,9 +134,12 @@ impl HoneyRepository for HoneyRepositorySqlite {
         };
 
         sqlx_honey
-            .update(&self.pool)
+            .update(&mut *tx)
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+
+        tx.commit().await.map_err(|e| e.to_string())?;
+        Ok(())
     }
 
     async fn exists_honey(&self, honey: &HoneyDetail) -> Result<bool, String> {
@@ -264,10 +273,13 @@ impl HoneyRepository for HoneyRepositoryMock {
     }
 }
 
-pub async fn insert_honey_if_not_exists(
+pub async fn insert_honey_if_not_exists<'a, E>(
     honey: &ModelHoney,
-    pool: &sqlx::SqlitePool,
-) -> Result<(), sqlx::Error> {
+    executor: E,
+) -> Result<(), sqlx::Error>
+where
+    E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+{
     let sqlx_honey = Honey {
         id: honey.id,
         name_jp: honey.name_jp.clone(),
@@ -279,20 +291,8 @@ pub async fn insert_honey_if_not_exists(
         purchase_date: honey.purchase_date.clone(),
         note: honey.note.clone(),
     };
-    match Honey::is_exist_by_name_static(&sqlx_honey.name_jp, pool).await {
-        Ok(true) => {
-            log::info!("honey {:?} は既に存在しています。", sqlx_honey.name_jp);
-            Ok(())
-        }
-        Ok(false) => {
-            log::info!("honey {:?} は、DB に書き込みます", sqlx_honey.name_jp);
-            sqlx_honey.insert_and_return_id(pool).await.map(|_| ())
-        }
-        Err(e) => {
-            log::error!("DB 読み込みに失敗しました");
-            Err(e)
-        }
-    }
+    log::info!("honey {:?} は、DB に書き込みます(重複チェック付き)", sqlx_honey.name_jp);
+    sqlx_honey.insert_and_return_id_with_check(executor).await.map(|_| ())
 }
 
 pub async fn get_all_honies(pool: &sqlx::SqlitePool) -> Vec<ModelHoney> {
