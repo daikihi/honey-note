@@ -25,8 +25,14 @@ mod tests {
         async fn insert_honey(&self, _honey: HoneyDetail) -> Result<i64, String> {
             Ok(1)
         }
+        async fn update_honey(&self, _id: i64, _honey: HoneyDetail) -> Result<(), String> {
+            Ok(())
+        }
         async fn exists_honey(&self, _honey: &HoneyDetail) -> Result<bool, String> {
             Ok(false)
+        }
+        async fn exists_honey_by_id(&self, _id: i64) -> Result<bool, String> {
+            Ok(true)
         }
         async fn get_all_honeys(&self) -> Result<Vec<Honey>, String> {
             Ok(vec![
@@ -42,6 +48,25 @@ mod tests {
                     note: None,
                 },
             ])
+        }
+        async fn get_honey_by_id(&self, _id: i64) -> Result<HoneyDetail, String> {
+            use common_type::request::honey::basic::HoneyEditBasicRequest;
+            Ok(HoneyDetail {
+                basic: HoneyEditBasicRequest {
+                    name_jp: Some("Mock".to_string()),
+                    beekeeper_name: None,
+                    harvest_year: None,
+                    country: None,
+                    region: None,
+                    flower_names: vec![],
+                    honey_type: None,
+                    volume: None,
+                    purchase_date: None,
+                }.to_honey_input_basic(),
+                dynamic: vec![],
+                created_at: None,
+                updated_at: None,
+            })
         }
     }
 

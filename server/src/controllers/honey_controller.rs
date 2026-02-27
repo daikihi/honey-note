@@ -4,6 +4,9 @@ use common::repository::honeys::HoneyRepositorySqlite;
 use crate::{
     use_case::put_new_honey::put_new_honey_dto::{PutNewHoneyRequestDto, PutNewHoneyResponseDto},
     use_case::put_new_honey as put_new_honey_use_case,
+    use_case::put_edit_honey::put_edit_honey_dto::{PutEditHoneyRequestDto, PutEditHoneyResponseDto},
+    use_case::put_edit_honey as put_edit_honey_use_case,
+    use_case::get_honey_by_id as get_honey_by_id_use_case,
 };
 use common_type::request::honey::edit::HoneyEditRequest;
 use common_type::request::honey::new::HoneyNewRequest;
@@ -20,6 +23,29 @@ pub async fn get_all_honeys(
     let use_case_result = get_all_honies_use_case::run(&repo, request_dto).await;
     log::info!("size of response is {}", use_case_result.honeys.iter().len());
     Ok(actix_web::HttpResponse::Ok().json(use_case_result.honeys))
+}
+
+#[get("/honey-note/api/honey/{id}")]
+pub async fn get_honey_by_id(
+    path: web::Path<i64>,
+    pool: web::Data<sqlx::SqlitePool>,
+) -> Result<HttpResponse, Error> {
+    let id = path.into_inner();
+    let repo = HoneyRepositorySqlite { pool: pool.get_ref().clone() };
+    let dto = get_honey_by_id_use_case::get_honey_by_id_dto::GetHoneyByIdRequestDto { id };
+    let result = get_honey_by_id_use_case::run(&repo, dto).await;
+
+    if result.success {
+        // クライアントへは HoneyDetail をそのまま返却（Optionをアンラップ）
+        if let Some(h) = result.honey {
+            Ok(HttpResponse::Ok().json(h))
+        } else {
+            Ok(HttpResponse::NotFound().json(result))
+        }
+    } else {
+        // 見つからない場合は404相当で返す
+        Ok(HttpResponse::NotFound().json(result))
+    }
 }
 
 // 新規作成APIフレーム
@@ -49,10 +75,24 @@ pub async fn put_new_honey(
 #[put("/honey-note/api/honey/edit")]
 pub async fn put_edit_honey(
     _req: HttpRequest,
-    _payload: Json<HoneyEditRequest>,
+    payload: Json<HoneyEditRequest>,
+    pool: web::Data<sqlx::SqlitePool>,
 ) -> Result<HttpResponse, Error> {
-    // TODO: 編集ロジックを実装
-    Ok(HttpResponse::Ok().finish())
+    // DTO変換
+    let dto = PutEditHoneyRequestDto { edit: payload.into_inner() };
+
+    // Repositoryの実装を生成
+    let repo = HoneyRepositorySqlite { pool: pool.get_ref().clone() };
+
+    // UseCase呼び出し
+    let result: PutEditHoneyResponseDto = put_edit_honey_use_case::run(&repo, dto).await;
+
+    if result.success {
+        Ok(HttpResponse::Ok().json(result))
+    } else {
+        log::error!("put_edit_honey failed: {:?}", result.error_message);
+        Ok(HttpResponse::BadRequest().json(result))
+    }
 }
 
 
@@ -157,6 +197,92 @@ mod tests {
         let body: PutNewHoneyResponseDto = test::read_body_json(resp2).await;
         assert!(!body.success);
         assert_eq!(body.error_message, Some("既に同じはちみつデータが存在します".to_string()));
+    }
+    #[actix_web::test]
+    async fn test_put_edit_honey_success() {
+        let pool = setup_db().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .service(put_new_honey)
+                .service(put_edit_honey)
+        ).await;
+
+        // 1. 新規作成
+        let payload_new = create_test_request("編集前のはちみつ");
+        let req_new = test::TestRequest::put()
+            .uri("/honey-note/api/honey/new")
+            .set_json(&payload_new)
+            .to_request();
+        let resp_new = test::call_service(&app, req_new).await;
+        let body_new: PutNewHoneyResponseDto = test::read_body_json(resp_new).await;
+        let honey_id = body_new.id.unwrap();
+
+        // 2. 編集
+        let payload_edit = HoneyEditRequest {
+            id: honey_id,
+            basic: HoneyEditBasicRequest {
+                name_jp: Some("編集後のはちみつ".to_string()),
+                beekeeper_name: None,
+                harvest_year: None,
+                country: None,
+                region: None,
+                flower_names: vec![],
+                honey_type: None,
+                volume: None,
+                purchase_date: None,
+            },
+            dynamic: vec![],
+            updated_at: None,
+        };
+        let req_edit = test::TestRequest::put()
+            .uri("/honey-note/api/honey/edit")
+            .set_json(&payload_edit)
+            .to_request();
+
+        let resp_edit = test::call_service(&app, req_edit).await;
+        assert!(resp_edit.status().is_success());
+
+        let body_edit: PutEditHoneyResponseDto = test::read_body_json(resp_edit).await;
+        assert!(body_edit.success);
+    }
+
+    #[actix_web::test]
+    async fn test_put_edit_honey_no_such_id() {
+        let pool = setup_db().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .service(put_edit_honey)
+        ).await;
+
+        let payload_edit = HoneyEditRequest {
+            id: 9999, // 存在しないID
+            basic: HoneyEditBasicRequest {
+                name_jp: Some("ななしのはちみつ".to_string()),
+                beekeeper_name: None,
+                harvest_year: None,
+                country: None,
+                region: None,
+                flower_names: vec![],
+                honey_type: None,
+                volume: None,
+                purchase_date: None,
+            },
+            dynamic: vec![],
+            updated_at: None,
+        };
+        let req_edit = test::TestRequest::put()
+            .uri("/honey-note/api/honey/edit")
+            .set_json(&payload_edit)
+            .to_request();
+
+        let resp_edit = test::call_service(&app, req_edit).await;
+        assert_eq!(resp_edit.status(), actix_web::http::StatusCode::BAD_REQUEST);
+
+        let body_edit: PutEditHoneyResponseDto = test::read_body_json(resp_edit).await;
+        assert!(!body_edit.success);
+        assert_eq!(body_edit.error_message, Some("NoSuchHoneyIdExist".to_string()));
     }
 //     @todo 同じ値でも名前が違えば登録できるというテストを書く
 }

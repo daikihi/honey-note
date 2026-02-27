@@ -38,6 +38,39 @@ impl Honey {
         Ok(result.0 != 0)
     }
 
+    pub async fn is_exist_by_id_static(id: i32, pool: &sqlx::SqlitePool) -> Result<bool, sqlx::Error> {
+        let query = "SELECT EXISTS(SELECT 1 FROM honey WHERE id = ?)";
+        let result: (i64,) = sqlx::query_as(query)
+            .bind(id)
+            .fetch_one(pool)
+            .await?;
+
+        Ok(result.0 != 0)
+    }
+
+    pub async fn update(&self, pool: &sqlx::SqlitePool) -> Result<(), sqlx::Error> {
+        let query = r#"
+            UPDATE honey
+            SET name_jp = ?, name_en = ?, beekeeper_id = ?, origin_country = ?, origin_region = ?, harvest_year = ?, purchase_date = ?, note = ?
+            WHERE id = ?
+        "#;
+
+        sqlx::query(query)
+            .bind(&self.name_jp)
+            .bind(&self.name_en)
+            .bind(self.beekeeper_id)
+            .bind(&self.origin_country)
+            .bind(&self.origin_region)
+            .bind(self.harvest_year)
+            .bind(&self.purchase_date)
+            .bind(&self.note)
+            .bind(self.id)
+            .execute(pool)
+            .await?;
+
+        Ok(())
+    }
+
     pub async fn insert_and_return_id(&self, pool: &sqlx::SqlitePool) -> Result<i64, sqlx::Error> {
         let query = r#"        
             INSERT INTO honey (name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note)

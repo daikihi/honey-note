@@ -528,6 +528,7 @@ name = "common"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "chrono",
  "common-type",
  "config",
  "env_logger",
@@ -912,6 +913,7 @@ dependencies = [
  "common-type",
  "serde",
  "serde-wasm-bindgen",
+ "serde_json",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",

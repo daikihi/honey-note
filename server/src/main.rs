@@ -38,6 +38,7 @@ async fn main() -> std::io::Result<()> {
 
 fn configure_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(controllers::honey_controller::get_all_honeys)
+        .service(controllers::honey_controller::get_honey_by_id)
         .service(controllers::health_checking::health_check)
         .service(controllers::prefecture_controller::get_all_prefectures)
         .service(controllers::beekeeper_controller::get_all_beekeepers)

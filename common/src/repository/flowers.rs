@@ -7,6 +7,7 @@ pub trait FlowerRepository: Send + Sync {
     async fn get_all_flowers(&self) -> Result<Vec<ModelFlower>, AppError>;
     async fn insert_flower(&self, flower: &ModelFlower) -> Result<(), AppError>;
     async fn has_flower(&self, flower: &ModelFlower) -> Result<bool, AppError>;
+    async fn get_flower_id_by_name(&self, name: &str) -> Option<i32>;
 }
 
 pub struct FlowerRepositorySqlite {
@@ -42,6 +43,17 @@ impl FlowerRepository for FlowerRepositorySqlite {
             .has_flower(&self.pool)
             .await
             .map_err(|e| AppError::DatabaseError(e.to_string()))
+    }
+
+    async fn get_flower_id_by_name(&self, name: &str) -> Option<i32> {
+        let query = "SELECT id FROM flower WHERE name_jp = $1";
+        let result: Result<(i32,), sqlx::Error> =
+            sqlx::query_as(query).bind(name).fetch_one(&self.pool).await;
+
+        match result {
+            Ok((id,)) => Some(id),
+            Err(_) => None,
+        }
     }
 }
 
