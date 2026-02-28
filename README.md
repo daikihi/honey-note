@@ -104,7 +104,7 @@ RUST_LOG=info cargo run -p batchs --bin honey_loader resources/master_data/${hon
 
 ```bash
 cd $honey_note_top_directory
-cargo run -p server
+RUST_LOG=info cargo run -p server
 ```
 
 `$honey_note_top_directory` はリポジトリのルートディレクトリを指します。
