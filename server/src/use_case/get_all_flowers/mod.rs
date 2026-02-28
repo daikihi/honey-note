@@ -24,6 +24,26 @@ mod tests {
                 create_model_flower_from_name("Acacia"),
             ])
         }
+        async fn get_flower_by_id(&self, _id: i32) -> Result<common_type::models::flowers::Flower, AppError> {
+            Ok(create_model_flower_from_name("Mock Flower"))
+        }
+        async fn update_flower<'a, E>(
+            &self,
+            _id: i32,
+            _flower: &common_type::models::flowers::Flower,
+            _executor: E,
+        ) -> Result<(), AppError>
+        where
+            E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+        {
+            Ok(())
+        }
+        async fn exists_flower_by_id<'a, E>(&self, _id: i32, _executor: E) -> Result<bool, AppError>
+        where
+            E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+        {
+            Ok(true)
+        }
         async fn insert_flower<'a, E>(&self, _flower: &common_type::models::flowers::Flower, _executor: E) -> Result<(), AppError>
         where
             E: sqlx::Executor<'a, Database = sqlx::Sqlite>

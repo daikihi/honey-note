@@ -44,6 +44,18 @@ pub fn honey_edit_and_new_main() {
 }
 
 #[wasm_bindgen]
+pub async fn beekeeper_edit_and_new_main() {
+    web_sys::console::log_1(&"Hello, Beekeeper Edit and New!".into());
+    edit_and_new::beekeeper_edit_and_new_main::run().await;
+}
+
+#[wasm_bindgen]
+pub async fn flower_edit_and_new_main() {
+    web_sys::console::log_1(&"Hello, Flower Edit and New!".into());
+    edit_and_new::flower_edit_and_new_main::run().await;
+}
+
+#[wasm_bindgen]
 pub async fn honey_show_main() {
     web_sys::console::log_1(&"Hello, Honey Show!".into());
     show::honey_show_page_main::run().await;

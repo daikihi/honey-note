@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>HoneyNote | 蜜源の編集</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --gold:#FFB703;
+            --blue:#219EBC;
+            --line:#E9C46A;
+            --cream:#FFF8ED;
+            --radius:8px;
+            font-family:"Inter","Noto Sans JP",sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--cream); color:#333; }
+
+        header {
+            background:#fff;
+            box-shadow:0 1px 4px rgba(0,0,0,.06);
+        }
+        header nav {
+            max-width:1000px;
+            height:64px;
+            margin:auto;
+            display:flex;
+            justify-content: space-between;
+            align-items:center;
+            padding:0 1rem;
+        }
+        nav a.logo {
+            display:flex; align-items:center; gap:0.5rem;
+            font-size:1.5rem; font-weight:700;
+            color:var(--gold); text-decoration:none;
+        }
+        .logo img { height:56px; }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .nav-links a:hover {
+            color: var(--blue);
+        }
+
+        main {
+            max-width:900px;
+            margin:2rem auto;
+            background:#fff;
+            padding:2rem;
+            border-radius:var(--radius);
+            box-shadow:0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            font-size:1.8rem;
+            margin-bottom:1rem;
+            color:var(--blue);
+        }
+
+        .section {
+            margin-bottom:2rem;
+        }
+        .section h2 {
+            font-size:1.2rem;
+            margin-bottom:.5rem;
+            color:#555;
+            border-left:4px solid var(--gold);
+            padding-left:0.5rem;
+        }
+
+        .info-grid {
+            display:grid;
+            grid-template-columns: 160px 1fr;
+            row-gap:0.6rem;
+            column-gap:1rem;
+            font-size:.95rem;
+        }
+        .label {
+            color:#666;
+            font-weight:600;
+        }
+
+        input, select, textarea {
+            font-size:1rem;
+            padding:.3rem .5rem;
+            border:1px solid #ccc;
+            border-radius:var(--radius);
+            width:100%;
+        }
+        textarea {
+            min-height:80px;
+            resize:vertical;
+        }
+
+        .actions {
+            margin-top:2rem;
+            display:flex;
+            justify-content:flex-end;
+            gap:1rem;
+        }
+        .actions button, .actions a {
+            padding:0.5rem 1rem;
+            border-radius:var(--radius);
+            text-decoration:none;
+            font-weight:600;
+            border:none;
+            cursor:pointer;
+        }
+        .btn-save {
+            background:var(--blue);
+            color:white;
+        }
+        .btn-cancel {
+            background:#eee;
+            color:#333;
+        }
+    </style>
+
+    <script type="module">
+        import init, { flower_edit_and_new_main } from '/honey_note/javascript/front.js';
+        init().then(() => {
+            flower_edit_and_new_main();
+            console.log("WASM loaded on flower edit.html!");
+        });
+    </script>
+</head>
+<body>
+
+<header>
+    <nav>
+        <div class="nav-left">
+            <a class="logo" href="/honey_note/index.html">
+                <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
+                HoneyNote
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="/honey_note/honeys/lists.html">はちみつ一覧</a>
+            <a href="/honey_note/flowers/lists.html">蜜源リスト</a>
+            <a href="/honey_note/beekeepers/lists.html">養蜂場</a>
+        </div>
+    </nav>
+</header>
+
+<main>
+    <h1 id="page_title">蜜源の編集</h1>
+    <form id="flower_form">
+        <div class="section">
+            <h2>基本情報</h2>
+            <div class="info-grid">
+                <div class="label">蜜源名 (和名) <span style="color: red;">*</span></div>
+                <div><input type="text" name="name_jp" id="name_jp" required placeholder="例：アカシア"></div>
+
+                <div class="label">蜜源名 (英名)</div>
+                <div><input type="text" name="name_en" id="name_en" placeholder="例：Acacia"></div>
+
+                <div class="label">学名</div>
+                <div><input type="text" name="scientific_name" id="scientific_name"></div>
+
+                <div class="label">短い説明</div>
+                <div><input type="text" name="short_note" id="short_note"></div>
+
+                <div class="label">種類</div>
+                <div><input type="text" name="flower_type" id="flower_type" placeholder="例：木本"></div>
+
+                <div class="label">備考</div>
+                <div><textarea name="note" id="note"></textarea></div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <a class="btn-cancel" href="/honey_note/flowers/lists.html">キャンセル</a>
+            <button class="btn-save" type="button" id="btn_save">保存</button>
+        </div>
+    </form>
+</main>
+</body>
+</html>

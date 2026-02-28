@@ -25,6 +25,7 @@
             height:64px;
             margin:auto;
             display:flex;
+            justify-content: space-between;
             align-items:center;
             padding:0 1rem;
         }
@@ -34,6 +35,20 @@
             color:var(--gold); text-decoration:none;
         }
         .logo img { height:56px; }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .nav-links a:hover {
+            color: var(--blue);
+        }
 
         main {
             max-width:900px;
@@ -219,10 +234,17 @@
 
 <header>
     <nav>
-        <a class="logo" href="/honey_note/index.html">
-            <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
-            HoneyNote
-        </a>
+        <div class="nav-left">
+            <a class="logo" href="/honey_note/index.html">
+                <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
+                HoneyNote
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="/honey_note/honeys/lists.html">はちみつ一覧</a>
+            <a href="/honey_note/flowers/lists.html">蜜源リスト</a>
+            <a href="/honey_note/beekeepers/lists.html">養蜂場</a>
+        </div>
     </nav>
 </header>
 
@@ -538,7 +560,7 @@
 
         <div class="actions">
             <a class="btn-cancel" href="/honey_note/honeies/index.html">キャンセル</a>
-            <button class="btn-save" type="button">保存</button>
+            <button class="btn-save" type="button" id="btn_save">保存</button>
         </div>
     </form>
 </main>
