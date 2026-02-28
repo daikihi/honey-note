@@ -71,11 +71,11 @@ fn write_flowers_to_table(flowers: Vec<ModelFlower>) {
     for flower in flowers {
         let row = document.create_element("tr").unwrap();
         row.set_inner_html(&format!(
-            "<td>{}</td><td>{}</td><td>{}</td><td>{}</td>",
+            "<td>{}</td><td>{}</td><td>{}</td><td><a href='/honey_note/flowers/edit.html?id={}'>編集</a></td>",
             flower.id.unwrap_or(0.0),
             flower.name_jp,
             flower.name_en.unwrap_or_default(),
-            flower.short_note.unwrap_or_default()
+            flower.id.unwrap_or(0.0)
         ));
         tbody.append_child(&row).unwrap();
     }

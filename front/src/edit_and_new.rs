@@ -1,3 +1,9 @@
 pub mod honey_edit_and_new_main;
+pub mod beekeeper_edit_and_new_main;
+pub mod flower_edit_and_new_main;
 pub mod edit_mode;
+pub mod beekeeper_edit_mode;
+pub mod flower_edit_mode;
 pub mod new_mode;
+pub mod beekeeper_new_mode;
+pub mod flower_new_mode;

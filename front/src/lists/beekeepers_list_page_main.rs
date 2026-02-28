@@ -118,11 +118,13 @@ fn write_beekeepers_to_table(beekeepers: Vec<ModelBeekeeper>, prefectures: Vec<M
                     None => false,
                 });
         let row = document.create_element("tr").unwrap();
+        let beekeeper_id = beekeeper.id.unwrap_or_default();
         row.set_inner_html(&format!(
-            "<td>{}</td><td>{}</td><td>{}</td>",
-            beekeeper.id.unwrap_or_default(),
+            "<td>{}</td><td>{}</td><td>{}</td><td><a href='/honey_note/beekeepers/edit.html?id={}'>編集</a></td>",
+            beekeeper_id,
             beekeeper.name_jp,
             matched_prefecture.map_or("Unknown".to_string(), |p| p.name_jp.clone()),
+            beekeeper_id
         ));
         tbody.append_child(&row).unwrap();
     }
