@@ -1,5 +1,4 @@
 use actix_web::{get, put, web, HttpResponse, Error, HttpRequest};
-use web::Json;
 use common::repository::honeys::HoneyRepositorySqlite;
 use crate::{
     use_case::put_new_honey::put_new_honey_dto::{PutNewHoneyRequestDto, PutNewHoneyResponseDto},
@@ -7,6 +6,7 @@ use crate::{
     use_case::put_edit_honey::put_edit_honey_dto::{PutEditHoneyRequestDto, PutEditHoneyResponseDto},
     use_case::put_edit_honey as put_edit_honey_use_case,
     use_case::get_honey_by_id as get_honey_by_id_use_case,
+    middleware::LoggedJson,
 };
 use common_type::request::honey::edit::HoneyEditRequest;
 use common_type::request::honey::new::HoneyNewRequest;
@@ -52,21 +52,19 @@ pub async fn get_honey_by_id(
 #[put("/honey-note/api/honey/new")]
 pub async fn put_new_honey(
     _req: HttpRequest,
-    payload: Json<HoneyNewRequest>,
+    payload: LoggedJson<HoneyNewRequest>,
     pool: web::Data<sqlx::SqlitePool>,
 ) -> Result<HttpResponse, Error> {
     // DTO変換
     let dto = PutNewHoneyRequestDto { new: payload.into_inner() };
-    println!("request = {:?}", dto);
     // Repositoryの実装を生成
     let repo = HoneyRepositorySqlite { pool: pool.get_ref().clone() };
     // UseCase呼び出し
     let result: PutNewHoneyResponseDto = put_new_honey_use_case::run(&repo, dto).await;
     if result.success {
-        println!("ok response = {:?}", result);
         Ok(HttpResponse::Ok().json(result))
     } else {
-        println!("bad response = {:?}", result);
+        log::error!("put_new_honey failed: {:?}", result.error_message);
         Ok(HttpResponse::BadRequest().json(result))
     }
 }
@@ -75,7 +73,7 @@ pub async fn put_new_honey(
 #[put("/honey-note/api/honey/edit")]
 pub async fn put_edit_honey(
     _req: HttpRequest,
-    payload: Json<HoneyEditRequest>,
+    payload: LoggedJson<HoneyEditRequest>,
     pool: web::Data<sqlx::SqlitePool>,
 ) -> Result<HttpResponse, Error> {
     // DTO変換
