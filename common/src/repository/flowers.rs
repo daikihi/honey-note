@@ -5,6 +5,18 @@ use common_type::models::flowers::Flower as ModelFlower;
 
 pub trait FlowerRepository: Send + Sync {
     async fn get_all_flowers(&self) -> Result<Vec<ModelFlower>, AppError>;
+    async fn get_flower_by_id(&self, id: i32) -> Result<ModelFlower, AppError>;
+    async fn update_flower<'a, E>(
+        &self,
+        id: i32,
+        flower: &ModelFlower,
+        executor: E,
+    ) -> Result<(), AppError>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
+    async fn exists_flower_by_id<'a, E>(&self, id: i32, executor: E) -> Result<bool, AppError>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
     async fn insert_flower<'a, E>(&self, flower: &ModelFlower, executor: E) -> Result<(), AppError>
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
@@ -30,6 +42,48 @@ impl FlowerRepository for FlowerRepositorySqlite {
                 .collect::<Vec<ModelFlower>>()),
             Err(e) => Err(AppError::DatabaseError(e.to_string())),
         }
+    }
+
+    async fn get_flower_by_id(&self, id: i32) -> Result<ModelFlower, AppError> {
+        let result = crate::infrastructure::db::sqlx::flower::Flower::get_flower_by_id(id, &self.pool).await;
+        match result {
+            Ok(f) => Ok(f.to_model_flower()),
+            Err(e) => Err(AppError::DatabaseError(e.to_string())),
+        }
+    }
+
+    async fn update_flower<'a, E>(
+        &self,
+        id: i32,
+        flower: &ModelFlower,
+        executor: E,
+    ) -> Result<(), AppError>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
+        let sqlx_flower = crate::infrastructure::db::sqlx::flower::Flower {
+            id: Some(id),
+            name_jp: flower.name_jp.clone(),
+            name_en: flower.name_en.clone(),
+            scientific_name: flower.scientific_name.clone(),
+            short_note: flower.short_note.clone(),
+            flower_type: flower.flower_type.clone(),
+            image_path: flower.image_path.clone(),
+            note: flower.note.clone(),
+        };
+        sqlx_flower
+            .update(executor)
+            .await
+            .map_err(|e| AppError::DatabaseError(e.to_string()))
+    }
+
+    async fn exists_flower_by_id<'a, E>(&self, id: i32, executor: E) -> Result<bool, AppError>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
+        crate::infrastructure::db::sqlx::flower::Flower::exists_flower_by_id(id, executor)
+            .await
+            .map_err(|e| AppError::DatabaseError(e.to_string()))
     }
 
     async fn insert_flower<'a, E>(&self, flower: &ModelFlower, executor: E) -> Result<(), AppError>

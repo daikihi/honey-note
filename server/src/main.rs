@@ -43,7 +43,13 @@ fn configure_routes(cfg: &mut web::ServiceConfig) {
         .service(controllers::health_checking::health_check)
         .service(controllers::prefecture_controller::get_all_prefectures)
         .service(controllers::beekeeper_controller::get_all_beekeepers)
+        .service(controllers::beekeeper_controller::get_beekeeper_by_id)
+        .service(controllers::beekeeper_controller::put_new_beekeeper)
+        .service(controllers::beekeeper_controller::put_edit_beekeeper)
         .service(controllers::flower_controller::get_all_flowers)
+        .service(controllers::flower_controller::get_flower_by_id)
+        .service(controllers::flower_controller::put_new_flower)
+        .service(controllers::flower_controller::put_edit_flower)
         .service(controllers::honey_controller::put_new_honey)
         .service(controllers::honey_controller::put_edit_honey)
         .service(Files::new(

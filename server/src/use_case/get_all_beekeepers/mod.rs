@@ -42,6 +42,35 @@ mod tests {
                 },
             ])
         }
+        async fn get_beekeeper_by_id(&self, _id: i32) -> Result<Beekeeper, AppError> {
+            Ok(Beekeeper {
+                id: Some(1),
+                name_jp: "山田養蜂場".to_string(),
+                name_en: Some("Yamada Bee Farm".to_string()),
+                founding_year: Some(1950),
+                location_prefecture_id: Some(33),
+                location_city: Some("苫田郡鏡野町".to_string()),
+                website_url: Some("https://www.3838.com/".to_string()),
+                note: None,
+            })
+        }
+        async fn update_beekeeper<'a, E>(
+            &self,
+            _id: i32,
+            _beekeeper: &Beekeeper,
+            _executor: E,
+        ) -> Result<(), AppError>
+        where
+            E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+        {
+            Ok(())
+        }
+        async fn exists_beekeeper_by_id<'a, E>(&self, _id: i32, _executor: E) -> Result<bool, AppError>
+        where
+            E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+        {
+            Ok(true)
+        }
         async fn get_beekeeper_id_by_name<'a, E>(&self, _name: &str, _executor: E) -> Option<i32>
         where
             E: sqlx::Executor<'a, Database = sqlx::Sqlite>

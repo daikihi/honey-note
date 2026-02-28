@@ -81,6 +81,49 @@ impl Flower {
             note: self.note.clone(),
         }
     }
+
+    pub async fn get_flower_by_id(
+        id: i32,
+        pool: &sqlx::SqlitePool,
+    ) -> Result<Flower, sqlx::Error> {
+        let query = "SELECT id, name_jp, name_en, scientific_name, short_note, flower_type, image_path, note FROM flower WHERE id = $1";
+        sqlx::query_as::<_, Flower>(query)
+            .bind(id)
+            .fetch_one(pool)
+            .await
+    }
+
+    pub async fn exists_flower_by_id<'a, E>(id: i32, executor: E) -> Result<bool, sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
+        let query = "SELECT EXISTS(SELECT 1 FROM flower WHERE id = $1)";
+        let exists: (i64,) = sqlx::query_as(query).bind(id).fetch_one(executor).await?;
+        Ok(exists.0 != 0)
+    }
+
+    pub async fn update<'a, E>(&self, executor: E) -> Result<(), sqlx::Error>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
+        let query = r#"
+            UPDATE flower
+            SET name_jp = ?, name_en = ?, scientific_name = ?, short_note = ?, flower_type = ?, image_path = ?, note = ?
+            WHERE id = ?
+        "#;
+        sqlx::query(query)
+            .bind(&self.name_jp)
+            .bind(&self.name_en)
+            .bind(&self.scientific_name)
+            .bind(&self.short_note)
+            .bind(&self.flower_type)
+            .bind(&self.image_path)
+            .bind(&self.note)
+            .bind(self.id)
+            .execute(executor)
+            .await?;
+        Ok(())
+    }
 }
 
 pub async fn get_all_flowers(pool: &sqlx::SqlitePool) -> Result<Vec<Flower>, sqlx::Error> {

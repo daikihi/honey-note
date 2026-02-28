@@ -6,6 +6,18 @@ use log::error;
 
 pub trait BeekeeperRepository: Send + Sync {
     async fn get_all_beekeepers(&self) -> Result<Vec<ModelBeekeeper>, AppError>;
+    async fn get_beekeeper_by_id(&self, id: i32) -> Result<ModelBeekeeper, AppError>;
+    async fn update_beekeeper<'a, E>(
+        &self,
+        id: i32,
+        beekeeper: &ModelBeekeeper,
+        executor: E,
+    ) -> Result<(), AppError>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
+    async fn exists_beekeeper_by_id<'a, E>(&self, id: i32, executor: E) -> Result<bool, AppError>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
     async fn get_beekeeper_id_by_name<'a, E>(&self, name: &str, executor: E) -> Option<i32>
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
@@ -50,6 +62,48 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
         SqlBeekeeper::get_beekeeper_id_by_name(name, executor).await
+    }
+
+    async fn get_beekeeper_by_id(&self, id: i32) -> Result<ModelBeekeeper, AppError> {
+        let result = SqlBeekeeper::get_beekeeper_by_id(id, &self.pool).await;
+        match result {
+            Ok(b) => Ok(b.to_model_beekeeper()),
+            Err(e) => Err(AppError::DatabaseError(e.to_string())),
+        }
+    }
+
+    async fn update_beekeeper<'a, E>(
+        &self,
+        id: i32,
+        beekeeper: &ModelBeekeeper,
+        executor: E,
+    ) -> Result<(), AppError>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
+        let sqlx_bk = SqlBeekeeper {
+            id,
+            name_jp: beekeeper.name_jp.clone(),
+            name_en: beekeeper.name_en.clone(),
+            founding_year: beekeeper.founding_year,
+            location_prefecture_id: beekeeper.location_prefecture_id,
+            location_city: beekeeper.location_city.clone(),
+            website_url: beekeeper.website_url.clone(),
+            note: beekeeper.note.clone(),
+        };
+        sqlx_bk
+            .update(executor)
+            .await
+            .map_err(|e| AppError::DatabaseError(e.to_string()))
+    }
+
+    async fn exists_beekeeper_by_id<'a, E>(&self, id: i32, executor: E) -> Result<bool, AppError>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
+    {
+        SqlBeekeeper::exists_beekeeper_by_id(id, executor)
+            .await
+            .map_err(|e| AppError::DatabaseError(e.to_string()))
     }
 
     async fn insert_beekeeper<'a, E>(&self, beekeeper: &ModelBeekeeper, executor: E) -> Result<(), AppError>
