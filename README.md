@@ -1,141 +1,133 @@
 # honey-note
 
-このプロジェクトはハチミツの管理を行うためのものです。ハチミツのコレクションをしている方は、このプロジェクトを使ってハチミツを登録・管理できます。
+ハチミツの管理を行うためのプロジェクトです。ハチミツのコレクションを登録・管理することができます。
+
+## プロジェクト構成
+
+このプロジェクトは以下のサブプロジェクトで構成されています。
+
+- `server`: Actix-webを使用したAPIサーバーと静的ファイルの配信
+- `front`: Rust + WebAssembly (wasm-pack) によるフロントエンド
+- `batchs`: マスターデータや初期データの登録用バッチツール
+- `common`: 各サブプロジェクトで共有されるインフラ・リポジトリ層
+- `common-type`: 各サブプロジェクトで共有される型定義
+- `resources`: データベースマイグレーションファイルとマスターデータ
 
 ## 設計概要
 
-![Abstract image of what will we make](docs/AbustructDesignLogs.md)
+- [抽象デザイン](docs/AbustructDesignLogs.md)
+- [データモデル設計](docs/design.md)
+- [システム構成図](https://github.com/user-attachments/assets/330b914e-1d96-48c4-8480-9a4e344c53a8)
+- [イベントストーミング図](https://github.com/user-attachments/assets/fb8d6349-a483-4388-942c-7e41c75982bf)
 
-![data model design](docs/design.md)
+## 開発環境のセットアップ
 
-![Overview Architecture](https://github.com/user-attachments/assets/330b914e-1d96-48c4-8480-9a4e344c53a8)
-
-イベントストーミング図
-
-![Events](https://github.com/user-attachments/assets/fb8d6349-a483-4388-942c-7e41c75982bf)
-
-## データベースマイグレーション
-
-```bash
-$ cd resources/db
-$ sqlx migrate run --database-url sqlite:${PATH_TO_YOUR_SQLITE_DB_FILE}
-
-# 例
-$ sqlx migrate run --database-url sqlite:./honey_note.db
-```
-
-デフォルトのデータベースファイルパスは `common/src/infrastructure/db/sqlx.rs` にある `DB_FILE_NAME` 定数で指定されています。別のファイルを使用したい場合は定数を書き換えるか、バッチなど実行時に引数で指定してください。
-
-SQLiteのデータベースファイルを削除した状態でサーバーが起動していると、古いファイルへのコネクションが残るため、サーバーを再起動してください。
-
-## 実行方法
-
-このプロジェクトは主にRustで書かれています。環境にはRustがインストールされている必要があります。
-Rustのインストールにはrustupを推奨します。インストール手順は [rustup.rs](https://rustup.rs/) を参照してください。
+### 必須ツール
+- Rust (rustupを推奨: [rustup.rs](https://rustup.rs/))
+- wasm-pack (フロントエンドのビルドに使用)
+- sqlx-cli (データベースマイグレーションに使用)
+- SQLite
 
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# wasm-packのインストール
+cargo install wasm-pack
+
+# sqlx-cliのインストール
+cargo install sqlx-cli --no-default-features --features sqlite
 ```
 
-### ビルド
+### データベースの準備
 
 ```bash
-$ cd $honey_note_path
-$ cargo install wasm-bindgen-cli  # frontサブプロジェクト向け
+cd resources/db
+# データベースファイルの作成とマイグレーションの実行
+sqlx migrate run --database-url sqlite:./honey_note.db
 ```
 
-### バッチ
+デフォルトのデータベースファイル名は `common/src/infrastructure/db/sqlx.rs` の `DB_FILE_NAME` で定義されています。
 
-バッチ処理では各操作を**トランザクション**内で行うようになりました。途中でエラーが発生した場合はロールバックされるので、同じファイルを何度実行しても重複登録されにくくなっています。
+## ビルドと実行
 
-以下ではバッチ処理の実行例を示します。
+### フロントエンドのビルド
 
-#### 都道府県マスターローダー
-
-ファイルシステムから都道府県マスターデータを読み込み、DBに存在しない場合は登録します。
+RustコードをWebAssemblyにコンパイルし、サーバーが配信するディレクトリに出力します。
 
 ```bash
-$ cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.csv $PATH_TO_DB_FILE
+cd front/
+wasm-pack build --target web --out-dir ../server/src/assets/javascript/
 ```
 
-ログを表示したい場合:
+### サーバーの起動
 
 ```bash
-$ RUST_LOG=info cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.csv $PATH_TO_DB_FILE
+# ルートディレクトリから実行
+RUST_LOG=info cargo run -p server
 ```
 
-#### 花名マスターローダー
+サーバーはデフォルトで `http://127.0.0.1:8080/honey_note/honeys/lists.html` でアクセス可能です。
+設定は `common/config/server/local.toml` で変更できます。
 
-ファイルシステム上のマスターデータファイル（各行に花の名前）を読み込み、新しいデータのみをDBに保存します。拡張子は問いません。ヘッダー行は無視され、各行は1つの花名だけを含むと仮定します。
+### バッチ処理
 
+各バッチは `batchs` サブプロジェクトに含まれています。トランザクション内で処理されるため、再試行が可能です。
+
+#### 都道府県マスター
 ```bash
-$ RUST_LOG=info cargo run -p batchs --bin flower_loader flower_master_data_directory/file_name.csv database_file.db
+RUST_LOG=info cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.csv resources/db/honey_note.db
 ```
 
-#### 養蜂業者マスターローダー
-
-CSV形式の入力ファイルを処理し、養蜂業者マスターデータを更新・登録します。各行のフォーマットは次の通りです。
-
-```
-name_jp,name_en,prefecture_name,city_name
-名前,英語表記,都道府県,都市
+#### 花名マスター
+```bash
+RUST_LOG=info cargo run -p batchs --bin flower_loader resources/master_data/flower.csv resources/db/honey_note.db
 ```
 
-name_jp以外のフィールドは空でも構いません。
-
-将来的にはフロントページの入力フォームからDBを更新できるようにする予定です。現在はプロトタイプとしての実装です。
-
-実行例:
-
+#### 養蜂業者マスター
 ```bash
 RUST_LOG=info cargo run -p batchs --bin beekeeper_loader resources/master_data/beekeeper.csv resources/db/honey_note.db
 ```
 
-#### ハチミツマスターローダー
-
-```
-RUST_LOG=info cargo run -p batchs --bin honey_loader resources/master_data/${honey_master_data_name}.jsonl resources/db/${honey_db_name}.db
-```
-
-### Web サーバー
-
-サーバーは `common/config/server/local.toml` などの設定ファイルからホスト名・ポート番号を読み込みます。
-デフォルトでは `127.0.0.1:8080` ですが、別の環境を追加したい場合は同ディレクトリに環境名.toml を作成し、`main.rs` の `load_config("<env>")` 引数を変更してください。
-
+#### ハチミツデータ（JSONL形式）
 ```bash
-cd $honey_note_top_directory
-RUST_LOG=info cargo run -p server
+RUST_LOG=info cargo run -p batchs --bin honey_loader resources/master_data/honey_data.jsonl resources/db/honey_note.db
 ```
 
-`$honey_note_top_directory` はリポジトリのルートディレクトリを指します。
+## APIエンドポイント
 
-#### JavaScript
+主要なエンドポイントは以下の通りです。ベースURLは `/honey-note/api` です。
 
-RustコードからJavaScriptをビルドする方法です。最初に `wasm-pack` をインストールしてください。
+### ハチミツ関連
+- `GET /honeys`: ハチミツ一覧の取得
+- `GET /honey/{id}`: ハチミツ詳細の取得
+- `PUT /honey/new`: ハチミツの新規登録
+- `PUT /honey/edit`: ハチミツの更新
 
-```bash
-cargo install wasm-pack
-```
+### マスターデータ関連
+- `GET /flowers`: 花一覧の取得
+- `GET /flower/{id}`: 花詳細の取得
+- `PUT /flower/new`: 花の新規登録
+- `PUT /flower/edit/{id}`: 花の更新
+- `GET /beekeepers`: 養蜂業者一覧の取得
+- `GET /beekeeper/{id}`: 養蜂業者詳細の取得
+- `PUT /beekeeper/new`: 養蜂業者の新規登録
+- `PUT /beekeeper/edit/{id}`: 養蜂業者の更新
+- `GET /prefectures`: 都道府県一覧の取得
 
-```bash
-$ cd front/
-$ wasm-pack build --target web --out-dir ../server/src/assets/javascript/
-$ ls ../server/src/assets/javascript
-front_bg.wasm      front_bg.wasm.d.ts front.d.ts         front.js           package.json
-```
+### その他
+- `GET /health`: ヘルスチェック
 
-ビルド後、`server/src/assets/javascript` にファイルが配置されます。
+## 仕様書
+
+詳細な仕様については以下のドキュメントを参照してください（日本語）。
+
+- [API仕様書](specs/jp/api.md)
+- [Webページ仕様書](specs/jp/web-endpoint.md)
 
 ## その他
 
-- バッチやサーバーの動作ログを見たい場合は、`RUST_LOG=info` などで環境変数を設定して実行してください。
-- WSL（Ubuntu）上で開発する場合、コンパイル用にgccをインストールしてください。
+- WSL（Ubuntu）を使用する場合は、`gcc` のインストールが必要です: `sudo apt install gcc`
+- 動作ログを表示するには、環境変数 `RUST_LOG=info` を設定してください。
 
-```bash
-sudo apt install gcc
-```
-
-## ライセンス・関連情報
+## ライセンス
 
 - 本プロジェクトには "ISO 3166 Countries with Regional Codes" のデータを使用しており、MITライセンスに基づき提供されています。
   <https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes>
