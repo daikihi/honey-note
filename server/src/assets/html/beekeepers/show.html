@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>HoneyNote | 養蜂場の詳細</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --gold:#FFB703;
+            --blue:#219EBC;
+            --line:#E9C46A;
+            --cream:#FFF8ED;
+            --radius:8px;
+            font-family:"Inter","Noto Sans JP",sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { background:var(--cream); color:#333; }
+
+        header {
+            background:#fff;
+            box-shadow:0 1px 4px rgba(0,0,0,.06);
+        }
+        header nav {
+            max-width:1000px;
+            height:64px;
+            margin:auto;
+            display:flex;
+            justify-content: space-between;
+            align-items:center;
+            padding:0 1rem;
+        }
+        nav a.logo {
+            display:flex; align-items:center; gap:0.5rem;
+            font-size:1.5rem; font-weight:700;
+            color:var(--gold); text-decoration:none;
+        }
+        .logo img { height:56px; }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .nav-links a:hover {
+            color: var(--blue);
+        }
+
+        main {
+            max-width:900px;
+            margin:2rem auto;
+            background:#fff;
+            padding:2rem;
+            border-radius:var(--radius);
+            box-shadow:0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            font-size:1.8rem;
+            margin-bottom:1rem;
+            color:var(--blue);
+        }
+
+        .section {
+            margin-bottom:2rem;
+        }
+        .section h2 {
+            font-size:1.2rem;
+            margin-bottom:.5rem;
+            color:#555;
+            border-left:4px solid var(--gold);
+            padding-left:0.5rem;
+        }
+
+        .info-grid {
+            display:grid;
+            grid-template-columns: 160px 1fr;
+            row-gap:0.6rem;
+            column-gap:1rem;
+            font-size:.95rem;
+        }
+        .label {
+            color:#666;
+            font-weight:600;
+        }
+
+        .actions {
+            margin-top:2rem;
+            display:flex;
+            justify-content:flex-end;
+            gap:1rem;
+        }
+        .actions a {
+            padding:0.5rem 1rem;
+            border-radius:var(--radius);
+            text-decoration:none;
+            font-weight:600;
+        }
+        .btn-edit {
+            background:var(--blue);
+            color:white;
+        }
+        .btn-back {
+            background:#eee;
+            color:#333;
+        }
+
+        .hint {
+            font-size:.8rem;
+            color:#888;
+            margin-top:.3rem;
+        }
+    </style>
+
+    <script type="module">
+        import init, { beekeeper_show_main } from '/honey_note/javascript/front.js';
+        init().then(() => {
+            beekeeper_show_main();
+            console.log("WASM loaded on beekeeper show.html!");
+        });
+    </script>
+</head>
+<body>
+
+<header>
+    <nav>
+        <div class="nav-left">
+            <a class="logo" href="/honey_note/index.html">
+                <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
+                HoneyNote
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="/honey_note/honeys/lists.html">はちみつ一覧</a>
+            <a href="/honey_note/flowers/lists.html">蜜源リスト</a>
+            <a href="/honey_note/beekeepers/lists.html">養蜂場</a>
+        </div>
+    </nav>
+</header>
+
+<main>
+    <h1 id="page_title">養蜂場の詳細</h1>
+    
+    <div class="section">
+        <h2>基本情報</h2>
+        <div class="info-grid">
+            <div class="label">養蜂場名 (和名)</div>
+            <div id="field_name_jp">-</div>
+
+            <div class="label">養蜂場名 (英名)</div>
+            <div id="field_name_en">-</div>
+
+            <div class="label">創業年</div>
+            <div id="field_founding_year">-</div>
+
+            <div class="label">所在地 (都道府県)</div>
+            <div id="field_location_prefecture">-</div>
+
+            <div class="label">所在地 (市区町村以下)</div>
+            <div id="field_location_city">-</div>
+
+            <div class="label">ウェブサイト URL</div>
+            <div id="field_website_url">-</div>
+
+            <div class="label">備考</div>
+            <div id="field_note">-</div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a class="btn-back" href="/honey_note/beekeepers/lists.html">一覧に戻る</a>
+        <a class="btn-edit" id="btn_edit_link" href="/honey_note/beekeepers/edit.html">編集する</a>
+    </div>
+</main>
+
+<script>
+  (function(){
+    try {
+      const url = new URL(window.location.href);
+      const id = url.searchParams.get('id');
+      if (id) {
+        const a = document.getElementById('btn_edit_link');
+        if (a) {
+          a.href = `/honey_note/beekeepers/edit.html?id=${encodeURIComponent(id)}`;
+        }
+      }
+    } catch (e) {
+      console.error('failed to setup edit link', e);
+    }
+  })();
+</script>
+</body>
+</html>

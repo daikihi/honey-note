@@ -61,6 +61,12 @@ pub async fn honey_show_main() {
     show::honey_show_page_main::run().await;
 }
 
+#[wasm_bindgen]
+pub async fn beekeeper_show_main() {
+    web_sys::console::log_1(&"Hello, Beekeeper Show!".into());
+    show::beekeeper_show_page_main::run().await;
+}
+
 
 /**
  *  For Common Functions as library
