@@ -6,6 +6,7 @@ pub async fn run<T: FlowerRepository>(
     repo: &T,
     req: PutEditFlowerRequestDto,
     pool: &sqlx::SqlitePool,
+    user_id: i32,
 ) -> PutEditFlowerResponseDto {
     let id = req.id;
     let flower = req.flower;
@@ -19,9 +20,9 @@ pub async fn run<T: FlowerRepository>(
         },
     };
 
-    match repo.exists_flower_by_id(id, &mut *tx).await {
+    match repo.exists_flower_by_id(id, user_id, &mut *tx).await {
         Ok(true) => {
-            match repo.update_flower(id, &flower, &mut *tx).await {
+            match repo.update_flower(id, &flower, user_id, &mut *tx).await {
                 Ok(_) => {
                     if let Err(e) = tx.commit().await {
                         return PutEditFlowerResponseDto {

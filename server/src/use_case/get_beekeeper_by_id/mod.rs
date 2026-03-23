@@ -5,9 +5,10 @@ use get_beekeeper_by_id_dto::{GetBeekeeperByIdRequestDto, GetBeekeeperByIdRespon
 pub async fn run<T: BeekeeperRepository>(
     repo: &T,
     req: GetBeekeeperByIdRequestDto,
+    user_id: i32,
 ) -> GetBeekeeperByIdResponseDto {
     let id = req.id;
-    match repo.get_beekeeper_by_id(id).await {
+    match repo.get_beekeeper_by_id(id, user_id).await {
         Ok(beekeeper) => GetBeekeeperByIdResponseDto {
             success: true,
             beekeeper: Some(beekeeper),

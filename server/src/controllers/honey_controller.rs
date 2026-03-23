@@ -11,17 +11,20 @@ use crate::{
 use common_type::request::honey::edit::HoneyEditRequest;
 use common_type::request::honey::new::HoneyNewRequest;
 
+use crate::middleware::auth::AuthenticatedUser;
+
 #[get("/honey-note/api/honeys")]
 pub async fn get_all_honeys(
     pool: web::Data<sqlx::SqlitePool>,
+    auth: AuthenticatedUser,
 ) -> Result<actix_web::HttpResponse, actix_web::Error> {
     use crate::use_case::get_all_honies as get_all_honies_use_case;
     let request_dto = get_all_honies_use_case::get_all_honies_dto::GetAllHoneysRequestDto {};
     let repo = HoneyRepositorySqlite {
         pool: pool.get_ref().clone(),
     };
-    let use_case_result = get_all_honies_use_case::run(&repo, request_dto).await;
-    log::info!("size of response is {}", use_case_result.honeys.iter().len());
+    let use_case_result = get_all_honies_use_case::run(&repo, request_dto, auth.user_id).await;
+    log::info!("user_id={}, username={}, action=get_all_honeys, count={}", auth.user_id, auth.username, use_case_result.honeys.len());
     Ok(actix_web::HttpResponse::Ok().json(use_case_result.honeys))
 }
 
@@ -29,11 +32,12 @@ pub async fn get_all_honeys(
 pub async fn get_honey_by_id(
     path: web::Path<i64>,
     pool: web::Data<sqlx::SqlitePool>,
+    auth: AuthenticatedUser,
 ) -> Result<HttpResponse, Error> {
     let id = path.into_inner();
     let repo = HoneyRepositorySqlite { pool: pool.get_ref().clone() };
     let dto = get_honey_by_id_use_case::get_honey_by_id_dto::GetHoneyByIdRequestDto { id };
-    let result = get_honey_by_id_use_case::run(&repo, dto).await;
+    let result = get_honey_by_id_use_case::run(&repo, dto, auth.user_id).await;
 
     if result.success {
         // クライアントへは HoneyDetail をそのまま返却（Optionをアンラップ）
@@ -54,13 +58,17 @@ pub async fn put_new_honey(
     _req: HttpRequest,
     payload: LoggedJson<HoneyNewRequest>,
     pool: web::Data<sqlx::SqlitePool>,
+    auth: AuthenticatedUser,
 ) -> Result<HttpResponse, Error> {
     // DTO変換
     let dto = PutNewHoneyRequestDto { new: payload.into_inner() };
     // Repositoryの実装を生成
     let repo = HoneyRepositorySqlite { pool: pool.get_ref().clone() };
     // UseCase呼び出し
-    let result: PutNewHoneyResponseDto = put_new_honey_use_case::run(&repo, dto).await;
+    let result: PutNewHoneyResponseDto = put_new_honey_use_case::run(&repo, dto, auth.user_id).await;
+
+    info!("user_id={}, username={}, action=put_new_honey, honey_id={:?}, success={}", auth.user_id, auth.username, result.id, result.success);
+
     if result.success {
         Ok(HttpResponse::Ok().json(result))
     } else {
@@ -75,6 +83,7 @@ pub async fn put_edit_honey(
     _req: HttpRequest,
     payload: LoggedJson<HoneyEditRequest>,
     pool: web::Data<sqlx::SqlitePool>,
+    auth: AuthenticatedUser,
 ) -> Result<HttpResponse, Error> {
     // DTO変換
     let dto = PutEditHoneyRequestDto { edit: payload.into_inner() };
@@ -83,7 +92,9 @@ pub async fn put_edit_honey(
     let repo = HoneyRepositorySqlite { pool: pool.get_ref().clone() };
 
     // UseCase呼び出し
-    let result: PutEditHoneyResponseDto = put_edit_honey_use_case::run(&repo, dto).await;
+    let result: PutEditHoneyResponseDto = put_edit_honey_use_case::run(&repo, dto, auth.user_id).await;
+
+    info!("user_id={}, username={}, action=put_edit_honey, honey_id={}, success={}", auth.user_id, auth.username, dto.edit.id, result.success);
 
     if result.success {
         Ok(HttpResponse::Ok().json(result))

@@ -5,8 +5,9 @@ use get_honey_by_id_dto::{GetHoneyByIdRequestDto, GetHoneyByIdResponseDto};
 pub async fn run<T: HoneyRepository>(
     repo: &T,
     request: GetHoneyByIdRequestDto,
+    user_id: i32,
 ) -> GetHoneyByIdResponseDto {
-    match repo.get_honey_by_id(request.id).await {
+    match repo.get_honey_by_id(request.id, user_id).await {
         Ok(detail) => GetHoneyByIdResponseDto { success: true, honey: Some(detail), error_message: None },
         Err(e) => GetHoneyByIdResponseDto { success: false, honey: None, error_message: Some(e) },
     }

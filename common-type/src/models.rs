@@ -2,6 +2,8 @@ pub mod beekeeper;
 pub mod flowers;
 pub mod honey;
 pub mod prefectures;
+pub mod user;
+pub mod session;
 pub mod honey_detail;
 pub mod honey_detail_types;
 pub mod observation_input;

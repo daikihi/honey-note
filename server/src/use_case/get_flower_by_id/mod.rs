@@ -5,9 +5,10 @@ use get_flower_by_id_dto::{GetFlowerByIdRequestDto, GetFlowerByIdResponseDto};
 pub async fn run<T: FlowerRepository>(
     repo: &T,
     req: GetFlowerByIdRequestDto,
+    user_id: i32,
 ) -> GetFlowerByIdResponseDto {
     let id = req.id;
-    match repo.get_flower_by_id(id).await {
+    match repo.get_flower_by_id(id, user_id).await {
         Ok(flower) => GetFlowerByIdResponseDto {
             success: true,
             flower: Some(flower),

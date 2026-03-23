@@ -5,13 +5,16 @@ use crate::infrastructure::db::sqlx::beekeeper::Beekeeper;
 use crate::infrastructure::db::sqlx::honey::Honey;
 use crate::infrastructure::db::sqlx::{beekeeper, honey};
 
+use async_trait::async_trait;
+
+#[async_trait]
 pub trait HoneyRepository: Send + Sync {
-    async fn insert_honey(&self, honey: HoneyDetail) -> Result<i64, String>;
-    async fn update_honey(&self, id: i64, honey: HoneyDetail) -> Result<(), String>;
-    async fn exists_honey(&self, honey: &HoneyDetail) -> Result<bool, String>;
-    async fn exists_honey_by_id(&self, id: i64) -> Result<bool, String>;
-    async fn get_all_honeys(&self) -> Result<Vec<ModelHoney>, String>;
-    async fn get_honey_by_id(&self, id: i64) -> Result<HoneyDetail, String>;
+    async fn insert_honey(&self, honey: HoneyDetail, user_id: i32) -> Result<i64, String>;
+    async fn update_honey(&self, id: i64, honey: HoneyDetail, user_id: i32) -> Result<(), String>;
+    async fn exists_honey(&self, honey: &HoneyDetail, user_id: i32) -> Result<bool, String>;
+    async fn exists_honey_by_id(&self, id: i64, user_id: i32) -> Result<bool, String>;
+    async fn get_all_honeys(&self, user_id: i32) -> Result<Vec<ModelHoney>, String>;
+    async fn get_honey_by_id(&self, id: i64, user_id: i32) -> Result<HoneyDetail, String>;
 }
 
 pub struct HoneyRepositorySqlite {
@@ -19,7 +22,7 @@ pub struct HoneyRepositorySqlite {
 }
 
 impl HoneyRepository for HoneyRepositorySqlite {
-    async fn insert_honey(&self, honey: HoneyDetail) -> Result<i64, String> {
+    async fn insert_honey(&self, honey: HoneyDetail, user_id: i32) -> Result<i64, String> {
         use crate::repository::{beekeepers as bk_repo, flowers as fl_repo};
         use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
         use common_type::models::flowers::create_model_flower_from_name;
@@ -31,13 +34,14 @@ impl HoneyRepository for HoneyRepositorySqlite {
         if let Some(bk_name) = honey.basic.beekeeper_name.clone() {
             let name = bk_name.0;
             if !name.is_empty() {
-                // 既存確認
+                // 既存確認（ユーザーに紐付く養蜂業者）
                 let existing = bk_repo::get_beekeeper_id_by_name(&name, &mut *tx).await;
                 match existing {
                     Some(id) => beekeeper_id_opt = Some(id),
                     None => {
                         // 新規作成
-                        let model_bk = ModelBeekeeper::from_string_csv(&name, None, None, None);
+                        let mut model_bk = ModelBeekeeper::from_string_csv(&name, None, None, None);
+                        model_bk.user_id = Some(user_id);
                         if !bk_repo::has_beekeeper(&model_bk, &mut *tx).await {
                             let _ = bk_repo::insert_beekeeper(&model_bk, &mut *tx).await;
                         }
@@ -54,6 +58,7 @@ impl HoneyRepository for HoneyRepositorySqlite {
             name_jp: honey.basic.name_jp.0.clone(),
             name_en: None,
             beekeeper_id: beekeeper_id_opt,
+            user_id: Some(user_id),
             origin_country: honey.basic.country.map(|c| c.0),
             origin_region: honey.basic.region.map(|r| r.0),
             harvest_year: honey.basic.harvest_year,
@@ -118,14 +123,27 @@ impl HoneyRepository for HoneyRepositorySqlite {
         Ok(honey_id)
     }
 
-    async fn update_honey(&self, id: i64, honey: HoneyDetail) -> Result<(), String> {
+    async fn update_honey(&self, id: i64, honey: HoneyDetail, user_id: i32) -> Result<(), String> {
         let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
+
+        // 所有権チェック
+        let exists = sqlx::query("SELECT 1 FROM honey WHERE id = ? AND user_id = ?")
+            .bind(id as i32)
+            .bind(user_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        
+        if exists.is_none() {
+            return Err("指定されたハチミツが見つからないか、権限がありません".to_string());
+        }
 
         let sqlx_honey = Honey {
             id: Some(id as i32),
             name_jp: honey.basic.name_jp.0.clone(),
             name_en: None,
             beekeeper_id: None,
+            user_id: Some(user_id),
             origin_country: honey.basic.country.map(|c| c.0),
             origin_region: honey.basic.region.map(|r| r.0),
             harvest_year: honey.basic.harvest_year,
@@ -142,22 +160,36 @@ impl HoneyRepository for HoneyRepositorySqlite {
         Ok(())
     }
 
-    async fn exists_honey(&self, honey: &HoneyDetail) -> Result<bool, String> {
-        Honey::is_exist_by_name_static(&honey.basic.name_jp.0, &self.pool)
+    async fn exists_honey(&self, honey: &HoneyDetail, user_id: i32) -> Result<bool, String> {
+        let name = &honey.basic.name_jp.0;
+        let query = "SELECT EXISTS(SELECT 1 FROM honey WHERE name_jp = ? AND user_id = ?)";
+        let result: (i64,) = sqlx::query_as(query)
+            .bind(name)
+            .bind(user_id)
+            .fetch_one(&self.pool)
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        Ok(result.0 != 0)
     }
 
-    async fn exists_honey_by_id(&self, id: i64) -> Result<bool, String> {
-        Honey::is_exist_by_id_static(id as i32, &self.pool)
+    async fn exists_honey_by_id(&self, id: i64, user_id: i32) -> Result<bool, String> {
+        let query = "SELECT EXISTS(SELECT 1 FROM honey WHERE id = ? AND user_id = ?)";
+        let result: (i64,) = sqlx::query_as(query)
+            .bind(id as i32)
+            .bind(user_id)
+            .fetch_one(&self.pool)
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        Ok(result.0 != 0)
     }
 
-    async fn get_all_honeys(&self) -> Result<Vec<ModelHoney>, String> {
-        let sql_honeys: Result<Vec<Honey>, sqlx::Error> = honey::get_all(&self.pool).await;
+    async fn get_all_honeys(&self, user_id: i32) -> Result<Vec<ModelHoney>, String> {
+        let sql_honeys: Result<Vec<Honey>, sqlx::Error> = sqlx::query_as("SELECT * FROM honey WHERE user_id = ?")
+            .bind(user_id)
+            .fetch_all(&self.pool)
+            .await;
         let sql_beekeepers: Result<Vec<beekeeper::Beekeeper>, sqlx::Error> =
-            beekeeper::Beekeeper::get_all_beekeepers(&self.pool).await;
+            beekeeper::Beekeeper::get_all_beekeepers(&self.pool).await; // 養蜂業者は共通マスターまたは全取得で一旦妥協
 
         match (sql_honeys, sql_beekeepers) {
             (Ok(v), Ok(bks)) => Ok(create_model_honeys(v, bks)),
@@ -166,7 +198,7 @@ impl HoneyRepository for HoneyRepositorySqlite {
         }
     }
 
-    async fn get_honey_by_id(&self, id: i64) -> Result<HoneyDetail, String> {
+    async fn get_honey_by_id(&self, id: i64, user_id: i32) -> Result<HoneyDetail, String> {
         use chrono::{DateTime, FixedOffset};
         use common_type::models::honey_detail::HoneyDetail;
         use common_type::models::honey_detail_basic::HoneyDetailBasic;
@@ -175,13 +207,14 @@ impl HoneyRepository for HoneyRepositorySqlite {
 
         // 1) honey行を取得
         let row: Result<Honey, sqlx::Error> = sqlx::query_as::<_, Honey>(
-            r#"SELECT id, name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note FROM honey WHERE id = ?"#
+            r#"SELECT id, name_jp, name_en, beekeeper_id, user_id, origin_country, origin_region, harvest_year, purchase_date, note FROM honey WHERE id = ? AND user_id = ?"#
         )
         .bind(id as i32)
+        .bind(user_id)
         .fetch_one(&self.pool)
         .await;
 
-        let h = row.map_err(|e| format!("NoSuchHoneyIdExist: {:?}", e))?;
+        let h = row.map_err(|e| format!("NoSuchHoneyIdExistOrNoPermission: {:?}", e))?;
 
         // 2) 養蜂場名の解決
         let beekeeper_name_opt: Option<BeekeeperName> = match h.beekeeper_id {
@@ -238,22 +271,22 @@ impl HoneyRepository for HoneyRepositorySqlite {
 pub struct HoneyRepositoryMock;
 
 impl HoneyRepository for HoneyRepositoryMock {
-    async fn insert_honey(&self, _honey: HoneyDetail) -> Result<i64, String> {
+    async fn insert_honey(&self, _honey: HoneyDetail, _user_id: i32) -> Result<i64, String> {
         Ok(1)
     }
-    async fn update_honey(&self, _id: i64, _honey: HoneyDetail) -> Result<(), String> {
+    async fn update_honey(&self, _id: i64, _honey: HoneyDetail, _user_id: i32) -> Result<(), String> {
         Ok(())
     }
-    async fn exists_honey(&self, _honey: &HoneyDetail) -> Result<bool, String> {
+    async fn exists_honey(&self, _honey: &HoneyDetail, _user_id: i32) -> Result<bool, String> {
         Ok(false) // 常に新規として扱う（テスト用）
     }
-    async fn exists_honey_by_id(&self, _id: i64) -> Result<bool, String> {
+    async fn exists_honey_by_id(&self, _id: i64, _user_id: i32) -> Result<bool, String> {
         Ok(true)
     }
-    async fn get_all_honeys(&self) -> Result<Vec<ModelHoney>, String> {
+    async fn get_all_honeys(&self, _user_id: i32) -> Result<Vec<ModelHoney>, String> {
         Ok(vec![])
     }
-    async fn get_honey_by_id(&self, id: i64) -> Result<HoneyDetail, String> {
+    async fn get_honey_by_id(&self, id: i64, _user_id: i32) -> Result<HoneyDetail, String> {
         use common_type::models::honey_detail::HoneyDetail;
         use common_type::models::honey_detail_basic::HoneyDetailBasic;
         use common_type::models::honey_detail_dynamic::HoneyDetailDynamic;

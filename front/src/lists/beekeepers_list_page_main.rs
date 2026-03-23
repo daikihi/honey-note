@@ -1,10 +1,15 @@
-use crate::commons::{ajax::get_list_data, validators::is_valid_path};
+use crate::commons::{ajax::{get_list_data, check_authentication}, validators::is_valid_path};
 use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 use common_type::models::prefectures::Prefecture as ModelPrefecture;
 use wasm_bindgen::JsValue;
 use web_sys::{Document, Window};
 
 pub async fn run() {
+    // 認証チェック
+    if let Err(_) = check_authentication().await {
+        return;
+    }
+
     if is_valid_path("/honey_note/beekeepers/lists.html") {
         web_sys::console::log_1(&"Beekeepers List Page is running.".into());
         let _ = main_work().await;

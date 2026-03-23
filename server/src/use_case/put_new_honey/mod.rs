@@ -10,10 +10,11 @@ use put_new_honey_dto::{PutNewHoneyRequestDto, PutNewHoneyResponseDto};
 pub async fn run<T: HoneyRepository>(
     repo: &T,
     req: PutNewHoneyRequestDto,
+    user_id: i32,
 ) -> PutNewHoneyResponseDto {
     let honey_detail: HoneyDetail = req.to_honey_detail();
     // 既存チェック
-    match repo.exists_honey(&honey_detail).await {
+    match repo.exists_honey(&honey_detail, user_id).await {
         Ok(true) => {
             return PutNewHoneyResponseDto {
                 id: None,
@@ -23,7 +24,7 @@ pub async fn run<T: HoneyRepository>(
         }
         Ok(false) => {
             // 新規登録
-            match repo.insert_honey(honey_detail).await {
+            match repo.insert_honey(honey_detail, user_id).await {
                 Ok(id) => PutNewHoneyResponseDto { id: Some(id), success: true, error_message: None },
                 Err(e) => PutNewHoneyResponseDto { id: None, success: false, error_message: Some(e) },
             }

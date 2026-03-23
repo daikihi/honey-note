@@ -4,9 +4,9 @@ use common_type::models::beekeeper::Beekeeper;
 use crate::honey_loader_models::JsonHoney;
 use crate::{honey_loader_gateway, honey_loader_request};
 
-pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>) {
+pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>, user_id: i32) {
     // ログ出力
-    log::info!("honey_loader リクエスト: {:?}", request_dto);
+    log::info!("honey_loader リクエスト: {:?}, user_id={}", request_dto, user_id);
     let _json_honeys: Vec<JsonHoney> = honey_loader_gateway::run(request_dto.file_name);
     log::info!(
         "honey_loader 完了: {} 件のハニーを読み込みました",
@@ -33,7 +33,7 @@ pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>) {
     let mut tx = pool.begin().await.expect("データベース接続に失敗しました");
 
     for beekeeper in beekeepers {
-        let bk = &Beekeeper {
+        let mut bk = Beekeeper {
             id: None,
             name_jp: beekeeper.to_string(),
             name_en: None,
@@ -41,13 +41,14 @@ pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>) {
             location_prefecture_id: None,
             location_city: None,
             website_url: None,
+            user_id: Some(user_id),
             note: None,
         };
 
-        let is_exist = common::repository::beekeepers::has_beekeeper(bk, &mut *tx).await;
+        let is_exist = common::repository::beekeepers::has_beekeeper(&bk, user_id, &mut *tx).await;
 
         if !is_exist {
-            let _ = common::repository::beekeepers::insert_beekeeper(bk, &mut *tx).await;
+            let _ = common::repository::beekeepers::insert_beekeeper(&bk, user_id, &mut *tx).await;
             log::info!("養蜂家をデータベースに挿入: {:?}", beekeeper);
         } else {
             log::info!("養蜂家は既に存在します: {:?}", beekeeper);
@@ -59,6 +60,7 @@ pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>) {
         for json_honey in _non_empty_honeys {
             let beekeeper_id = common::repository::beekeepers::get_beekeeper_id_by_name(
                 &json_honey.beekeeper.clone().unwrap_or_default(),
+                user_id,
                 &mut *tx,
             )
             .await;
@@ -76,6 +78,7 @@ pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>) {
                         location_prefecture_id: None,
                         location_city: None,
                         website_url: None,
+                        user_id: Some(user_id),
                         note: None,
                     }
                 }),

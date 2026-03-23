@@ -10,15 +10,16 @@ use put_edit_honey_dto::{PutEditHoneyRequestDto, PutEditHoneyResponseDto};
 pub async fn run<T: HoneyRepository>(
     repo: &T,
     req: PutEditHoneyRequestDto,
+    user_id: i32,
 ) -> PutEditHoneyResponseDto {
     let id = req.edit.id;
     let honey_detail: HoneyDetail = req.to_honey_detail();
 
     // 既存チェック
-    match repo.exists_honey_by_id(id).await {
+    match repo.exists_honey_by_id(id, user_id).await {
         Ok(true) => {
             // 更新
-            match repo.update_honey(id, honey_detail).await {
+            match repo.update_honey(id, honey_detail, user_id).await {
                 Ok(_) => PutEditHoneyResponseDto { success: true, error_message: None },
                 Err(e) => PutEditHoneyResponseDto { success: false, error_message: Some(e) },
             }

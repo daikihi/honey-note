@@ -5,8 +5,9 @@ use get_all_honies_dto::{GetAllHoneysRequestDto, GetAllHoneysResponseDto};
 pub async fn run<T: HoneyRepository>(
     repo: &T,
     _request_dto: GetAllHoneysRequestDto,
+    user_id: i32,
 ) -> GetAllHoneysResponseDto {
-    let honeys = repo.get_all_honeys().await.unwrap_or_else(|e| {
+    let honeys = repo.get_all_honeys(user_id).await.unwrap_or_else(|e| {
         log::error!("Error fetching honeys: {}", e);
         vec![]
     });

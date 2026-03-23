@@ -1,8 +1,14 @@
 use web_sys::{Document, Location, Window};
 use crate::edit_and_new::edit_mode;
 use crate::edit_and_new::new_mode;
+use crate::commons::ajax::check_authentication;
 
-pub fn run() {
+pub async fn run() {
+    // 認証チェック
+    if let Err(_) = check_authentication().await {
+        return;
+    }
+
     let window: Window = web_sys::window().expect("no global `window` exists");
     let document: Document = window.document().expect("should have a document on window");
     let location: Location = window.location();

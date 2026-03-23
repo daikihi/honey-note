@@ -3,6 +3,7 @@
 // now (2025-06-08), we assume that there is only access to sqlite database.
 pub mod beekeepers;
 pub mod flowers;
+pub mod users;
 pub mod honeys;
 pub mod prefectures;
 pub mod honey_repository;

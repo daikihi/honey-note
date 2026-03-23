@@ -17,3 +17,5 @@ serde = { version = "1", features = ["derive"] }
 thiserror = "1.0"
 async-trait = "0.1.89"
 chrono = { version = "0.4", features = ["serde"] }
+bcrypt = "0.15"
+sha2 = "0.10"

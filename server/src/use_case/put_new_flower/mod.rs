@@ -6,6 +6,7 @@ pub async fn run<T: FlowerRepository>(
     repo: &T,
     req: PutNewFlowerRequestDto,
     pool: &sqlx::SqlitePool,
+    user_id: i32,
 ) -> PutNewFlowerResponseDto {
     let flower = req.flower;
 
@@ -19,16 +20,16 @@ pub async fn run<T: FlowerRepository>(
         },
     };
 
-    match repo.has_flower(&flower, &mut *tx).await {
+    match repo.has_flower(&flower, user_id, &mut *tx).await {
         Ok(true) => return PutNewFlowerResponseDto {
             id: None,
             success: false,
             error_message: Some("既に同じ名前の蜜源が存在します".to_string()),
         },
         Ok(false) => {
-            match repo.insert_flower(&flower, &mut *tx).await {
+            match repo.insert_flower(&flower, user_id, &mut *tx).await {
                 Ok(_) => {
-                    let id = repo.get_flower_id_by_name(&flower.name_jp, &mut *tx).await;
+                    let id = repo.get_flower_id_by_name(&flower.name_jp, user_id, &mut *tx).await;
                     if let Err(e) = tx.commit().await {
                         return PutNewFlowerResponseDto {
                             id: None,

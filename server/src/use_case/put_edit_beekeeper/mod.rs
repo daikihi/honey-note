@@ -6,10 +6,11 @@ pub async fn run<T: BeekeeperRepository>(
     repo: &T,
     req: PutEditBeekeeperRequestDto,
     pool: &sqlx::SqlitePool,
+    user_id: i32,
 ) -> PutEditBeekeeperResponseDto {
     let id = req.id;
     let beekeeper = req.beekeeper;
-
+    
     // Begin transaction
     let mut tx = match pool.begin().await {
         Ok(tx) => tx,
@@ -19,9 +20,9 @@ pub async fn run<T: BeekeeperRepository>(
         },
     };
 
-    match repo.exists_beekeeper_by_id(id, &mut *tx).await {
+    match repo.exists_beekeeper_by_id(id, user_id, &mut *tx).await {
         Ok(true) => {
-            match repo.update_beekeeper(id, &beekeeper, &mut *tx).await {
+            match repo.update_beekeeper(id, &beekeeper, user_id, &mut *tx).await {
                 Ok(_) => {
                     if let Err(e) = tx.commit().await {
                         return PutEditBeekeeperResponseDto {

@@ -9,9 +9,13 @@ use crate::{
 };
 use common_type::models::flowers::Flower;
 
+use crate::middleware::auth::AuthenticatedUser;
+use log::{info};
+
 #[get("/honey-note/api/flowers")]
 pub async fn get_all_flowers(
     pool: web::Data<sqlx::SqlitePool>,
+    auth: AuthenticatedUser,
 ) -> Result<HttpResponse, Error> {
     let repo = FlowerRepositorySqlite {
         pool: pool.get_ref().clone(),
@@ -19,9 +23,13 @@ pub async fn get_all_flowers(
     let results = get_all_flowers_use_case::run(
         &repo,
         get_all_flowers_use_case::get_all_flowers_dto::GetAllFlowersRequestDto {},
+        auth.user_id,
     ).await;
     match results {
-        Ok(res) => Ok(HttpResponse::Ok().json(res.flowers)),
+        Ok(res) => {
+            info!("user_id={}, username={}, action=get_all_flowers, count={}", auth.user_id, auth.username, res.flowers.len());
+            Ok(HttpResponse::Ok().json(res.flowers))
+        }
         Err(e) => {
             log::error!("Error fetching flowers: {}", e);
             Ok(HttpResponse::InternalServerError().finish())
@@ -33,11 +41,12 @@ pub async fn get_all_flowers(
 pub async fn get_flower_by_id(
     path: web::Path<i32>,
     pool: web::Data<sqlx::SqlitePool>,
+    auth: AuthenticatedUser,
 ) -> Result<HttpResponse, Error> {
     let id = path.into_inner();
     let repo = FlowerRepositorySqlite { pool: pool.get_ref().clone() };
     let dto = get_flower_by_id_use_case::get_flower_by_id_dto::GetFlowerByIdRequestDto { id };
-    let result = get_flower_by_id_use_case::run(&repo, dto).await;
+    let result = get_flower_by_id_use_case::run(&repo, dto, auth.user_id).await;
 
     if result.success {
         if let Some(f) = result.flower {
@@ -55,10 +64,14 @@ pub async fn put_new_flower(
     _req: HttpRequest,
     payload: LoggedJson<Flower>,
     pool: web::Data<sqlx::SqlitePool>,
+    auth: AuthenticatedUser,
 ) -> Result<HttpResponse, Error> {
     let dto = put_new_flower_use_case::put_new_flower_dto::PutNewFlowerRequestDto { flower: payload.into_inner() };
     let repo = FlowerRepositorySqlite { pool: pool.get_ref().clone() };
-    let result = put_new_flower_use_case::run(&repo, dto, pool.get_ref()).await;
+    let result = put_new_flower_use_case::run(&repo, dto, pool.get_ref(), auth.user_id).await;
+
+    info!("user_id={}, username={}, action=put_new_flower, flower_id={:?}, success={}", auth.user_id, auth.username, result.id, result.success);
+
     if result.success {
         Ok(HttpResponse::Ok().json(result))
     } else {
@@ -73,6 +86,7 @@ pub async fn put_edit_flower(
     _req: HttpRequest,
     payload: LoggedJson<Flower>,
     pool: web::Data<sqlx::SqlitePool>,
+    auth: AuthenticatedUser,
 ) -> Result<HttpResponse, Error> {
     let id = path.into_inner();
     let dto = put_edit_flower_use_case::put_edit_flower_dto::PutEditFlowerRequestDto { 
@@ -80,7 +94,10 @@ pub async fn put_edit_flower(
         flower: payload.into_inner() 
     };
     let repo = FlowerRepositorySqlite { pool: pool.get_ref().clone() };
-    let result = put_edit_flower_use_case::run(&repo, dto, pool.get_ref()).await;
+    let result = put_edit_flower_use_case::run(&repo, dto, pool.get_ref(), auth.user_id).await;
+
+    info!("user_id={}, username={}, action=put_edit_flower, flower_id={}, success={}", auth.user_id, auth.username, id, result.success);
+
     if result.success {
         Ok(HttpResponse::Ok().json(result))
     } else {

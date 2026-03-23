@@ -12,6 +12,7 @@ async fn main() {
     let db_file_name = args
         .get(2)
         .expect("データベースのファイル名を指定してください");
+    let user_id = args.get(3).expect("ユーザーIDを指定してください").parse::<i32>().expect("ユーザーIDは数値で指定してください");
     let request_dto = honey_loader_request::HoneyLoaderRequestDto::new(file_name, db_file_name);
-    let _use_case_result = honey_loader_usecase::run(request_dto).await;
+    let _use_case_result = honey_loader_usecase::run(request_dto, user_id).await;
 }

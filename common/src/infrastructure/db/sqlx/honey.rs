@@ -6,6 +6,7 @@ pub struct Honey {
     pub name_jp: String,                // NOT NULLなのでOptionなし
     pub name_en: Option<String>,        // NULL可能な場合はOptionでラップ
     pub beekeeper_id: Option<i32>,      // 外部キー（NULL可能と仮定）
+    pub user_id: Option<i32>,           // ユーザーID
     pub origin_country: Option<String>, // NULL可能なカラム
     pub origin_region: Option<String>,  // NULL可能なカラム
     pub harvest_year: Option<i32>,      // 採蜜年（NULL可能）
@@ -20,6 +21,7 @@ impl Honey {
             name_jp,
             name_en: None,
             beekeeper_id: None,
+            user_id: None,
             origin_country: None,
             origin_region: None,
             harvest_year: None,
@@ -60,7 +62,7 @@ impl Honey {
     {
         let query = r#"
             UPDATE honey
-            SET name_jp = ?, name_en = ?, beekeeper_id = ?, origin_country = ?, origin_region = ?, harvest_year = ?, purchase_date = ?, note = ?
+            SET name_jp = ?, name_en = ?, beekeeper_id = ?, user_id = ?, origin_country = ?, origin_region = ?, harvest_year = ?, purchase_date = ?, note = ?
             WHERE id = ?
         "#;
 
@@ -68,6 +70,7 @@ impl Honey {
             .bind(&self.name_jp)
             .bind(&self.name_en)
             .bind(self.beekeeper_id)
+            .bind(self.user_id)
             .bind(&self.origin_country)
             .bind(&self.origin_region)
             .bind(self.harvest_year)
@@ -85,14 +88,15 @@ impl Honey {
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
         let query = r#"        
-            INSERT INTO honey (name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO honey (name_jp, name_en, beekeeper_id, user_id, origin_country, origin_region, harvest_year, purchase_date, note)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#;
 
         let result = sqlx::query(query)
             .bind(&self.name_jp)
             .bind(&self.name_en)
             .bind(self.beekeeper_id)
+            .bind(self.user_id)
             .bind(&self.origin_country)
             .bind(&self.origin_region)
             .bind(self.harvest_year)

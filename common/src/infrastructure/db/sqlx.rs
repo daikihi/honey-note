@@ -2,6 +2,7 @@ pub mod beekeeper;
 pub mod flower;
 pub mod honey;
 pub mod prefecture;
+pub mod user;
 
 use once_cell::sync::OnceCell;
 use sqlx::SqlitePool;

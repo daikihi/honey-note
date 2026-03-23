@@ -6,8 +6,9 @@ use crate::use_case::get_all_beekeepers::get_all_beekeepers_dto::GetAllBeekeeper
 pub async fn run<T: BeekeeperRepository>(
     repo: &T,
     _dto: get_all_beekeepers_dto::GetAllBeekeepersRequestDto,
+    user_id: i32,
 ) -> Result<get_all_beekeepers_dto::GetAllBeekeepersResponseDto, AppError> {
-    let beekeepers = repo.get_all_beekeepers().await;
+    let beekeepers = repo.get_all_beekeepers(user_id).await;
     match beekeepers {
         Ok(beekeepers) => {
             let response: GetAllBeekeepersResponseDto = GetAllBeekeepersResponseDto { beekeepers };

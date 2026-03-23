@@ -4,7 +4,7 @@ use common::infrastructure::gateway::filesystem::load_master_data::load_master_d
 use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 use log::{error, info};
 
-pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) -> Result<(), AppError> {
+pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>, user_id: i32) -> Result<(), AppError> {
     let file_name = request_dto.file_name;
     let connection_pool = request_dto.pool;
 
@@ -16,7 +16,7 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) -> Result<(), AppEr
         )));
     }
 
-    info!("master data {}", master_data);
+    info!("master data {}, user_id={}", master_data, user_id);
     let mut tx = connection_pool.begin().await.map_err(|e| AppError::DatabaseError(e.to_string()))?;
     for line in master_data.lines() {
         info!("Processing line: {}", line);
@@ -58,19 +58,20 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) -> Result<(), AppEr
             }
         };
 
-        let model_beekeeper = ModelBeekeeper::from_string_csv(
+        let mut model_beekeeper = ModelBeekeeper::from_string_csv(
             beekeeper_name,
             beekeeper_name_en,
             beekeeper_city,
             prefecture_id,
         );
+        model_beekeeper.user_id = Some(user_id);
 
         info!("Loaded beekeeper: {:?}", &model_beekeeper);
         let has_beekeeper =
-            common::repository::beekeepers::has_beekeeper(&model_beekeeper, &mut *tx).await;
+            common::repository::beekeepers::has_beekeeper(&model_beekeeper, user_id, &mut *tx).await;
         if !has_beekeeper {
             info!("Inserting new beekeeper: {:?}", &model_beekeeper);
-            let _ = common::repository::beekeepers::insert_beekeeper(&model_beekeeper, &mut *tx)
+            let _ = common::repository::beekeepers::insert_beekeeper(&model_beekeeper, user_id, &mut *tx)
                 .await;
         } else {
             info!("Beekeeper already exists: {:?}", &model_beekeeper);

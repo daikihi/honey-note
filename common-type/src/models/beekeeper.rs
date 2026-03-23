@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
-pub struct Beekeeper {
+pub struct  Beekeeper {
     pub id: Option<i32>,
     pub name_jp: String,
     pub name_en: Option<String>,
