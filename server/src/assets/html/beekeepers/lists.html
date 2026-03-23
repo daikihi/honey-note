@@ -5,9 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>HoneyNote | 養蜂場一覧</title>
 
-  <style>
-    @import url('/honey_note/css/common_list.css');
-  </style>
+  <link rel="stylesheet" href="/honey_note/css/common_list.css">
 
     <script type="module">
     import init,  { beekeepers_list_main } from '/honey_note/javascript/front.js';
@@ -42,11 +40,12 @@
   <input id="searchInput" placeholder="ID・養蜂場名・地域で検索…" autocomplete="off">
 </div>
 
+<div class="action-bar">
+  <a href="/honey_note/beekeepers/new.html" class="btn-new">新規登録</a>
+</div>
+
 <main>
   <h1 class="page-title">養蜂場一覧</h1>
-  <div style="margin-bottom: 1rem;">
-    <a href="/honey_note/beekeepers/new.html" class="btn-new" style="display: inline-block; padding: 0.5rem 1rem; background: var(--blue); color: white; text-decoration: none; border-radius: 4px;">新規登録</a>
-  </div>
   <table id="apiaryTable">
     <thead>
       <tr>

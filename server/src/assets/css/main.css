@@ -1,60 +1,9 @@
-:root {
-    --gold: #FFB703;
-    --blue: #219EBC;
-    --line: #E9C46A;
-    --cream: #FFF8ED;
-    --radius: 12px;
-    font-family: "Inter", "Noto Sans JP", sans-serif;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+@import url('/honey_note/css/common.css');
 
 body {
-    background: var(--cream);
-    color: #333;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-}
-
-header {
-    background: #fff;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
-}
-
-header nav {
-    max-width: 1000px;
-    height: 64px;
-    margin: auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 1rem;
-}
-
-.nav-left {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-nav a.logo {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--gold);
-    text-decoration: none;
-}
-
-.logo img {
-    height: 56px;
-    vertical-align: middle;
 }
 
 .hero {
