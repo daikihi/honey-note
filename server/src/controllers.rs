@@ -1,5 +1,12 @@
+#[path = "controllers/beekeeper_controller.rs"]
 pub mod beekeeper_controller;
+#[path = "controllers/flower_controller.rs"]
 pub mod flower_controller;
+#[path = "controllers/health_checking.rs"]
 pub mod health_checking;
+#[path = "controllers/honey_controller.rs"]
 pub mod honey_controller;
+#[path = "controllers/prefecture_controller.rs"]
 pub mod prefecture_controller;
+#[path = "controllers/auth_controller.rs"]
+pub mod auth_controller;

@@ -192,15 +192,16 @@ where
 
 pub async fn get_beekeeper_id_by_name<'a, E>(
     name: &str,
+    user_id: i32,
     executor: E,
 ) -> Option<i32>
 where
     E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
 {
-    SqlBeekeeper::get_beekeeper_id_by_name(name, executor).await
+    SqlBeekeeper::get_beekeeper_id_by_name(name, user_id, executor).await
 }
 
-pub async fn get_all_beekeepers(pool: &sqlx::SqlitePool) -> Result<Vec<ModelBeekeeper>, AppError> {
+pub async fn get_all_beekeepers(pool: &sqlx::SqlitePool, user_id: i32) -> Result<Vec<ModelBeekeeper>, AppError> {
     let repo = BeekeeperRepositorySqlite { pool: pool.clone() };
-    repo.get_all_beekeepers().await
+    repo.get_all_beekeepers(user_id).await
 }

@@ -3,6 +3,7 @@ use crate::{
 };
 
 use common::infrastructure::db::sqlx::get_sqlite_pool;
+use common::repository::flowers::{FlowerRepository, FlowerRepositorySqlite};
 use log::info;
 
 pub async fn run(dto: FlowerLoaderRequestDto, user_id: i32) {
@@ -24,14 +25,14 @@ pub async fn run(dto: FlowerLoaderRequestDto, user_id: i32) {
             use common_type::models::flowers;
             let flower = flowers::create_model_flower_from_name(line);
 
-            let has_flower = common::repository::flowers::has_flower(&flower, user_id, &mut *tx).await;
-            match has_flower {
+            let repo = FlowerRepositorySqlite { pool: connection_pool.clone() };
+            match repo.has_flower(&flower, user_id, &mut *tx).await {
                 Ok(true) => {
                     log::info!("Flower already exists for this user: {:?}", line);
                 }
                 Ok(false) => {
                     log::info!("Inserting new flower: {:?}", line);
-                    let _ = common::repository::flowers::insert_flower(&flower, user_id, &mut *tx).await;
+                    let _ = repo.insert_flower(&flower, user_id, &mut *tx).await;
                 }
                 Err(e) => {
                     log::error!("Error checking flower existence: {}", e);

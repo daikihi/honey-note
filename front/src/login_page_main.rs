@@ -56,8 +56,9 @@ async fn check_already_logged_in(window: &Window) -> Result<bool, JsValue> {
 
 async fn handle_login(form: &HtmlFormElement, error_div: &HtmlElement) -> Result<(), JsValue> {
     let window = web_sys::window().unwrap();
-    let username = form.get_elements_by_name("username").item(0).unwrap().dyn_into::<HtmlInputElement>().unwrap().value();
-    let password = form.get_elements_by_name("password").item(0).unwrap().dyn_into::<HtmlInputElement>().unwrap().value();
+    let document = web_sys::window().unwrap().document().unwrap();
+    let username = document.get_element_by_id("username").unwrap().dyn_into::<HtmlInputElement>().unwrap().value();
+    let password = document.get_element_by_id("password").unwrap().dyn_into::<HtmlInputElement>().unwrap().value();
 
     let body_obj = web_sys::js_sys::Object::new();
     Reflect::set(&body_obj, &JsValue::from_str("username"), &JsValue::from_str(&username))?;

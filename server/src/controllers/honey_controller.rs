@@ -1,4 +1,5 @@
 use actix_web::{get, put, web, HttpResponse, Error, HttpRequest};
+use log::info;
 use common::repository::honeys::HoneyRepositorySqlite;
 use crate::{
     use_case::put_new_honey::put_new_honey_dto::{PutNewHoneyRequestDto, PutNewHoneyResponseDto},
@@ -87,6 +88,7 @@ pub async fn put_edit_honey(
 ) -> Result<HttpResponse, Error> {
     // DTO変換
     let dto = PutEditHoneyRequestDto { edit: payload.into_inner() };
+    let log_id = dto.edit.id; // move前にIDを保持
 
     // Repositoryの実装を生成
     let repo = HoneyRepositorySqlite { pool: pool.get_ref().clone() };
@@ -94,7 +96,7 @@ pub async fn put_edit_honey(
     // UseCase呼び出し
     let result: PutEditHoneyResponseDto = put_edit_honey_use_case::run(&repo, dto, auth.user_id).await;
 
-    info!("user_id={}, username={}, action=put_edit_honey, honey_id={}, success={}", auth.user_id, auth.username, dto.edit.id, result.success);
+    info!("user_id={}, username={}, action=put_edit_honey, honey_id={}, success={}", auth.user_id, auth.username, log_id, result.success);
 
     if result.success {
         Ok(HttpResponse::Ok().json(result))

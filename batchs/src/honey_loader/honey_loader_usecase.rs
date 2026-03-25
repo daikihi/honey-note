@@ -1,4 +1,5 @@
 use common::repository;
+use common::repository::beekeepers::BeekeeperRepository;
 use common_type::models::beekeeper::Beekeeper;
 
 use crate::honey_loader_models::JsonHoney;
@@ -33,7 +34,7 @@ pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>, u
     let mut tx = pool.begin().await.expect("データベース接続に失敗しました");
 
     for beekeeper in beekeepers {
-        let mut bk = Beekeeper {
+        let bk = Beekeeper {
             id: None,
             name_jp: beekeeper.to_string(),
             name_en: None,
@@ -41,14 +42,14 @@ pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>, u
             location_prefecture_id: None,
             location_city: None,
             website_url: None,
-            user_id: Some(user_id),
             note: None,
         };
 
-        let is_exist = common::repository::beekeepers::has_beekeeper(&bk, user_id, &mut *tx).await;
+        let bk_repo = common::repository::beekeepers::BeekeeperRepositorySqlite { pool: pool.clone() };
+        let is_exist = bk_repo.has_beekeeper(&bk, user_id, &mut *tx).await;
 
         if !is_exist {
-            let _ = common::repository::beekeepers::insert_beekeeper(&bk, user_id, &mut *tx).await;
+            let _ = bk_repo.insert_beekeeper(&bk, user_id, &mut *tx).await;
             log::info!("養蜂家をデータベースに挿入: {:?}", beekeeper);
         } else {
             log::info!("養蜂家は既に存在します: {:?}", beekeeper);
@@ -58,12 +59,12 @@ pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>, u
     let model_honeys: Vec<common_type::models::honey::Honey> = {
         let mut results = Vec::new();
         for json_honey in _non_empty_honeys {
-            let beekeeper_id = common::repository::beekeepers::get_beekeeper_id_by_name(
+            let bk_repo = common::repository::beekeepers::BeekeeperRepositorySqlite { pool: pool.clone() };
+            let beekeeper_id = bk_repo.get_beekeeper_id_by_name(
                 &json_honey.beekeeper.clone().unwrap_or_default(),
                 user_id,
                 &mut *tx,
-            )
-            .await;
+            ).await;
 
             results.push(common_type::models::honey::Honey {
                 id: Some(json_honey.id),
@@ -78,7 +79,6 @@ pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>, u
                         location_prefecture_id: None,
                         location_city: None,
                         website_url: None,
-                        user_id: Some(user_id),
                         note: None,
                     }
                 }),

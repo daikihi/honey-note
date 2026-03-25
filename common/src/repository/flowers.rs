@@ -168,9 +168,9 @@ where
     insert_flower.has_flower(executor).await
 }
 
-pub async fn get_all_flowers(pool: &sqlx::SqlitePool) -> Result<Vec<ModelFlower>, AppError> {
+pub async fn get_all_flowers(pool: &sqlx::SqlitePool, user_id: i32) -> Result<Vec<ModelFlower>, AppError> {
     let repo = FlowerRepositorySqlite { pool: pool.clone() };
-    repo.get_all_flowers().await
+    repo.get_all_flowers(user_id).await
 }
 
 // ここから下はテストコード

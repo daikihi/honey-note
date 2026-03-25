@@ -21,9 +21,11 @@ pub struct HoneyRepositorySqlite {
     pub pool: sqlx::SqlitePool,
 }
 
+#[async_trait]
 impl HoneyRepository for HoneyRepositorySqlite {
-    async fn insert_honey(&self, honey: HoneyDetail, user_id: i32) -> Result<i64, String> {
-        use crate::repository::{beekeepers as bk_repo, flowers as fl_repo};
+        async fn insert_honey(&self, honey: HoneyDetail, user_id: i32) -> Result<i64, String> {
+        use crate::repository::{beekeepers as bk_repo, flowers::{FlowerRepository, FlowerRepositorySqlite}};
+        use crate::repository::beekeepers::{BeekeeperRepository, BeekeeperRepositorySqlite};
         use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
         use common_type::models::flowers::create_model_flower_from_name;
 
@@ -35,18 +37,18 @@ impl HoneyRepository for HoneyRepositorySqlite {
             let name = bk_name.0;
             if !name.is_empty() {
                 // 既存確認（ユーザーに紐付く養蜂業者）
-                let existing = bk_repo::get_beekeeper_id_by_name(&name, &mut *tx).await;
+                let existing = bk_repo::get_beekeeper_id_by_name(&name, user_id, &mut *tx).await;
                 match existing {
                     Some(id) => beekeeper_id_opt = Some(id),
                     None => {
                         // 新規作成
-                        let mut model_bk = ModelBeekeeper::from_string_csv(&name, None, None, None);
-                        model_bk.user_id = Some(user_id);
-                        if !bk_repo::has_beekeeper(&model_bk, &mut *tx).await {
-                            let _ = bk_repo::insert_beekeeper(&model_bk, &mut *tx).await;
+                        let model_bk = ModelBeekeeper::from_string_csv(&name, None, None, None);
+                        let bk_repo_inst = BeekeeperRepositorySqlite { pool: self.pool.clone() };
+                        if !bk_repo_inst.has_beekeeper(&model_bk, user_id, &mut *tx).await {
+                            let _ = bk_repo_inst.insert_beekeeper(&model_bk, user_id, &mut *tx).await;
                         }
                         // 再取得
-                        beekeeper_id_opt = bk_repo::get_beekeeper_id_by_name(&name, &mut *tx).await;
+                        beekeeper_id_opt = bk_repo::get_beekeeper_id_by_name(&name, user_id, &mut *tx).await;
                     }
                 }
             }
@@ -87,9 +89,10 @@ impl HoneyRepository for HoneyRepositorySqlite {
 
             if flower_id_opt.is_none() {
                 let model = create_model_flower_from_name(&name);
-                match fl_repo::has_flower(&model, &mut *tx).await {
+                let fl_repo_inst = FlowerRepositorySqlite { pool: self.pool.clone() };
+                match fl_repo_inst.has_flower(&model, user_id, &mut *tx).await {
                     Ok(false) => {
-                        let _ = fl_repo::insert_flower(&model, &mut *tx).await;
+                        let _ = fl_repo_inst.insert_flower(&model, user_id, &mut *tx).await;
                     }
                     _ => {}
                 }
@@ -270,6 +273,7 @@ impl HoneyRepository for HoneyRepositorySqlite {
 
 pub struct HoneyRepositoryMock;
 
+#[async_trait]
 impl HoneyRepository for HoneyRepositoryMock {
     async fn insert_honey(&self, _honey: HoneyDetail, _user_id: i32) -> Result<i64, String> {
         Ok(1)
@@ -318,6 +322,7 @@ where
         name_jp: honey.name_jp.clone(),
         name_en: honey.name_en.clone(),
         beekeeper_id: honey.beekkeeper.clone().map(|b| b.id).flatten(),
+        user_id: None,
         origin_country: honey.origin_country.clone(),
         origin_region: honey.origin_region.clone(),
         harvest_year: honey.harvest_year,
