@@ -140,7 +140,7 @@ impl Honey {
 
 pub async fn get_all(pool: &sqlx::SqlitePool) -> Result<Vec<Honey>, sqlx::Error> {
     let honeys: Result<Vec<Honey>, sqlx::Error> = sqlx::query_as::<_, Honey>(
-        r#"SELECT id, name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note
+        r#"SELECT id, name_jp, name_en, beekeeper_id, user_id, origin_country, origin_region, harvest_year, purchase_date, note
         FROM honey"#,
     ).fetch_all(pool).await;
     honeys
@@ -189,6 +189,7 @@ mod tests {
                 name_jp TEXT NOT NULL,
                 name_en TEXT,
                 beekeeper_id INTEGER,
+                user_id INTEGER,
                 origin_country TEXT,
                 origin_region TEXT,
                 harvest_year INTEGER,
@@ -210,6 +211,7 @@ mod tests {
             name_jp: "テストはちみつ".to_string(),
             name_en: Some("Test Honey".to_string()),
             beekeeper_id: None,
+            user_id: Some(1),
             origin_country: None,
             origin_region: None,
             harvest_year: Some(2023),
@@ -238,6 +240,7 @@ mod tests {
             name_jp: "はちみつ1".to_string(),
             name_en: None,
             beekeeper_id: None,
+            user_id: Some(1),
             origin_country: None,
             origin_region: None,
             harvest_year: None,
@@ -258,6 +261,7 @@ mod tests {
             name_jp: "アカシアはちみつ".to_string(),
             name_en: Some("Acacia Honey".to_string()),
             beekeeper_id: Some(2),
+            user_id: Some(1),
             origin_country: Some("日本".to_string()),
             origin_region: Some("北海道".to_string()),
             harvest_year: Some(2024),
@@ -273,6 +277,7 @@ mod tests {
             location_prefecture_id: Some(1),
             location_city: Some("札幌市".to_string()),
             website_url: Some("https://yamadabeefarm.jp".to_string()),
+            user_id: Some(1),
             note: Some("信頼できる養蜂場".to_string()),
         });
 

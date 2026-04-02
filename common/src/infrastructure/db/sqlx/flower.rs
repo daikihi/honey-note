@@ -18,9 +18,11 @@ impl InsertFlower {
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
         let flower_name_jp = self.name_jp.clone();
-        let query = "SELECT EXISTS(SELECT 1 FROM flower WHERE name_jp = $1)";
+        let user_id = self.user_id;
+        let query = "SELECT EXISTS(SELECT 1 FROM flower WHERE name_jp = $1 AND (user_id = $2 OR user_id IS NULL))";
         let exists: (i64,) = sqlx::query_as(query)
             .bind(flower_name_jp)
+            .bind(user_id)
             .fetch_one(executor)
             .await?;
         Ok(exists.0 != 0)

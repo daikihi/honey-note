@@ -312,6 +312,7 @@ impl HoneyRepository for HoneyRepositoryMock {
 
 pub async fn insert_honey_if_not_exists<'a, E>(
     honey: &ModelHoney,
+    user_id: i32,
     executor: E,
 ) -> Result<(), sqlx::Error>
 where
@@ -322,7 +323,7 @@ where
         name_jp: honey.name_jp.clone(),
         name_en: honey.name_en.clone(),
         beekeeper_id: honey.beekkeeper.clone().map(|b| b.id).flatten(),
-        user_id: None,
+        user_id: Some(user_id),
         origin_country: honey.origin_country.clone(),
         origin_region: honey.origin_region.clone(),
         harvest_year: honey.harvest_year,

@@ -4,6 +4,9 @@ use crate::infrastructure::db::sqlx::beekeeper::BeekeeperForInsert;
 use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 use log::error;
 
+use async_trait::async_trait;
+
+#[async_trait]
 pub trait BeekeeperRepository: Send + Sync {
     async fn get_all_beekeepers(&self, user_id: i32) -> Result<Vec<ModelBeekeeper>, AppError>;
     async fn get_beekeeper_by_id(&self, id: i32, user_id: i32) -> Result<ModelBeekeeper, AppError>;
@@ -34,6 +37,7 @@ pub struct BeekeeperRepositorySqlite {
     pub pool: sqlx::SqlitePool,
 }
 
+#[async_trait]
 impl BeekeeperRepository for BeekeeperRepositorySqlite {
     async fn get_all_beekeepers(&self, user_id: i32) -> Result<Vec<ModelBeekeeper>, AppError> {
         let result: Result<Vec<SqlBeekeeper>, sqlx::Error> = sqlx::query_as("SELECT * FROM beekeeper WHERE user_id = ?")

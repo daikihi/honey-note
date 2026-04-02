@@ -93,7 +93,7 @@ pub async fn run(request_dto: honey_loader_request::HoneyLoaderRequestDto<'_>, u
     };
 
     for model_honey in model_honeys {
-        let _ = repository::honeys::insert_honey_if_not_exists(&model_honey, &mut *tx).await;
+        let _ = repository::honeys::insert_honey_if_not_exists(&model_honey, user_id, &mut *tx).await;
         log::info!("ハニーをデータベースに挿入: {:?}", model_honey);
     }
     tx.commit().await.expect("Failed to commit transaction");

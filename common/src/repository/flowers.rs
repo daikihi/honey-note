@@ -3,6 +3,9 @@ use log::info;
 use crate::errors::AppError;
 use common_type::models::flowers::Flower as ModelFlower;
 
+use async_trait::async_trait;
+
+#[async_trait]
 pub trait FlowerRepository: Send + Sync {
     async fn get_all_flowers(&self, user_id: i32) -> Result<Vec<ModelFlower>, AppError>;
     async fn get_flower_by_id(&self, id: i32, user_id: i32) -> Result<ModelFlower, AppError>;
@@ -33,6 +36,7 @@ pub struct FlowerRepositorySqlite {
     pub pool: sqlx::SqlitePool,
 }
 
+#[async_trait]
 impl FlowerRepository for FlowerRepositorySqlite {
     async fn get_all_flowers(&self, user_id: i32) -> Result<Vec<ModelFlower>, AppError> {
         let result: Result<Vec<crate::infrastructure::db::sqlx::flower::Flower>, sqlx::Error> = sqlx::query_as("SELECT * FROM flower WHERE user_id = ?")
@@ -146,25 +150,29 @@ impl FlowerRepository for FlowerRepositorySqlite {
 
 pub async fn insert_flower<'a, E>(
     flower: &ModelFlower,
+    user_id: i32,
     executor: E,
 ) -> Result<(), sqlx::Error>
 where
     E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
 {
-    let insert_flower =
+    let mut insert_flower =
         crate::infrastructure::db::sqlx::flower::InsertFlower::from_model_flower(flower);
+    insert_flower.user_id = Some(user_id);
     insert_flower.insert_flower(executor).await
 }
 
 pub async fn has_flower<'a, E>(
     flower: &ModelFlower,
+    user_id: i32,
     executor: E,
 ) -> Result<bool, sqlx::Error>
 where
     E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
 {
-    let insert_flower =
+    let mut insert_flower =
         crate::infrastructure::db::sqlx::flower::InsertFlower::from_model_flower(flower);
+    insert_flower.user_id = Some(user_id);
     insert_flower.has_flower(executor).await
 }
 
@@ -193,7 +201,8 @@ mod tests {
                 short_note TEXT,       -- description に相当する簡単な説明
                 flower_type TEXT,
                 image_path TEXT,
-                note TEXT
+                note TEXT,
+                user_id INTEGER
                 );
             ",
         )
@@ -207,7 +216,8 @@ mod tests {
     async fn test_insert_flower() {
         let pool = setup_db().await;
         let flower = create_model_flower_from_name("Test Flower");
-        let result = insert_flower(&flower, &pool).await;
+        let user_id = 1;
+        let result = insert_flower(&flower, user_id, &pool).await;
 
         assert!(
             result.is_ok(),
@@ -215,7 +225,7 @@ mod tests {
             result.err()
         );
 
-        let has_flower = has_flower(&flower, &pool).await;
+        let has_flower = has_flower(&flower, user_id, &pool).await;
         assert!(
             has_flower.is_ok(),
             "Failed to check if flower exists: {:?}",
@@ -228,9 +238,10 @@ mod tests {
     async fn test_insert_flower_duplicate() {
         let pool = setup_db().await;
         let flower = create_model_flower_from_name("Duplicate Flower");
+        let user_id = 1;
 
         // Insert the flower for the first time
-        let result = insert_flower(&flower, &pool).await;
+        let result = insert_flower(&flower, user_id, &pool).await;
         assert!(
             result.is_ok(),
             "Failed to insert flower: {:?}",
@@ -238,13 +249,13 @@ mod tests {
         );
 
         // Try to insert the same flower again
-        let duplicate_result = insert_flower(&flower, &pool).await;
+        let duplicate_result = insert_flower(&flower, user_id, &pool).await;
         assert!(
             duplicate_result.is_ok(),
             "Should not allow duplicate insertion"
         );
 
-        let has_flower = has_flower(&flower, &pool).await;
+        let has_flower = has_flower(&flower, user_id, &pool).await;
         assert!(
             has_flower.is_ok(),
             "Failed to check if flower exists: {:?}",

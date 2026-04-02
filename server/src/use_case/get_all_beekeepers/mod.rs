@@ -28,8 +28,9 @@ mod tests {
 
     struct MockBeekeeperRepository;
 
+    #[async_trait::async_trait]
     impl BeekeeperRepository for MockBeekeeperRepository {
-        async fn get_all_beekeepers(&self) -> Result<Vec<Beekeeper>, AppError> {
+        async fn get_all_beekeepers(&self, _user_id: i32) -> Result<Vec<Beekeeper>, AppError> {
             Ok(vec![
                 Beekeeper {
                     id: Some(1),
@@ -43,7 +44,7 @@ mod tests {
                 },
             ])
         }
-        async fn get_beekeeper_by_id(&self, _id: i32) -> Result<Beekeeper, AppError> {
+        async fn get_beekeeper_by_id(&self, _id: i32, _user_id: i32) -> Result<Beekeeper, AppError> {
             Ok(Beekeeper {
                 id: Some(1),
                 name_jp: "山田養蜂場".to_string(),
@@ -59,6 +60,7 @@ mod tests {
             &self,
             _id: i32,
             _beekeeper: &Beekeeper,
+            _user_id: i32,
             _executor: E,
         ) -> Result<(), AppError>
         where
@@ -66,25 +68,25 @@ mod tests {
         {
             Ok(())
         }
-        async fn exists_beekeeper_by_id<'a, E>(&self, _id: i32, _executor: E) -> Result<bool, AppError>
+        async fn exists_beekeeper_by_id<'a, E>(&self, _id: i32, _user_id: i32, _executor: E) -> Result<bool, AppError>
         where
             E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
         {
             Ok(true)
         }
-        async fn get_beekeeper_id_by_name<'a, E>(&self, _name: &str, _executor: E) -> Option<i32>
+        async fn get_beekeeper_id_by_name<'a, E>(&self, _name: &str, _user_id: i32, _executor: E) -> Option<i32>
         where
             E: sqlx::Executor<'a, Database = sqlx::Sqlite>
         {
             Some(1)
         }
-        async fn insert_beekeeper<'a, E>(&self, _beekeeper: &Beekeeper, _executor: E) -> Result<(), AppError>
+        async fn insert_beekeeper<'a, E>(&self, _beekeeper: &Beekeeper, _user_id: i32, _executor: E) -> Result<(), AppError>
         where
             E: sqlx::Executor<'a, Database = sqlx::Sqlite>
         {
             Ok(())
         }
-        async fn has_beekeeper<'a, E>(&self, _beekeeper: &Beekeeper, _executor: E) -> bool
+        async fn has_beekeeper<'a, E>(&self, _beekeeper: &Beekeeper, _user_id: i32, _executor: E) -> bool
         where
             E: sqlx::Executor<'a, Database = sqlx::Sqlite>
         {
@@ -96,7 +98,7 @@ mod tests {
     async fn test_run() {
         let repo = MockBeekeeperRepository;
         let req = get_all_beekeepers_dto::GetAllBeekeepersRequestDto {};
-        let result = run(&repo, req).await.unwrap();
+        let result = run(&repo, req, 1).await.unwrap();
 
         assert_eq!(result.beekeepers.len(), 1);
         assert_eq!(result.beekeepers[0].name_jp, "山田養蜂場");

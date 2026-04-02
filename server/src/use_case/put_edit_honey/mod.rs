@@ -45,23 +45,24 @@ mod tests {
         exists: bool,
     }
 
+    #[async_trait::async_trait]
     impl HoneyRepository for MockHoneyRepository {
-        async fn insert_honey(&self, _honey: HoneyDetail) -> Result<i64, String> {
+        async fn insert_honey(&self, _honey: HoneyDetail, _user_id: i32) -> Result<i64, String> {
             Ok(100)
         }
-        async fn update_honey(&self, _id: i64, _honey: HoneyDetail) -> Result<(), String> {
+        async fn update_honey(&self, _id: i64, _honey: HoneyDetail, _user_id: i32) -> Result<(), String> {
             Ok(())
         }
-        async fn exists_honey(&self, _honey: &HoneyDetail) -> Result<bool, String> {
+        async fn exists_honey(&self, _honey: &HoneyDetail, _user_id: i32) -> Result<bool, String> {
             Ok(false)
         }
-        async fn exists_honey_by_id(&self, _id: i64) -> Result<bool, String> {
+        async fn exists_honey_by_id(&self, _id: i64, _user_id: i32) -> Result<bool, String> {
             Ok(self.exists)
         }
-        async fn get_all_honeys(&self) -> Result<Vec<Honey>, String> {
+        async fn get_all_honeys(&self, _user_id: i32) -> Result<Vec<Honey>, String> {
             Ok(vec![])
         }
-        async fn get_honey_by_id(&self, _id: i64) -> Result<HoneyDetail, String> {
+        async fn get_honey_by_id(&self, _id: i64, _user_id: i32) -> Result<HoneyDetail, String> {
             Ok(HoneyDetail {
                 basic: HoneyEditBasicRequest {
                     name_jp: Some("Mock".to_string()),
@@ -106,7 +107,7 @@ mod tests {
     async fn test_run_success() {
         let repo = MockHoneyRepository { exists: true };
         let req = create_request(1, "編集済みはちみつ");
-        let result = run(&repo, req).await;
+        let result = run(&repo, req, 1).await;
 
         assert!(result.success);
         assert!(result.error_message.is_none());
@@ -116,7 +117,7 @@ mod tests {
     async fn test_run_no_such_id() {
         let repo = MockHoneyRepository { exists: false };
         let req = create_request(999, "存在しないはちみつ");
-        let result = run(&repo, req).await;
+        let result = run(&repo, req, 1).await;
 
         assert!(!result.success);
         assert_eq!(result.error_message, Some("NoSuchHoneyIdExist".to_string()));

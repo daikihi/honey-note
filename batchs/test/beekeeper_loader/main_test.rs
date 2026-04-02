@@ -39,11 +39,11 @@ mod test_beekeeper_load {
         let dto = BeekeeperLoaderRequestDto::new(file_path, pool.clone());
 
         // execute testing
-        let result = beekeeper_loader_usecase::run(dto).await;
+        let result = beekeeper_loader_usecase::run(dto, 1).await;
         assert!(result.is_ok(), "Error: {:?}", result.err());
 
         // verify
-        let beekeepers = get_all_beekeepers(&pool).await.unwrap();
+        let beekeepers = get_all_beekeepers(&pool, 1).await.unwrap();
         assert_eq!(beekeepers.len(), 1);
         assert_eq!(beekeepers[0].name_jp, "テスト養蜂場");
         assert_eq!(beekeepers[0].name_en, Some("Test Beekeeper".to_string()));
@@ -63,7 +63,7 @@ mod test_beekeeper_load {
 
         let dto = BeekeeperLoaderRequestDto::new(file_path, pool.clone());
 
-        let result = beekeeper_loader_usecase::run(dto).await;
+        let result = beekeeper_loader_usecase::run(dto, 1).await;
         assert!(result.is_err());
         if let Err(common::errors::AppError::InvalidInput(msg)) = result {
             assert!(msg.contains("Master data is empty"));
@@ -85,7 +85,7 @@ mod test_beekeeper_load {
 
         let dto = BeekeeperLoaderRequestDto::new(file_path, pool.clone());
 
-        let result = beekeeper_loader_usecase::run(dto).await;
+        let result = beekeeper_loader_usecase::run(dto, 1).await;
         assert!(result.is_err());
         if let Err(common::errors::AppError::InvalidInput(msg)) = result {
             assert!(msg.contains("Invalid CSV format"));
@@ -107,7 +107,7 @@ mod test_beekeeper_load {
 
         let dto = BeekeeperLoaderRequestDto::new(file_path, pool.clone());
 
-        let result = beekeeper_loader_usecase::run(dto).await;
+        let result = beekeeper_loader_usecase::run(dto, 1).await;
         assert!(result.is_err());
         if let Err(common::errors::AppError::DatabaseError(_)) = result {
             // OK: 都道府県が見つからない場合は現状 DatabaseError になる (AppError::NotFound ではない理由はリポジトリの実装に依存)
