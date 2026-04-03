@@ -1,14 +1,16 @@
 #[path = "controllers.rs"]
 mod controllers;
-mod use_case;
 mod middleware;
+mod use_case;
 
 use actix_cors::Cors;
 use actix_files::Files;
-use actix_session::SessionMiddleware;
+// for signing key
+use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_session::storage::CookieSessionStore;
+use actix_session::SessionMiddleware;
+use actix_web::cookie::Key;
 use actix_web::{middleware::Logger, web, App, HttpServer};
-use actix_web::cookie::Key; // for signing key
 use common::libs::config::models::server::load_config;
 use common::libs::config::models::server::Server;
 
@@ -29,9 +31,17 @@ async fn main() -> std::io::Result<()> {
     let path = common::infrastructure::db::sqlx::DB_FILE_NAME;
     let pool = common::infrastructure::db::sqlx::get_sqlite_pool(path.to_string());
 
-    // Cookie signing key (in production, this should be from config/env)
-    let secret_key = Key::generate();
+    let governor_conf = GovernorConfigBuilder::default()
+        .seconds_per_request(2) // 2秒に1回まで
+        .burst_size(5) // 最大5回バースト許可
+        .finish()
+        .unwrap();
 
+    // Cookie signing key (in production, this should be from config/env)
+    // let secret_key = Key::generate();
+    let secret_key = std::env::var("SESSION_SECRET_KEY")
+        .map(|k| Key::from(k.as_bytes()))
+        .unwrap_or_else(|_| Key::generate()); // 開発環境だけ generate でも許容
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
@@ -43,6 +53,7 @@ async fn main() -> std::io::Result<()> {
             )
             .wrap(Logger::default())
             .wrap(Cors::permissive())
+            .wrap(Governor::new(&governor_conf))
             .configure(configure_routes)
     })
     .bind((c.host_name.as_str(), c.port))?
