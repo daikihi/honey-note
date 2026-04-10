@@ -217,3 +217,304 @@ async fn test_signup_success() {
     cleanup_dom();
     restore_stubs();
 }
+
+/// テストケース：サーバーエラー（400 Bad Request）時のエラーメッセージ表示
+#[wasm_bindgen_test]
+async fn test_signup_server_error_400_with_message() {
+    setup_dom();
+    setup_stubs();
+    // サーバーエラーレスポンスをシミュレート（400 Bad Request）
+    set_next_response(400, JsValue::from_str(r#"{"message": "メールアドレスは既に登録されています"}"#));
+
+    let document = web_sys::window().unwrap().document().unwrap();
+
+    // フォーム入力（有効なデータ）
+    document
+        .get_element_by_id("username")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .set_value("testuser");
+    document
+        .get_element_by_id("email")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .set_value("test@example.com");
+    document
+        .get_element_by_id("password")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .set_value("password123");
+    document
+        .get_element_by_id("confirm_password")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .set_value("password123");
+
+    // アプリケーションの初期化（イベントリスナーの登録）を実行
+    signup_page_main::run().await;
+
+    // submitイベントを手動で発火
+    let form = document.get_element_by_id("signup_form").unwrap();
+    let event = web_sys::Event::new("submit").unwrap();
+    form.dispatch_event(&event).unwrap();
+
+    // 内部の非同期処理（spawn_local）が完了するまで待機
+    for _ in 0..5 {
+        wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(&JsValue::NULL))
+            .await
+            .unwrap();
+    }
+
+    // 検証：エラーメッセージが正しく設定され、表示されているか
+    let error_div = document
+        .get_element_by_id("error_message")
+        .unwrap()
+        .dyn_into::<HtmlElement>()
+        .unwrap();
+    assert_eq!(
+        error_div.text_content().unwrap(),
+        "メールアドレスは既に登録されています"
+    );
+    assert_eq!(
+        error_div.style().get_property_value("display").unwrap(),
+        "block"
+    );
+
+    // リダイレクトが発生していないことを確認
+    let redirect = get_last_redirect();
+    assert!(redirect.is_null());
+
+    cleanup_dom();
+    restore_stubs();
+}
+
+/// テストケース：サーバーエラー（500 Internal Server Error）時のエラーメッセージ表示
+#[wasm_bindgen_test]
+async fn test_signup_server_error_500_with_message() {
+    setup_dom();
+    setup_stubs();
+    // サーバーエラーレスポンスをシミュレート（500 Internal Server Error）
+    set_next_response(500, JsValue::from_str(r#"{"message": "サーバー内部エラーが発生しました"}"#));
+
+    let document = web_sys::window().unwrap().document().unwrap();
+
+    // フォーム入力（有効なデータ）
+    document
+        .get_element_by_id("username")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .set_value("testuser");
+    document
+        .get_element_by_id("email")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .set_value("test@example.com");
+    document
+        .get_element_by_id("password")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .set_value("password123");
+    document
+        .get_element_by_id("confirm_password")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .set_value("password123");
+
+    // アプリケーションの初期化（イベントリスナーの登録）を実行
+    signup_page_main::run().await;
+
+    // submitイベントを手動で発火
+    let form = document.get_element_by_id("signup_form").unwrap();
+    let event = web_sys::Event::new("submit").unwrap();
+    form.dispatch_event(&event).unwrap();
+
+    // 内部の非同期処理（spawn_local）が完了するまで待機
+    for _ in 0..5 {
+        wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(&JsValue::NULL))
+            .await
+            .unwrap();
+    }
+
+    // 検証：エラーメッセージが正しく設定され、表示されているか
+    let error_div = document
+        .get_element_by_id("error_message")
+        .unwrap()
+        .dyn_into::<HtmlElement>()
+        .unwrap();
+    assert_eq!(
+        error_div.text_content().unwrap(),
+        "サーバー内部エラーが発生しました"
+    );
+    assert_eq!(
+        error_div.style().get_property_value("display").unwrap(),
+        "block"
+    );
+
+    // リダイレクトが発生していないことを確認
+    let redirect = get_last_redirect();
+    assert!(redirect.is_null());
+
+    cleanup_dom();
+    restore_stubs();
+}
+
+/// テストケース：サーバーエラー（400）でメッセージフィールドなしの場合のフォールバック表示
+#[wasm_bindgen_test]
+async fn test_signup_server_error_400_no_message() {
+    setup_dom();
+    setup_stubs();
+    // サーバーエラーレスポンスをシミュレート（400 Bad Request、message フィールドなし）
+    set_next_response(400, JsValue::from_str("{}"));
+
+    let document = web_sys::window().unwrap().document().unwrap();
+
+    // フォーム入力（有効なデータ）
+    document
+        .get_element_by_id("username")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .set_value("testuser");
+    document
+        .get_element_by_id("email")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .set_value("test@example.com");
+    document
+        .get_element_by_id("password")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .set_value("password123");
+    document
+        .get_element_by_id("confirm_password")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .set_value("password123");
+
+    // アプリケーションの初期化（イベントリスナーの登録）を実行
+    signup_page_main::run().await;
+
+    // submitイベントを手動で発火
+    let form = document.get_element_by_id("signup_form").unwrap();
+    let event = web_sys::Event::new("submit").unwrap();
+    form.dispatch_event(&event).unwrap();
+
+    // 内部の非同期処理（spawn_local）が完了するまで待機
+    for _ in 0..5 {
+        wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(&JsValue::NULL))
+            .await
+            .unwrap();
+    }
+
+    // 検証：フォールバックメッセージが表示されているか
+    let error_div = document
+        .get_element_by_id("error_message")
+        .unwrap()
+        .dyn_into::<HtmlElement>()
+        .unwrap();
+    assert_eq!(
+        error_div.text_content().unwrap(),
+        "新規登録に失敗しました"
+    );
+    assert_eq!(
+        error_div.style().get_property_value("display").unwrap(),
+        "block"
+    );
+
+    // リダイレクトが発生していないことを確認
+    let redirect = get_last_redirect();
+    assert!(redirect.is_null());
+
+    cleanup_dom();
+    restore_stubs();
+}
+
+/// テストケース：既にログイン済みの場合の自動リダイレクト
+#[wasm_bindgen_test]
+async fn test_already_logged_in_redirect() {
+    setup_dom();
+    setup_stubs();
+    // /api/auth/me のレスポンスをログイン済みに設定
+    set_next_response(200, JsValue::from_str(r#"{"logged_in": true}"#));
+
+    // run() を実行（ページ初期化）
+    signup_page_main::run().await;
+
+    // 非同期処理（check_already_logged_in）の完了を待機
+    for _ in 0..10 {
+        wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(&JsValue::NULL))
+            .await
+            .unwrap();
+    }
+
+    // 検証: リダイレクトが発生していること
+    let redirect = get_last_redirect();
+    assert_eq!(redirect.as_string().unwrap(), "/honey_note/index.html");
+
+    cleanup_dom();
+    restore_stubs();
+}
+
+/// テストケース：ログインしていない場合のリダイレクトなし
+#[wasm_bindgen_test]
+async fn test_not_logged_in_no_redirect() {
+    setup_dom();
+    setup_stubs();
+    // /api/auth/me のレスポンスを未ログインに設定
+    set_next_response(200, JsValue::from_str(r#"{"logged_in": false}"#));
+
+    // run() を実行
+    signup_page_main::run().await;
+
+    // 非同期処理待機
+    for _ in 0..10 {
+        wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(&JsValue::NULL))
+            .await
+            .unwrap();
+    }
+
+    // 検証: リダイレクトが発生していないこと
+    let redirect = get_last_redirect();
+    assert!(redirect.is_null());
+
+    cleanup_dom();
+    restore_stubs();
+}
+
+/// テストケース：/api/auth/me が 401 を返す場合のリダイレクトなし
+#[wasm_bindgen_test]
+async fn test_auth_me_unauthorized_no_redirect() {
+    setup_dom();
+    setup_stubs();
+    // /api/auth/me のレスポンスを 401 Unauthorized に設定
+    set_next_response(401, JsValue::from_str(r#"{"message": "Unauthorized"}"#));
+
+    // run() を実行
+    signup_page_main::run().await;
+
+    // 非同期処理待機
+    for _ in 0..10 {
+        wasm_bindgen_futures::JsFuture::from(js_sys::Promise::resolve(&JsValue::NULL))
+            .await
+            .unwrap();
+    }
+
+    // 検証: リダイレクトが発生していないこと
+    let redirect = get_last_redirect();
+    assert!(redirect.is_null());
+
+    cleanup_dom();
+    restore_stubs();
+}
+
