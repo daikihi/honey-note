@@ -16,9 +16,12 @@ pub async fn signup(
 ) -> Result<HttpResponse, Error> {
     // バリデーション
     if let Err(e) = payload.validate() {
+        warn!("バリデーションエラー: {:?}", e);
         return Ok(HttpResponse::BadRequest().json(AuthResponse {
             success: false,
-            message: Some(format!("バリデーションエラー: {:?}", e)),
+            message: Some(
+                "入力内容に誤りがあります。メールアドレスの形式を確認してください。".to_string(),
+            ),
             user_id: None,
             username: None,
         }));
