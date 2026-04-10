@@ -7,16 +7,28 @@ use common_type::models::session::SessionData;
 use common_type::request::auth::auth::{SignupRequest, LoginRequest, AuthResponse, MeResponse};
 use sqlx::SqlitePool;
 use log::{info, warn};
+use validator::Validate;
 
 #[post("/api/auth/signup")]
 pub async fn signup(
     pool: web::Data<SqlitePool>,
     payload: web::Json<SignupRequest>,
 ) -> Result<HttpResponse, Error> {
+    // バリデーション
+    if let Err(e) = payload.validate() {
+        return Ok(HttpResponse::BadRequest().json(AuthResponse {
+            success: false,
+            message: Some(format!("バリデーションエラー: {:?}", e)),
+            user_id: None,
+            username: None,
+        }));
+    }
+
     let repo = UserRepositorySqlite { pool: pool.get_ref().clone() };
     
     // ユーザー名を小文字に正規化
     let username = payload.username.to_lowercase();
+    println!("username: {}", username);
     
     // ユーザー名の重複チェック
     if let Ok(Some(_)) = repo.find_by_username(&username).await {
@@ -49,7 +61,7 @@ pub async fn signup(
         username: username.clone(),
         email_hash,
         password_hash,
-        display_name: payload.display_name.clone(),
+        display_name: payload.display_name.clone().or_else(|| Some(username.clone())),
         created_at: None,
         terminated_at: None,
         updated_at: None,

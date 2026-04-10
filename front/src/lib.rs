@@ -6,10 +6,16 @@ mod models;
 mod edit_and_new;
 mod show;
 mod login_page_main;
+mod signup_page_main;
 
 #[wasm_bindgen]
 pub async fn login_main() {
     login_page_main::run().await;
+}
+
+#[wasm_bindgen]
+pub async fn signup_main() {
+    signup_page_main::run().await;
 }
 
 #[wasm_bindgen]

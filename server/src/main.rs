@@ -32,8 +32,8 @@ async fn main() -> std::io::Result<()> {
     let pool = common::infrastructure::db::sqlx::get_sqlite_pool(path.to_string());
 
     let governor_conf = GovernorConfigBuilder::default()
-        .seconds_per_request(2) // 2秒に1回まで
-        .burst_size(5) // 最大5回バースト許可
+        .seconds_per_request(2) // 1秒に10回まで
+        .burst_size(20) // 最大20回バースト許可
         .finish()
         .unwrap();
 

@@ -54,7 +54,7 @@ async fn check_already_logged_in(window: &Window) -> Result<bool, JsValue> {
     Err(JsValue::from_str("not logged in"))
 }
 
-async fn handle_signup(form: &HtmlFormElement, error_div: &HtmlElement) -> Result<(), JsValue> {
+async fn handle_signup(_form: &HtmlFormElement, error_div: &HtmlElement) -> Result<(), JsValue> {
     let window = web_sys::window().unwrap();
     let document = web_sys::window().unwrap().document().unwrap();
 
@@ -98,4 +98,5 @@ async fn handle_signup(form: &HtmlFormElement, error_div: &HtmlElement) -> Resul
 
     Ok(())
 }
+
 
