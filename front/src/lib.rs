@@ -15,7 +15,9 @@ pub async fn login_main() {
 
 #[wasm_bindgen]
 pub async fn signup_main() {
-    signup_page_main::run().await;
+    if let Err(e) = signup_page_main::run().await {
+        web_sys::console::error_1(&format!("Signup initialization failed: {:?}", e).into());
+    }
 }
 
 #[wasm_bindgen]
