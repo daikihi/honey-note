@@ -31,14 +31,21 @@ impl BrowserAdapter for WebBrowserAdapter {
         let window: Window =
             web_sys::window().ok_or_else(|| JsValue::from_str("no global `window` exists"))?;
 
+        let norm_method = method.to_uppercase();
+
         let opts: RequestInit = RequestInit::new();
         web_sys::js_sys::Reflect::set(
             &opts,
             &JsValue::from_str("method"),
-            &JsValue::from_str(method),
+            &JsValue::from_str(&norm_method),
         )?;
 
         if let Some(b) = body {
+            if norm_method == "GET" || norm_method == "HEAD" {
+                return Err(JsValue::from_str(
+                    "Body is not allowed for GET or HEAD requests",
+                ));
+            }
             web_sys::js_sys::Reflect::set(
                 &opts,
                 &JsValue::from_str("body"),
@@ -47,7 +54,7 @@ impl BrowserAdapter for WebBrowserAdapter {
         }
 
         let request: Request = Request::new_with_str_and_init(url, &opts)?;
-        if method == "POST" || method == "PUT" {
+        if norm_method == "POST" || norm_method == "PUT" {
             request.headers().set("Content-Type", "application/json")?;
         }
 
