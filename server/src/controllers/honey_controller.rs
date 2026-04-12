@@ -29,18 +29,36 @@ pub async fn get_all_honeys(
     };
     let use_case_result: Result<GetAllHoneysResponseDto, String> =
         get_all_honies_use_case::run(&repo, request_dto, auth.user_id).await;
-    debug!(
-        "user_id={}, username={}, action=get_all_honeys, count={}",
-        auth.user_id,
-        auth.username,
-        use_case_result.clone().unwrap().honeys.len()
-    );
-    info!(
-        "user_id={}, action=get_all_honeys, count={}",
-        auth.user_id,
-        use_case_result.clone().unwrap().honeys.len()
-    );
-    Ok(actix_web::HttpResponse::Ok().json(use_case_result.unwrap().honeys))
+
+    match use_case_result {
+        Ok(response) => {
+            debug!(
+                "user_id={}, username={}, action=get_all_honeys, count={}",
+                auth.user_id,
+                auth.username,
+                response.honeys.len()
+            );
+            info!(
+                "user_id={}, action=get_all_honeys, count={}",
+                auth.user_id,
+                response.honeys.len()
+            );
+
+            Ok(actix_web::HttpResponse::Ok().json(response.honeys))
+        }
+        Err(e) => {
+            log::error!(
+                "user_id={}, action=get_all_honeys, error={}",
+                auth.user_id,
+                e
+            );
+            Ok(
+                actix_web::HttpResponse::InternalServerError().json(serde_json::json!({
+                    "error": "データの取得に失敗しました"
+                })),
+            )
+        }
+    }
 }
 
 #[get("/honey-note/api/honey/{id}")]
