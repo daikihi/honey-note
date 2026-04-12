@@ -121,17 +121,18 @@ pub async fn login(
         .map_err(|e| actix_web::error::ErrorInternalServerError(e.to_string()))?;
 
     if let Some(user) = user_opt {
-        match verify_password(&payload.password, &user.password_hash) {
-            Ok(true) => {
-                // セッション発行
-                let user_id = user.id.unwrap();
-                let session_data = SessionData::new(user_id, username.clone());
 
-                // セッション固定攻撃を防ぐためにセッションIDを再生成
-                session.renew();
-                session
-                    .insert("user", session_data)
-                    .map_err(|e| actix_web::error::ErrorInternalServerError(e.to_string()))?;
+        let verified = verify_password(&payload.password, &user.password_hash)
+            .map_err(|e| actix_web::error::ErrorInternalServerError(e.to_string()))?;
+        if verified {
+            // セッション発行
+            let user_id = user.id.unwrap();
+            let session_data = SessionData::new(user_id, username.clone());
+
+            session.renew();
+            session
+                .insert("user", session_data)
+                .map_err(|e| actix_web::error::ErrorInternalServerError(e.to_string()))?;
 
                 info!("login success username={}", mask_username(&username));
                 return Ok(HttpResponse::Ok().json(AuthResponse {

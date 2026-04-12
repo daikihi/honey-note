@@ -158,3 +158,41 @@ RUST_LOG=info cargo run -p batchs --bin honey_loader resources/master_data/honey
 
 - 本プロジェクトには "ISO 3166 Countries with Regional Codes" のデータを使用しており、MITライセンスに基づき提供されています。
   <https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes>
+
+# Release Notes
+
+## HoneyNote v2.0.0 — マルチユーザー対応・ユーザー認証基盤の導入
+
+### 主な変更内容
+
+#### 🔐 認証・ユーザー管理機能の新規追加
+
+- 新規ユーザー登録（サインアップ）機能を追加
+- ログイン／ログアウト機能を追加（Actix セッションによる管理）
+- `GET /api/auth/me` によるログイン状態確認エンドポイントを追加
+- パスワードは bcrypt でハッシュ化、メールアドレスは SHA-256 でハッシュ化して保存
+
+#### 👤 ユーザースコープによるデータ管理
+
+- Honey / Beekeeper / Flower の各データに `user_id` を紐付け
+- 各 API はログインユーザーのデータのみ取得・操作可能に変更
+
+#### 🛡️ セキュリティ強化
+
+- 認証ミドルウェア（`AuthenticatedUser`）を導入し、全リソース API に認証ゲートを追加
+- レート制限（actix-governor）を導入
+
+#### 🖥️ フロントエンド対応
+
+- ログインページ（`login.html`）／新規登録ページ（`signup.html`）を追加
+- 各ページ読み込み時に認証チェックを実施し、未ログイン時はログインページへリダイレクト
+
+#### ⚙️ バッチ処理対応
+
+- beekeeper / flower / honey の各ローダーバッチに `--user-id` 引数を追加し、ユーザースコープでのデータ投入に対応
+
+### ⚠️ 破壊的変更
+
+- 全リソース API（honey / beekeeper / flower）の取得・更新にログインセッションが必要になりました
+- バッチ実行時に `user_id` 引数が必須となりました
+- リポジトリトレイトの全メソッドシグネチャに `user_id: i32` が追加されました
