@@ -1,19 +1,18 @@
+use crate::commons::browser_adapter::BrowserAdapter;
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
-use web_sys::{
-    js_sys::{JsString, Reflect},
-    Document, Window, HtmlFormElement, HtmlInputElement, Request, RequestInit, Response, HtmlElement
-};
+use web_sys::{js_sys::Reflect, Document, HtmlElement, HtmlFormElement, HtmlInputElement, Window};
 
-pub async fn run() -> Result<(), JsValue> {
+pub async fn run<A: BrowserAdapter + 'static>(adapter: Rc<A>) -> Result<(), JsValue> {
     let window: Window = web_sys::window().expect("no global `window` exists");
     let document: Document = window.document().expect("should have a document on window");
 
     // すでにログインしているか確認
-    if let Ok(_) = check_already_logged_in(&window).await {
+    if let Ok(_) = check_already_logged_in(&window, adapter.as_ref()).await {
         // ログイン済みならトップへ
-        let _ = window.location().assign("/honey_note/index.html");
+        let _ = adapter.redirect("/honey_note/index.html");
         return Ok(());
     }
 
@@ -32,14 +31,23 @@ pub async fn run() -> Result<(), JsValue> {
 
     // イベントリスナーの追加も安全に行う
     let form_clone = form_element.clone();
+    let error_div_clone = error_div.clone();
+    let adapter_clone = Rc::clone(&adapter);
+    let document_clone = document.clone();
+    let window_clone = window.clone();
+
     let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
         event.prevent_default();
         let form = form_clone.clone();
-        let error_div = error_div.clone();
-        let document = document.clone();
-        let window = window.clone();
+        let error_div = error_div_clone.clone();
+        let adapter = Rc::clone(&adapter_clone);
+        let document = document_clone.clone();
+        let window = window_clone.clone();
+
         wasm_bindgen_futures::spawn_local(async move {
-            if let Err(e) = handle_signup(&form, &error_div, &document, &window).await {
+            if let Err(e) =
+                handle_signup(&form, &error_div, &document, &window, adapter.as_ref()).await
+            {
                 error_div.set_text_content(Some(&format!("エラーが発生しました: {:?}", e)));
                 let _ = error_div.style().set_property("display", "block");
             }
@@ -52,17 +60,17 @@ pub async fn run() -> Result<(), JsValue> {
     Ok(())
 }
 
-async fn check_already_logged_in(window: &Window) -> Result<bool, JsValue> {
-    let opts = RequestInit::new();
-    Reflect::set(&opts, &JsString::from("method"), &JsString::from("GET"))?;
-
-    let request = Request::new_with_str_and_init("/api/auth/me", &opts)?;
-    let response_value = JsFuture::from(window.fetch_with_request(&request)).await?;
-    let resp: Response = response_value.dyn_into()?;
+async fn check_already_logged_in<A: BrowserAdapter>(
+    _window: &Window,
+    adapter: &A,
+) -> Result<bool, JsValue> {
+    let resp = adapter.fetch("/api/auth/me", "GET", None).await?;
 
     if resp.status() == 200 {
         let json = JsFuture::from(resp.json()?).await?;
-        let logged_in = Reflect::get(&json, &JsValue::from_str("logged_in"))?.as_bool().unwrap_or(false);
+        let logged_in = Reflect::get(&json, &JsValue::from_str("logged_in"))?
+            .as_bool()
+            .unwrap_or(false);
         if logged_in {
             return Ok(true);
         }
@@ -70,8 +78,13 @@ async fn check_already_logged_in(window: &Window) -> Result<bool, JsValue> {
     Err(JsValue::from_str("not logged in"))
 }
 
-async fn handle_signup(form: &HtmlFormElement, error_div: &HtmlElement, document: &Document, window: &Window) -> Result<(), JsValue> {
-
+async fn handle_signup<A: BrowserAdapter>(
+    _form: &HtmlFormElement,
+    error_div: &HtmlElement,
+    document: &Document,
+    _window: &Window,
+    adapter: &A,
+) -> Result<(), JsValue> {
     let username_element = document
         .get_element_by_id("username")
         .ok_or_else(|| JsValue::from_str("username element not found"))?
@@ -104,31 +117,39 @@ async fn handle_signup(form: &HtmlFormElement, error_div: &HtmlElement, document
     if password != confirm_password {
         error_div.set_text_content(Some("パスワードが一致しません"));
         let _ = error_div.style().set_property("display", "block");
-        return Ok(());  // エラーではなく Ok を返す（メッセージを保持するため）
+        return Ok(());
     }
 
     let body_obj = web_sys::js_sys::Object::new();
-    Reflect::set(&body_obj, &JsValue::from_str("username"), &JsValue::from_str(&username))?;
-    Reflect::set(&body_obj, &JsValue::from_str("email"), &JsValue::from_str(&email))?;
-    Reflect::set(&body_obj, &JsValue::from_str("password"), &JsValue::from_str(&password))?;
+    Reflect::set(
+        &body_obj,
+        &JsValue::from_str("username"),
+        &JsValue::from_str(&username),
+    )?;
+    Reflect::set(
+        &body_obj,
+        &JsValue::from_str("email"),
+        &JsValue::from_str(&email),
+    )?;
+    Reflect::set(
+        &body_obj,
+        &JsValue::from_str("password"),
+        &JsValue::from_str(&password),
+    )?;
     let body_str = web_sys::js_sys::JSON::stringify(&body_obj)?;
 
-    let opts = RequestInit::new();
-    Reflect::set(&opts, &JsString::from("method"), &JsString::from("POST"))?;
-    Reflect::set(&opts, &JsString::from("body"), &body_str)?;
-
-    let request = Request::new_with_str_and_init("/api/auth/signup", &opts)?;
-    request.headers().set("Content-Type", "application/json")?;
-
-    let response_value = JsFuture::from(window.fetch_with_request(&request)).await?;
-    let resp: Response = response_value.dyn_into()?;
+    let resp = adapter
+        .fetch("/api/auth/signup", "POST", Some(body_str.into()))
+        .await?;
 
     if resp.status() == 200 || resp.status() == 201 {
         // 新規登録成功後、ログインページへリダイレクト
-        window.location().assign("/honey_note/login.html")?;
+        adapter.redirect("/honey_note/login.html")?;
     } else {
         let json = JsFuture::from(resp.json()?).await?;
-        let message = Reflect::get(&json, &JsValue::from_str("message"))?.as_string().unwrap_or_else(|| "新規登録に失敗しました".to_string());
+        let message = Reflect::get(&json, &JsValue::from_str("message"))?
+            .as_string()
+            .unwrap_or_else(|| "新規登録に失敗しました".to_string());
         error_div.set_text_content(Some(&message));
         let _ = error_div.style().set_property("display", "block");
     }

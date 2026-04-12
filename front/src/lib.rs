@@ -1,6 +1,8 @@
+use crate::commons::browser_adapter::WebBrowserAdapter;
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 
-mod commons;
+pub mod commons;
 mod edit_and_new;
 mod lists;
 mod login_page_main;
@@ -15,7 +17,8 @@ pub async fn login_main() {
 
 #[wasm_bindgen]
 pub async fn signup_main() {
-    if let Err(e) = signup_page_main::run().await {
+    let adapter = Rc::new(WebBrowserAdapter);
+    if let Err(e) = signup_page_main::run(adapter).await {
         web_sys::console::error_1(&format!("Signup initialization failed: {:?}", e).into());
     }
 }

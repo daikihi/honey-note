@@ -1,10 +1,9 @@
 use front::signup_page_main;
+use front::commons::browser_adapter::WebBrowserAdapter;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_test::*;
 use web_sys::{js_sys, HtmlElement, HtmlInputElement};
-
-// ブラウザ環境でのテスト実行を構成
-wasm_bindgen_test_configure!(run_in_browser);
+use std::rc::Rc;
 
 /// JavaScript側でのスタブ実装
 /// window.fetch と window.location.assign をテスト用に上書きし、
@@ -131,7 +130,8 @@ async fn test_signup_password_mismatch() {
         .set_value("mismatch");
 
     // アプリケーションの初期化（イベントリスナーの登録）を実行
-    signup_page_main::run().await;
+    let adapter = Rc::new(WebBrowserAdapter);
+    signup_page_main::run(adapter).await;
 
     // submitイベントを手動で発火
     let form = document.get_element_by_id("signup_form").unwrap();
@@ -197,7 +197,9 @@ async fn test_signup_success() {
         .unwrap()
         .set_value("password123");
 
-    signup_page_main::run().await;
+    // アプリケーションの初期化（イベントリスナーの登録）を実行
+    let adapter = Rc::new(WebBrowserAdapter);
+    signup_page_main::run(adapter).await;
 
     let form = document.get_element_by_id("signup_form").unwrap();
     let event = web_sys::Event::new("submit").unwrap();
@@ -255,7 +257,8 @@ async fn test_signup_server_error_400_with_message() {
         .set_value("password123");
 
     // アプリケーションの初期化（イベントリスナーの登録）を実行
-    signup_page_main::run().await;
+    let adapter = Rc::new(WebBrowserAdapter);
+    signup_page_main::run(adapter).await;
 
     // submitイベントを手動で発火
     let form = document.get_element_by_id("signup_form").unwrap();
@@ -329,7 +332,8 @@ async fn test_signup_server_error_500_with_message() {
         .set_value("password123");
 
     // アプリケーションの初期化（イベントリスナーの登録）を実行
-    signup_page_main::run().await;
+    let adapter = Rc::new(WebBrowserAdapter);
+    signup_page_main::run(adapter).await;
 
     // submitイベントを手動で発火
     let form = document.get_element_by_id("signup_form").unwrap();
@@ -403,7 +407,8 @@ async fn test_signup_server_error_400_no_message() {
         .set_value("password123");
 
     // アプリケーションの初期化（イベントリスナーの登録）を実行
-    signup_page_main::run().await;
+    let adapter = Rc::new(WebBrowserAdapter);
+    signup_page_main::run(adapter).await;
 
     // submitイベントを手動で発火
     let form = document.get_element_by_id("signup_form").unwrap();
@@ -449,7 +454,8 @@ async fn test_already_logged_in_redirect() {
     set_next_response(200, JsValue::from_str(r#"{"logged_in": true}"#));
 
     // run() を実行（ページ初期化）
-    signup_page_main::run().await;
+    let adapter = Rc::new(WebBrowserAdapter);
+    signup_page_main::run(adapter).await;
 
     // 非同期処理（check_already_logged_in）の完了を待機
     for _ in 0..10 {
@@ -475,7 +481,8 @@ async fn test_not_logged_in_no_redirect() {
     set_next_response(200, JsValue::from_str(r#"{"logged_in": false}"#));
 
     // run() を実行
-    signup_page_main::run().await;
+    let adapter = Rc::new(WebBrowserAdapter);
+    signup_page_main::run(adapter).await;
 
     // 非同期処理待機
     for _ in 0..10 {
@@ -501,7 +508,8 @@ async fn test_auth_me_unauthorized_no_redirect() {
     set_next_response(401, JsValue::from_str(r#"{"message": "Unauthorized"}"#));
 
     // run() を実行
-    signup_page_main::run().await;
+    let adapter = Rc::new(WebBrowserAdapter);
+    signup_page_main::run(adapter).await;
 
     // 非同期処理待機
     for _ in 0..10 {
