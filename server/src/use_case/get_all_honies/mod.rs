@@ -1,17 +1,15 @@
 pub mod get_all_honies_dto;
 use common::repository::honeys::HoneyRepository;
+use common_type::models::honey::Honey;
 use get_all_honies_dto::{GetAllHoneysRequestDto, GetAllHoneysResponseDto};
 
 pub async fn run<T: HoneyRepository>(
     repo: &T,
     _request_dto: GetAllHoneysRequestDto,
     user_id: i32,
-) -> GetAllHoneysResponseDto {
-    let honeys = repo.get_all_honeys(user_id).await.unwrap_or_else(|e| {
-        log::error!("Error fetching honeys: {}", e);
-        vec![]
-    });
-    GetAllHoneysResponseDto { honeys }
+) -> Result<GetAllHoneysResponseDto, String> {
+    let honeys: Vec<Honey> = repo.get_all_honeys(user_id).await?;
+    Ok(GetAllHoneysResponseDto { honeys })
 }
 
 #[cfg(test)]
@@ -27,7 +25,12 @@ mod tests {
         async fn insert_honey(&self, _honey: HoneyDetail, _user_id: i32) -> Result<i64, String> {
             Ok(1)
         }
-        async fn update_honey(&self, _id: i64, _honey: HoneyDetail, _user_id: i32) -> Result<(), String> {
+        async fn update_honey(
+            &self,
+            _id: i64,
+            _honey: HoneyDetail,
+            _user_id: i32,
+        ) -> Result<(), String> {
             Ok(())
         }
         async fn exists_honey(&self, _honey: &HoneyDetail, _user_id: i32) -> Result<bool, String> {
@@ -37,19 +40,17 @@ mod tests {
             Ok(true)
         }
         async fn get_all_honeys(&self, _user_id: i32) -> Result<Vec<Honey>, String> {
-            Ok(vec![
-                Honey {
-                    id: Some(1),
-                    name_jp: "アカシア".to_string(),
-                    name_en: None,
-                    beekkeeper: None,
-                    origin_country: None,
-                    origin_region: None,
-                    harvest_year: None,
-                    purchase_date: None,
-                    note: None,
-                },
-            ])
+            Ok(vec![Honey {
+                id: Some(1),
+                name_jp: "アカシア".to_string(),
+                name_en: None,
+                beekkeeper: None,
+                origin_country: None,
+                origin_region: None,
+                harvest_year: None,
+                purchase_date: None,
+                note: None,
+            }])
         }
         async fn get_honey_by_id(&self, _id: i64, _user_id: i32) -> Result<HoneyDetail, String> {
             use common_type::request::honey::basic::HoneyEditBasicRequest;
@@ -64,7 +65,8 @@ mod tests {
                     honey_type: None,
                     volume: None,
                     purchase_date: None,
-                }.to_honey_input_basic(),
+                }
+                .to_honey_input_basic(),
                 dynamic: vec![],
                 created_at: None,
                 updated_at: None,
@@ -76,9 +78,9 @@ mod tests {
     async fn test_run() {
         let repo = MockHoneyRepository;
         let req = GetAllHoneysRequestDto {};
-        let result = run(&repo, req, 1).await;
+        let result: Result<GetAllHoneysResponseDto, String> = run(&repo, req, 1).await;
 
-        assert_eq!(result.honeys.len(), 1);
-        assert_eq!(result.honeys[0].name_jp, "アカシア");
+        assert_eq!(result.clone().unwrap().honeys.len(), 1);
+        assert_eq!(result.unwrap().honeys[0].name_jp, "アカシア");
     }
 }
