@@ -9,6 +9,14 @@ use log::{debug, info, warn};
 use sqlx::SqlitePool;
 use validator::Validate;
 
+fn mask_username(username: &str) -> String {
+    if username.is_empty() {
+        return "***".to_string();
+    }
+    let first_char = username.chars().next().unwrap_or('*');
+    format!("{}***", first_char)
+}
+
 #[post("/api/auth/signup")]
 pub async fn signup(
     pool: web::Data<SqlitePool>,
@@ -33,7 +41,7 @@ pub async fn signup(
 
     // ユーザー名を小文字に正規化
     let username = payload.username.to_lowercase();
-    debug!("username: {}", username);
+    debug!("username: {}", mask_username(&username));
 
     // ユーザー名の重複チェック
     if let Ok(Some(_)) = repo.find_by_username(&username).await {
@@ -76,7 +84,7 @@ pub async fn signup(
 
     match repo.insert_user(new_user).await {
         Ok(id) => {
-            info!("user signup success: username={}", username);
+            info!("user signup success: username={}", mask_username(&username));
             Ok(HttpResponse::Ok().json(AuthResponse {
                 success: true,
                 message: None,
@@ -85,7 +93,7 @@ pub async fn signup(
             }))
         }
         Err(e) => {
-            warn!("user signup failed: username={}, error={}", username, e);
+            warn!("user signup failed: username={}, error={}", mask_username(&username), e);
             Ok(HttpResponse::InternalServerError().json(AuthResponse {
                 success: false,
                 message: Some("ユーザー登録に失敗しました".to_string()),
@@ -113,26 +121,48 @@ pub async fn login(
         .map_err(|e| actix_web::error::ErrorInternalServerError(e.to_string()))?;
 
     if let Some(user) = user_opt {
-        if let Ok(true) = verify_password(&payload.password, &user.password_hash) {
-            // セッション発行
-            let user_id = user.id.unwrap();
-            let session_data = SessionData::new(user_id, username.clone());
+        match verify_password(&payload.password, &user.password_hash) {
+            Ok(true) => {
+                // セッション発行
+                let user_id = user.id.unwrap();
+                let session_data = SessionData::new(user_id, username.clone());
 
-            session
-                .insert("user", session_data)
-                .map_err(|e| actix_web::error::ErrorInternalServerError(e.to_string()))?;
+                // セッション固定攻撃を防ぐためにセッションIDを再生成
+                session.renew();
+                session
+                    .insert("user", session_data)
+                    .map_err(|e| actix_web::error::ErrorInternalServerError(e.to_string()))?;
 
-            info!("login success username={}", username);
-            return Ok(HttpResponse::Ok().json(AuthResponse {
-                success: true,
-                message: None,
-                user_id: Some(user_id),
-                username: Some(username),
-            }));
+                info!("login success username={}", mask_username(&username));
+                return Ok(HttpResponse::Ok().json(AuthResponse {
+                    success: true,
+                    message: None,
+                    user_id: Some(user_id),
+                    username: Some(username),
+                }));
+            }
+            Ok(false) => {
+                warn!("login failed username={}", mask_username(&username));
+                return Ok(HttpResponse::Unauthorized().json(AuthResponse {
+                    success: false,
+                    message: Some("ユーザー名またはパスワードが正しくありません".to_string()),
+                    user_id: None,
+                    username: None,
+                }));
+            }
+            Err(e) => {
+                log::error!("bcrypt error during password verification: {}", e);
+                return Ok(HttpResponse::InternalServerError().json(AuthResponse {
+                    success: false,
+                    message: Some("サーバー内部エラーが発生しました".to_string()),
+                    user_id: None,
+                    username: None,
+                }));
+            }
         }
     }
 
-    warn!("login failed username={}", username);
+    warn!("login failed username={}", mask_username(&username));
     Ok(HttpResponse::Unauthorized().json(AuthResponse {
         success: false,
         message: Some("ユーザー名またはパスワードが正しくありません".to_string()),
@@ -144,7 +174,7 @@ pub async fn login(
 #[post("/api/auth/logout")]
 pub async fn logout(session: Session) -> Result<HttpResponse, Error> {
     if let Ok(Some(data)) = session.get::<SessionData>("user") {
-        info!("logout username={}", data.username);
+        info!("logout username={}", mask_username(&data.username));
     }
     session.purge();
     Ok(HttpResponse::Ok().json(AuthResponse {
@@ -169,5 +199,361 @@ pub async fn me(session: Session) -> Result<HttpResponse, Error> {
             user_id: None,
             username: None,
         }))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{test, web, App};
+    use sqlx::SqlitePool;
+
+    async fn setup_db() -> SqlitePool {
+        let pool = SqlitePool::connect(":memory:").await.unwrap();
+        sqlx::query(
+            "CREATE TABLE users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL,
+                email_hash TEXT NOT NULL,
+                password_hash TEXT NOT NULL,
+                display_name TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                terminated_at DATETIME,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(username),
+                UNIQUE(email_hash)
+            );",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        pool
+    }
+
+    #[actix_web::test]
+    async fn test_signup_success() {
+        let pool = setup_db().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .wrap(
+                    actix_session::SessionMiddleware::builder(
+                        actix_session::storage::CookieSessionStore::default(),
+                        actix_web::cookie::Key::from(&[0; 64]),
+                    )
+                    .build(),
+                )
+                .service(signup),
+        )
+        .await;
+
+        let payload = SignupRequest {
+            username: "testuser".to_string(),
+            email: "test@example.com".to_string(),
+            password: "password123".to_string(),
+            display_name: None,
+        };
+
+        let req = test::TestRequest::post()
+            .uri("/api/auth/signup")
+            .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+
+        let body: AuthResponse = test::read_body_json(resp).await;
+        assert!(body.success);
+        assert!(body.user_id.is_some());
+        assert_eq!(body.username, Some("testuser".to_string()));
+    }
+
+    #[actix_web::test]
+    async fn test_signup_invalid_email() {
+        let pool = setup_db().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .wrap(
+                    actix_session::SessionMiddleware::builder(
+                        actix_session::storage::CookieSessionStore::default(),
+                        actix_web::cookie::Key::from(&[0; 64]),
+                    )
+                    .build(),
+                )
+                .service(signup),
+        )
+        .await;
+
+        let payload = SignupRequest {
+            username: "testuser".to_string(),
+            email: "invalid-email".to_string(),
+            password: "password123".to_string(),
+            display_name: None,
+        };
+
+        let req = test::TestRequest::post()
+            .uri("/api/auth/signup")
+            .set_json(&payload)
+            .to_request();
+
+        let resp = test::call_service(&app, req).await;
+        assert_eq!(resp.status(), actix_web::http::StatusCode::BAD_REQUEST);
+
+        let body: AuthResponse = test::read_body_json(resp).await;
+        assert!(!body.success);
+    }
+
+    #[actix_web::test]
+    async fn test_signup_duplicate_username() {
+        let pool = setup_db().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .wrap(
+                    actix_session::SessionMiddleware::builder(
+                        actix_session::storage::CookieSessionStore::default(),
+                        actix_web::cookie::Key::from(&[0; 64]),
+                    )
+                    .build(),
+                )
+                .service(signup),
+        )
+        .await;
+
+        let payload = SignupRequest {
+            username: "testuser".to_string(),
+            email: "test1@example.com".to_string(),
+            password: "password123".to_string(),
+            display_name: None,
+        };
+
+        let req1 = test::TestRequest::post()
+            .uri("/api/auth/signup")
+            .set_json(&payload)
+            .to_request();
+        let resp1 = test::call_service(&app, req1).await;
+        assert!(resp1.status().is_success());
+
+        let payload2 = SignupRequest {
+            username: "testuser".to_string(),
+            email: "test2@example.com".to_string(),
+            password: "password123".to_string(),
+            display_name: None,
+        };
+
+        let req2 = test::TestRequest::post()
+            .uri("/api/auth/signup")
+            .set_json(&payload2)
+            .to_request();
+        let resp2 = test::call_service(&app, req2).await;
+        assert_eq!(resp2.status(), actix_web::http::StatusCode::BAD_REQUEST);
+
+        let body: AuthResponse = test::read_body_json(resp2).await;
+        assert!(!body.success);
+        assert!(body.message.unwrap().contains("ユーザー名は既に使用されています"));
+    }
+
+    #[actix_web::test]
+    async fn test_signup_duplicate_email_hash() {
+        let pool = setup_db().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .wrap(
+                    actix_session::SessionMiddleware::builder(
+                        actix_session::storage::CookieSessionStore::default(),
+                        actix_web::cookie::Key::from(&[0; 64]),
+                    )
+                    .build(),
+                )
+                .service(signup),
+        )
+        .await;
+
+        let payload = SignupRequest {
+            username: "testuser1".to_string(),
+            email: "test@example.com".to_string(),
+            password: "password123".to_string(),
+            display_name: None,
+        };
+
+        let req1 = test::TestRequest::post()
+            .uri("/api/auth/signup")
+            .set_json(&payload)
+            .to_request();
+        let resp1 = test::call_service(&app, req1).await;
+        assert!(resp1.status().is_success());
+
+        let payload2 = SignupRequest {
+            username: "testuser2".to_string(),
+            email: "test@example.com".to_string(),
+            password: "password123".to_string(),
+            display_name: None,
+        };
+
+        let req2 = test::TestRequest::post()
+            .uri("/api/auth/signup")
+            .set_json(&payload2)
+            .to_request();
+        let resp2 = test::call_service(&app, req2).await;
+        assert_eq!(resp2.status(), actix_web::http::StatusCode::BAD_REQUEST);
+
+        let body: AuthResponse = test::read_body_json(resp2).await;
+        assert!(!body.success);
+        assert!(body.message.unwrap().contains("メールアドレスは既に登録されています"));
+    }
+
+    #[actix_web::test]
+    async fn test_login_success() {
+        let pool = setup_db().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .wrap(
+                    actix_session::SessionMiddleware::builder(
+                        actix_session::storage::CookieSessionStore::default(),
+                        actix_web::cookie::Key::from(&[0; 64]),
+                    )
+                    .build(),
+                )
+                .service(signup)
+                .service(login),
+        )
+        .await;
+
+        let signup_payload = SignupRequest {
+            username: "testuser".to_string(),
+            email: "test@example.com".to_string(),
+            password: "password123".to_string(),
+            display_name: None,
+        };
+
+        let req_signup = test::TestRequest::post()
+            .uri("/api/auth/signup")
+            .set_json(&signup_payload)
+            .to_request();
+        let resp_signup = test::call_service(&app, req_signup).await;
+        assert!(resp_signup.status().is_success());
+
+        let login_payload = LoginRequest {
+            username: "testuser".to_string(),
+            password: "password123".to_string(),
+        };
+
+        let req_login = test::TestRequest::post()
+            .uri("/api/auth/login")
+            .set_json(&login_payload)
+            .to_request();
+        let resp_login = test::call_service(&app, req_login).await;
+        assert!(resp_login.status().is_success());
+
+        let body: AuthResponse = test::read_body_json(resp_login).await;
+        assert!(body.success);
+        assert!(body.user_id.is_some());
+    }
+
+    #[actix_web::test]
+    async fn test_login_incorrect_password() {
+        let pool = setup_db().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .wrap(
+                    actix_session::SessionMiddleware::builder(
+                        actix_session::storage::CookieSessionStore::default(),
+                        actix_web::cookie::Key::from(&[0; 64]),
+                    )
+                    .build(),
+                )
+                .service(signup)
+                .service(login),
+        )
+        .await;
+
+        let signup_payload = SignupRequest {
+            username: "testuser".to_string(),
+            email: "test@example.com".to_string(),
+            password: "password123".to_string(),
+            display_name: None,
+        };
+
+        let req_signup = test::TestRequest::post()
+            .uri("/api/auth/signup")
+            .set_json(&signup_payload)
+            .to_request();
+        let resp_signup = test::call_service(&app, req_signup).await;
+        assert!(resp_signup.status().is_success());
+
+        let login_payload = LoginRequest {
+            username: "testuser".to_string(),
+            password: "wrongpassword".to_string(),
+        };
+
+        let req_login = test::TestRequest::post()
+            .uri("/api/auth/login")
+            .set_json(&login_payload)
+            .to_request();
+        let resp_login = test::call_service(&app, req_login).await;
+        assert_eq!(resp_login.status(), actix_web::http::StatusCode::UNAUTHORIZED);
+
+        let body: AuthResponse = test::read_body_json(resp_login).await;
+        assert!(!body.success);
+    }
+
+    #[actix_web::test]
+    async fn test_logout() {
+        let pool = setup_db().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .wrap(
+                    actix_session::SessionMiddleware::builder(
+                        actix_session::storage::CookieSessionStore::default(),
+                        actix_web::cookie::Key::from(&[0; 64]),
+                    )
+                    .build(),
+                )
+                .service(logout),
+        )
+        .await;
+
+        let req = test::TestRequest::post()
+            .uri("/api/auth/logout")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+
+        let body: AuthResponse = test::read_body_json(resp).await;
+        assert!(body.success);
+    }
+
+    #[actix_web::test]
+    async fn test_me_not_logged_in() {
+        let pool = setup_db().await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .wrap(
+                    actix_session::SessionMiddleware::builder(
+                        actix_session::storage::CookieSessionStore::default(),
+                        actix_web::cookie::Key::from(&[0; 64]),
+                    )
+                    .build(),
+                )
+                .service(me),
+        )
+        .await;
+
+        let req = test::TestRequest::get()
+            .uri("/api/auth/me")
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+
+        let body: MeResponse = test::read_body_json(resp).await;
+        assert!(!body.logged_in);
+        assert!(body.user_id.is_none());
+        assert!(body.username.is_none());
     }
 }

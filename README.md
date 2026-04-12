@@ -94,25 +94,25 @@ RUST_LOG=info cargo run -p server
 #### 都道府県マスター
 
 ```bash
-RUST_LOG=info cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.csv resources/db/honey_note.db
+RUST_LOG=info cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.csv resources/db/honey_note.db --user-id <USER_ID>
 ```
 
 #### 花名マスター
 
 ```bash
-RUST_LOG=info cargo run -p batchs --bin flower_loader resources/master_data/flower.csv resources/db/honey_note.db
+RUST_LOG=info cargo run -p batchs --bin flower_loader resources/master_data/flower.csv resources/db/honey_note.db --user-id <USER_ID>
 ```
 
 #### 養蜂業者マスター
 
 ```bash
-RUST_LOG=info cargo run -p batchs --bin beekeeper_loader resources/master_data/beekeeper.csv resources/db/honey_note.db
+RUST_LOG=info cargo run -p batchs --bin beekeeper_loader resources/master_data/beekeeper.csv resources/db/honey_note.db --user-id <USER_ID>
 ```
 
 #### ハチミツデータ（JSONL形式）
 
 ```bash
-RUST_LOG=info cargo run -p batchs --bin honey_loader resources/master_data/honey_data.jsonl resources/db/honey_note.db
+RUST_LOG=info cargo run -p batchs --bin honey_loader resources/master_data/honey_data.jsonl resources/db/honey_note.db --user-id <USER_ID>
 ```
 
 ## APIエンドポイント
@@ -158,4 +158,3 @@ RUST_LOG=info cargo run -p batchs --bin honey_loader resources/master_data/honey
 
 - 本プロジェクトには "ISO 3166 Countries with Regional Codes" のデータを使用しており、MITライセンスに基づき提供されています。
   <https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes>
-

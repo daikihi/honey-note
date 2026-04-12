@@ -41,6 +41,6 @@ resources/master_data/flower_names.csv
 resources/master_data/beekeeper.csv
 resources/master_data/*.jsonl
 
-.specify
-specs_ai/
+/.specify
+/specs_ai/
 /related_works/

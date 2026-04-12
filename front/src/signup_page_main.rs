@@ -115,7 +115,7 @@ async fn handle_signup<A: BrowserAdapter>(
 
     // パスワードが一致するか確認
     if password != confirm_password {
-        error_div.set_text_content(Some("パスワードが一致しません"));
+        error_div.set_text_content(Some("エラーが発生しました"));
         let _ = error_div.style().set_property("display", "block");
         return Ok(());
     }
