@@ -27,6 +27,9 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>, user_id: i32) -> Re
         .begin()
         .await
         .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+    let repo = BeekeeperRepositorySqlite {
+        pool: connection_pool.clone(),
+    };
     for line in master_data.lines() {
         info!("Processing line: {}", line);
         let beekeeper_master_data: Vec<&str> = line.split(',').collect();
@@ -78,9 +81,6 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>, user_id: i32) -> Re
         );
 
         info!("Loaded beekeeper: {:?}", &model_beekeeper);
-        let repo = BeekeeperRepositorySqlite {
-            pool: connection_pool.clone(),
-        };
         let has_beekeeper = repo
             .has_beekeeper(&model_beekeeper, user_id, &mut *tx)
             .await;
