@@ -116,21 +116,23 @@ impl Honey {
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
         let query = r#"        
-            INSERT INTO honey (name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note)
-            SELECT ?, ?, ?, ?, ?, ?, ?, ?
-            WHERE NOT EXISTS (SELECT 1 FROM honey WHERE name_jp = ?)
+            INSERT INTO honey (name_jp, name_en, beekeeper_id, user_id, origin_country, origin_region, harvest_year, purchase_date, note)
+            SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
+            WHERE NOT EXISTS (SELECT 1 FROM honey WHERE name_jp = ? AND user_id = ?)
         "#;
 
         let result = sqlx::query(query)
             .bind(&self.name_jp)
             .bind(&self.name_en)
             .bind(self.beekeeper_id)
+            .bind(self.user_id)
             .bind(&self.origin_country)
             .bind(&self.origin_region)
             .bind(self.harvest_year)
             .bind(&self.purchase_date)
             .bind(&self.note)
             .bind(&self.name_jp)
+            .bind(self.user_id)
             .execute(executor)
             .await?;
 
