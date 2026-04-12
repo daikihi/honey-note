@@ -1,9 +1,15 @@
+#[path = "controllers.rs"]
 mod controllers;
-mod use_case;
 mod middleware;
+mod use_case;
 
 use actix_cors::Cors;
 use actix_files::Files;
+// for signing key
+use actix_governor::{Governor, GovernorConfigBuilder};
+use actix_session::storage::CookieSessionStore;
+use actix_session::SessionMiddleware;
+use actix_web::cookie::Key;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use common::libs::config::models::server::load_config;
 use common::libs::config::models::server::Server;
@@ -25,11 +31,51 @@ async fn main() -> std::io::Result<()> {
     let path = common::infrastructure::db::sqlx::DB_FILE_NAME;
     let pool = common::infrastructure::db::sqlx::get_sqlite_pool(path.to_string());
 
+    let governor_conf = GovernorConfigBuilder::default()
+        .seconds_per_request(2) // 2秒に1リクエスト（0.5 req/s）
+        .burst_size(20) // 最大20回バースト許可
+        .finish()
+        .unwrap();
+
+    // Cookie signing key (must be exactly 64 bytes in production, or generated in dev)
+    let secret_key = match std::env::var("SESSION_SECRET_KEY") {
+        Ok(k) => {
+            let key_bytes = k.as_bytes();
+            if key_bytes.len() != 64 {
+                eprintln!("SESSION_SECRET_KEY must be exactly 64 bytes long, got {}", key_bytes.len());
+                std::process::exit(1);
+            }
+            Key::from(key_bytes)
+        }
+        Err(_) => {
+            // Only allow Key::generate() in development
+            #[cfg(debug_assertions)]
+            {
+                log::warn!("SESSION_SECRET_KEY not set; using generated key (development only)");
+                Key::generate()
+            }
+            #[cfg(not(debug_assertions))]
+            {
+                eprintln!("SESSION_SECRET_KEY environment variable is required in production");
+                std::process::exit(1);
+            }
+        }
+    };
+
+    let is_production = !cfg!(debug_assertions);
+
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
+            .wrap(
+                SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
+                    .cookie_name("honey_note_session".to_string())
+                    .cookie_secure(is_production) // Secure in production, allow false in development
+                    .build(),
+            )
             .wrap(Logger::default())
             .wrap(Cors::permissive())
+            .wrap(Governor::new(&governor_conf))
             .configure(configure_routes)
     })
     .bind((c.host_name.as_str(), c.port))?
@@ -38,7 +84,11 @@ async fn main() -> std::io::Result<()> {
 }
 
 fn configure_routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(controllers::honey_controller::get_all_honeys)
+    cfg.service(controllers::auth_controller::signup)
+        .service(controllers::auth_controller::login)
+        .service(controllers::auth_controller::logout)
+        .service(controllers::auth_controller::me)
+        .service(controllers::honey_controller::get_all_honeys)
         .service(controllers::honey_controller::get_honey_by_id)
         .service(controllers::health_checking::health_check)
         .service(controllers::prefecture_controller::get_all_prefectures)

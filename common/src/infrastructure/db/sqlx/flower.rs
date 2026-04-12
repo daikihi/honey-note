@@ -8,6 +8,7 @@ pub struct InsertFlower {
     pub short_note: Option<String>, // description に相当する簡単な説明
     pub flower_type: Option<String>,
     pub image_path: Option<String>,
+    pub user_id: Option<i32>,
     pub note: Option<String>,
 }
 
@@ -17,9 +18,11 @@ impl InsertFlower {
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
         let flower_name_jp = self.name_jp.clone();
-        let query = "SELECT EXISTS(SELECT 1 FROM flower WHERE name_jp = $1)";
+        let user_id = self.user_id;
+        let query = "SELECT EXISTS(SELECT 1 FROM flower WHERE name_jp = $1 AND (user_id = $2 OR user_id IS NULL))";
         let exists: (i64,) = sqlx::query_as(query)
             .bind(flower_name_jp)
+            .bind(user_id)
             .fetch_one(executor)
             .await?;
         Ok(exists.0 != 0)
@@ -29,7 +32,7 @@ impl InsertFlower {
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
-        let query = "INSERT INTO flower (name_jp, name_en, scientific_name, short_note, flower_type, image_path, note) VALUES ($1, $2, $3, $4, $5, $6, $7)";
+        let query = "INSERT INTO flower (name_jp, name_en, scientific_name, short_note, flower_type, image_path, user_id, note) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)";
         sqlx::query(query)
             .bind(&self.name_jp)
             .bind(&self.name_en)
@@ -37,6 +40,7 @@ impl InsertFlower {
             .bind(&self.short_note)
             .bind(&self.flower_type)
             .bind(&self.image_path)
+            .bind(self.user_id)
             .bind(&self.note)
             .execute(executor)
             .await
@@ -51,6 +55,7 @@ impl InsertFlower {
             short_note: model_flower.short_note.clone(),
             flower_type: model_flower.flower_type.clone(),
             image_path: model_flower.image_path.clone(),
+            user_id: None,
             note: model_flower.note.clone(),
         }
     }
@@ -65,6 +70,7 @@ pub struct Flower {
     pub short_note: Option<String>,
     pub flower_type: Option<String>,
     pub image_path: Option<String>,
+    pub user_id: Option<i32>,
     pub note: Option<String>,
 }
 
@@ -86,7 +92,7 @@ impl Flower {
         id: i32,
         pool: &sqlx::SqlitePool,
     ) -> Result<Flower, sqlx::Error> {
-        let query = "SELECT id, name_jp, name_en, scientific_name, short_note, flower_type, image_path, note FROM flower WHERE id = $1";
+        let query = "SELECT id, name_jp, name_en, scientific_name, short_note, flower_type, image_path, user_id, note FROM flower WHERE id = $1";
         sqlx::query_as::<_, Flower>(query)
             .bind(id)
             .fetch_one(pool)
@@ -108,7 +114,7 @@ impl Flower {
     {
         let query = r#"
             UPDATE flower
-            SET name_jp = ?, name_en = ?, scientific_name = ?, short_note = ?, flower_type = ?, image_path = ?, note = ?
+            SET name_jp = ?, name_en = ?, scientific_name = ?, short_note = ?, flower_type = ?, image_path = ?, user_id = ?, note = ?
             WHERE id = ?
         "#;
         sqlx::query(query)
@@ -118,6 +124,7 @@ impl Flower {
             .bind(&self.short_note)
             .bind(&self.flower_type)
             .bind(&self.image_path)
+            .bind(self.user_id)
             .bind(&self.note)
             .bind(self.id)
             .execute(executor)
@@ -131,7 +138,7 @@ pub async fn get_all_flowers(pool: &sqlx::SqlitePool) -> Result<Vec<Flower>, sql
     let flowers: Result<Vec<Flower>, sqlx::Error> = sqlx::query_as::<_, Flower>(
         r#"
         SELECT id, name_jp, name_en, scientific_name , short_note, flower_type,
-        image_path, note
+        image_path, user_id, note
         FROM flower
         "#,
     )

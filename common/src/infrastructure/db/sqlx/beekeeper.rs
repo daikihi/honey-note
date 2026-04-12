@@ -10,6 +10,7 @@ pub struct Beekeeper {
     pub location_prefecture_id: Option<i32>,
     pub location_city: Option<String>,
     pub website_url: Option<String>,
+    pub user_id: Option<i32>,
     pub note: Option<String>,
 }
 
@@ -27,13 +28,13 @@ impl Beekeeper {
         }
     }
 
-    pub async fn get_beekeeper_id_by_name<'a, E>(name: &str, executor: E) -> Option<i32>
+    pub async fn get_beekeeper_id_by_name<'a, E>(name: &str, user_id: i32, executor: E) -> Option<i32>
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
-        let query = "SELECT id FROM beekeeper WHERE name_jp = $1";
+        let query = "SELECT id FROM beekeeper WHERE name_jp = ? AND user_id = ?";
         let result: Result<(i32,), sqlx::Error> =
-            sqlx::query_as(query).bind(name).fetch_one(executor).await;
+            sqlx::query_as(query).bind(name).bind(user_id).fetch_one(executor).await;
 
         match result {
             Ok((id,)) => Some(id),
@@ -44,7 +45,7 @@ impl Beekeeper {
     pub async fn get_all_beekeepers(
         pool: &sqlx::SqlitePool,
     ) -> Result<Vec<Beekeeper>, sqlx::Error> {
-        let query = "SELECT id, name_jp, name_en, founding_year, location_prefecture_id, location_city, website_url, note FROM beekeeper";
+        let query = "SELECT id, name_jp, name_en, founding_year, location_prefecture_id, location_city, website_url, user_id, note FROM beekeeper";
         let beekeepers: Result<Vec<Beekeeper>, sqlx::Error> =
             sqlx::query_as::<_, Beekeeper>(query).fetch_all(pool).await;
         beekeepers
@@ -54,7 +55,7 @@ impl Beekeeper {
         id: i32,
         pool: &sqlx::SqlitePool,
     ) -> Result<Beekeeper, sqlx::Error> {
-        let query = "SELECT id, name_jp, name_en, founding_year, location_prefecture_id, location_city, website_url, note FROM beekeeper WHERE id = $1";
+        let query = "SELECT id, name_jp, name_en, founding_year, location_prefecture_id, location_city, website_url, user_id, note FROM beekeeper WHERE id = $1";
         sqlx::query_as::<_, Beekeeper>(query)
             .bind(id)
             .fetch_one(pool)
@@ -76,7 +77,7 @@ impl Beekeeper {
     {
         let query = r#"
             UPDATE beekeeper
-            SET name_jp = ?, name_en = ?, founding_year = ?, location_prefecture_id = ?, location_city = ?, website_url = ?, note = ?
+            SET name_jp = ?, name_en = ?, founding_year = ?, location_prefecture_id = ?, location_city = ?, website_url = ?, user_id = ?, note = ?
             WHERE id = ?
         "#;
         sqlx::query(query)
@@ -86,6 +87,7 @@ impl Beekeeper {
             .bind(self.location_prefecture_id)
             .bind(&self.location_city)
             .bind(&self.website_url)
+            .bind(self.user_id)
             .bind(&self.note)
             .bind(self.id)
             .execute(executor)
@@ -103,6 +105,7 @@ pub struct BeekeeperForInsert {
     pub location_prefecture_id: Option<i32>,
     pub location_city: Option<String>,
     pub website_url: Option<String>,
+    pub user_id: Option<i32>,
     pub note: Option<String>,
 }
 
@@ -115,6 +118,7 @@ impl BeekeeperForInsert {
             location_prefecture_id: model_beekeeper.location_prefecture_id,
             location_city: model_beekeeper.location_city.clone(),
             website_url: model_beekeeper.website_url.clone(),
+            user_id: None,
             note: model_beekeeper.note.clone(),
         }
     }
@@ -135,7 +139,7 @@ impl BeekeeperForInsert {
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
-        let query = "INSERT INTO beekeeper (name_jp, name_en, founding_year, location_prefecture_id, location_city, website_url, note) VALUES ($1, $2, $3, $4, $5, $6, $7)";
+        let query = "INSERT INTO beekeeper (name_jp, name_en, founding_year, location_prefecture_id, location_city, website_url, user_id, note) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)";
         sqlx::query(query)
             .bind(&self.name_jp)
             .bind(&self.name_en)
@@ -143,6 +147,7 @@ impl BeekeeperForInsert {
             .bind(self.location_prefecture_id)
             .bind(&self.location_city)
             .bind(&self.website_url)
+            .bind(self.user_id)
             .bind(&self.note)
             .execute(executor)
             .await
@@ -153,7 +158,7 @@ impl BeekeeperForInsert {
     pub async fn get_all_beekeepers(
         pool: &sqlx::SqlitePool,
     ) -> Result<Vec<Beekeeper>, sqlx::Error> {
-        let query = "SELECT id, name_jp, name_en, founding_year, location_prefecture_id, location_city, website_url, note FROM beekeeper";
+        let query = "SELECT id, name_jp, name_en, founding_year, location_prefecture_id, location_city, website_url, user_id, note FROM beekeeper";
         let beekeepers: Result<Vec<Beekeeper>, sqlx::Error> =
             sqlx::query_as::<_, Beekeeper>(query).fetch_all(pool).await;
         beekeepers

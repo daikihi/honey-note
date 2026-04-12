@@ -3,10 +3,11 @@ use crate::{
 };
 
 use common::infrastructure::db::sqlx::get_sqlite_pool;
+use common::repository::flowers::{FlowerRepository, FlowerRepositorySqlite};
 use log::info;
 
-pub async fn run(dto: FlowerLoaderRequestDto) {
-    info!("flower_loader_usecase::run start");
+pub async fn run(dto: FlowerLoaderRequestDto, user_id: i32) {
+    info!("flower_loader_usecase::run start, user_id={}", user_id);
     let master_file_name = dto.master_file_name.as_str();
     let db_file_name = dto.db_file_name;
 
@@ -24,14 +25,14 @@ pub async fn run(dto: FlowerLoaderRequestDto) {
             use common_type::models::flowers;
             let flower = flowers::create_model_flower_from_name(line);
 
-            let has_flower = common::repository::flowers::has_flower(&flower, &mut *tx).await;
-            match has_flower {
+            let repo = FlowerRepositorySqlite { pool: connection_pool.clone() };
+            match repo.has_flower(&flower, user_id, &mut *tx).await {
                 Ok(true) => {
-                    log::info!("Flower already exists: {:?}", line);
+                    log::info!("Flower already exists for this user: {:?}", line);
                 }
                 Ok(false) => {
                     log::info!("Inserting new flower: {:?}", line);
-                    let _ = common::repository::flowers::insert_flower(&flower, &mut *tx).await;
+                    let _ = repo.insert_flower(&flower, user_id, &mut *tx).await;
                 }
                 Err(e) => {
                     log::error!("Error checking flower existence: {}", e);

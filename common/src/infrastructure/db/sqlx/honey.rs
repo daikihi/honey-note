@@ -6,6 +6,7 @@ pub struct Honey {
     pub name_jp: String,                // NOT NULLなのでOptionなし
     pub name_en: Option<String>,        // NULL可能な場合はOptionでラップ
     pub beekeeper_id: Option<i32>,      // 外部キー（NULL可能と仮定）
+    pub user_id: Option<i32>,           // ユーザーID
     pub origin_country: Option<String>, // NULL可能なカラム
     pub origin_region: Option<String>,  // NULL可能なカラム
     pub harvest_year: Option<i32>,      // 採蜜年（NULL可能）
@@ -20,6 +21,7 @@ impl Honey {
             name_jp,
             name_en: None,
             beekeeper_id: None,
+            user_id: None,
             origin_country: None,
             origin_region: None,
             harvest_year: None,
@@ -60,7 +62,7 @@ impl Honey {
     {
         let query = r#"
             UPDATE honey
-            SET name_jp = ?, name_en = ?, beekeeper_id = ?, origin_country = ?, origin_region = ?, harvest_year = ?, purchase_date = ?, note = ?
+            SET name_jp = ?, name_en = ?, beekeeper_id = ?, user_id = ?, origin_country = ?, origin_region = ?, harvest_year = ?, purchase_date = ?, note = ?
             WHERE id = ?
         "#;
 
@@ -68,6 +70,7 @@ impl Honey {
             .bind(&self.name_jp)
             .bind(&self.name_en)
             .bind(self.beekeeper_id)
+            .bind(self.user_id)
             .bind(&self.origin_country)
             .bind(&self.origin_region)
             .bind(self.harvest_year)
@@ -85,14 +88,15 @@ impl Honey {
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
         let query = r#"        
-            INSERT INTO honey (name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO honey (name_jp, name_en, beekeeper_id, user_id, origin_country, origin_region, harvest_year, purchase_date, note)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         "#;
 
         let result = sqlx::query(query)
             .bind(&self.name_jp)
             .bind(&self.name_en)
             .bind(self.beekeeper_id)
+            .bind(self.user_id)
             .bind(&self.origin_country)
             .bind(&self.origin_region)
             .bind(self.harvest_year)
@@ -112,21 +116,23 @@ impl Honey {
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
         let query = r#"        
-            INSERT INTO honey (name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note)
-            SELECT ?, ?, ?, ?, ?, ?, ?, ?
-            WHERE NOT EXISTS (SELECT 1 FROM honey WHERE name_jp = ?)
+            INSERT INTO honey (name_jp, name_en, beekeeper_id, user_id, origin_country, origin_region, harvest_year, purchase_date, note)
+            SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
+            WHERE NOT EXISTS (SELECT 1 FROM honey WHERE name_jp = ? AND user_id = ?)
         "#;
 
         let result = sqlx::query(query)
             .bind(&self.name_jp)
             .bind(&self.name_en)
             .bind(self.beekeeper_id)
+            .bind(self.user_id)
             .bind(&self.origin_country)
             .bind(&self.origin_region)
             .bind(self.harvest_year)
             .bind(&self.purchase_date)
             .bind(&self.note)
             .bind(&self.name_jp)
+            .bind(self.user_id)
             .execute(executor)
             .await?;
 
@@ -136,7 +142,7 @@ impl Honey {
 
 pub async fn get_all(pool: &sqlx::SqlitePool) -> Result<Vec<Honey>, sqlx::Error> {
     let honeys: Result<Vec<Honey>, sqlx::Error> = sqlx::query_as::<_, Honey>(
-        r#"SELECT id, name_jp, name_en, beekeeper_id, origin_country, origin_region, harvest_year, purchase_date, note
+        r#"SELECT id, name_jp, name_en, beekeeper_id, user_id, origin_country, origin_region, harvest_year, purchase_date, note
         FROM honey"#,
     ).fetch_all(pool).await;
     honeys
@@ -185,6 +191,7 @@ mod tests {
                 name_jp TEXT NOT NULL,
                 name_en TEXT,
                 beekeeper_id INTEGER,
+                user_id INTEGER,
                 origin_country TEXT,
                 origin_region TEXT,
                 harvest_year INTEGER,
@@ -206,6 +213,7 @@ mod tests {
             name_jp: "テストはちみつ".to_string(),
             name_en: Some("Test Honey".to_string()),
             beekeeper_id: None,
+            user_id: Some(1),
             origin_country: None,
             origin_region: None,
             harvest_year: Some(2023),
@@ -234,6 +242,7 @@ mod tests {
             name_jp: "はちみつ1".to_string(),
             name_en: None,
             beekeeper_id: None,
+            user_id: Some(1),
             origin_country: None,
             origin_region: None,
             harvest_year: None,
@@ -254,6 +263,7 @@ mod tests {
             name_jp: "アカシアはちみつ".to_string(),
             name_en: Some("Acacia Honey".to_string()),
             beekeeper_id: Some(2),
+            user_id: Some(1),
             origin_country: Some("日本".to_string()),
             origin_region: Some("北海道".to_string()),
             harvest_year: Some(2024),
@@ -269,6 +279,7 @@ mod tests {
             location_prefecture_id: Some(1),
             location_city: Some("札幌市".to_string()),
             website_url: Some("https://yamadabeefarm.jp".to_string()),
+            user_id: Some(1),
             note: Some("信頼できる養蜂場".to_string()),
         });
 

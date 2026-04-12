@@ -135,3 +135,57 @@ th {
   border: 1px solid #ccc;
   background: #FFD966;
 }
+
+/* Login and Signup Forms */
+.login-container, .signup-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.login-container h1, .signup-container h1 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+.btn-login, .btn-signup {
+    width: 100%;
+    padding: 12px;
+    background: #f0ad4e;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+.btn-login:hover, .btn-signup:hover {
+    background: #ec971f;
+}
+.error-message {
+    color: #d9534f;
+    background: #f2dede;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    display: none;
+}
+.signup-link, .login-link {
+    text-align: center;
+    margin-top: 20px;
+}

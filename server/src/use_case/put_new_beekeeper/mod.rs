@@ -6,6 +6,7 @@ pub async fn run<T: BeekeeperRepository>(
     repo: &T,
     req: PutNewBeekeeperRequestDto,
     pool: &sqlx::SqlitePool,
+    user_id: i32,
 ) -> PutNewBeekeeperResponseDto {
     let beekeeper = req.beekeeper;
     
@@ -19,7 +20,7 @@ pub async fn run<T: BeekeeperRepository>(
         },
     };
 
-    if repo.has_beekeeper(&beekeeper, &mut *tx).await {
+    if repo.has_beekeeper(&beekeeper, user_id, &mut *tx).await {
         return PutNewBeekeeperResponseDto {
             id: None,
             success: false,
@@ -27,9 +28,9 @@ pub async fn run<T: BeekeeperRepository>(
         };
     }
 
-    match repo.insert_beekeeper(&beekeeper, &mut *tx).await {
+    match repo.insert_beekeeper(&beekeeper, user_id, &mut *tx).await {
         Ok(_) => {
-            let id = repo.get_beekeeper_id_by_name(&beekeeper.name_jp, &mut *tx).await;
+            let id = repo.get_beekeeper_id_by_name(&beekeeper.name_jp, user_id, &mut *tx).await;
             if let Err(e) = tx.commit().await {
                 return PutNewBeekeeperResponseDto {
                     id: None,

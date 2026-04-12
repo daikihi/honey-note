@@ -10,17 +10,24 @@ use crate::{
 };
 use common_type::models::beekeeper::Beekeeper;
 
+use crate::middleware::auth::AuthenticatedUser;
+use log::{info};
+
 #[get("/honey-note/api/beekeepers")]
 pub async fn get_all_beekeepers(
     pool: web::Data<sqlx::SqlitePool>,
+    auth: AuthenticatedUser,
 ) -> Result<HttpResponse, Error> {
     let dto = get_all_beekeepers_dto::GetAllBeekeepersRequestDto {};
     let repo = BeekeeperRepositorySqlite {
         pool: pool.get_ref().clone(),
     };
-    let results = get_all_beekeepers_use_case::run(&repo, dto).await;
+    let results = get_all_beekeepers_use_case::run(&repo, dto, auth.user_id).await;
     match results {
-        Ok(res) => Ok(HttpResponse::Ok().json(res.beekeepers)),
+        Ok(res) => {
+            info!("user_id={}, username={}, action=get_all_beekeepers, count={}", auth.user_id, auth.username, res.beekeepers.len());
+            Ok(HttpResponse::Ok().json(res.beekeepers))
+        }
         Err(e) => {
             log::error!("Error fetching beekeepers: {}", e);
             Ok(HttpResponse::InternalServerError().finish())
@@ -32,11 +39,12 @@ pub async fn get_all_beekeepers(
 pub async fn get_beekeeper_by_id(
     path: web::Path<i32>,
     pool: web::Data<sqlx::SqlitePool>,
+    auth: AuthenticatedUser,
 ) -> Result<HttpResponse, Error> {
     let id = path.into_inner();
     let repo = BeekeeperRepositorySqlite { pool: pool.get_ref().clone() };
     let dto = get_beekeeper_by_id_use_case::get_beekeeper_by_id_dto::GetBeekeeperByIdRequestDto { id };
-    let result = get_beekeeper_by_id_use_case::run(&repo, dto).await;
+    let result = get_beekeeper_by_id_use_case::run(&repo, dto, auth.user_id).await;
 
     if result.success {
         if let Some(b) = result.beekeeper {
@@ -54,10 +62,14 @@ pub async fn put_new_beekeeper(
     _req: HttpRequest,
     payload: LoggedJson<Beekeeper>,
     pool: web::Data<sqlx::SqlitePool>,
+    auth: AuthenticatedUser,
 ) -> Result<HttpResponse, Error> {
     let dto = put_new_beekeeper_use_case::put_new_beekeeper_dto::PutNewBeekeeperRequestDto { beekeeper: payload.into_inner() };
     let repo = BeekeeperRepositorySqlite { pool: pool.get_ref().clone() };
-    let result = put_new_beekeeper_use_case::run(&repo, dto, pool.get_ref()).await;
+    let result = put_new_beekeeper_use_case::run(&repo, dto, pool.get_ref(), auth.user_id).await;
+
+    info!("user_id={}, username={}, action=put_new_beekeeper, beekeeper_id={:?}, success={}", auth.user_id, auth.username, result.id, result.success);
+
     if result.success {
         Ok(HttpResponse::Ok().json(result))
     } else {
@@ -72,6 +84,7 @@ pub async fn put_edit_beekeeper(
     _req: HttpRequest,
     payload: LoggedJson<Beekeeper>,
     pool: web::Data<sqlx::SqlitePool>,
+    auth: AuthenticatedUser,
 ) -> Result<HttpResponse, Error> {
     let id = path.into_inner();
     let dto = put_edit_beekeeper_use_case::put_edit_beekeeper_dto::PutEditBeekeeperRequestDto { 
@@ -79,7 +92,10 @@ pub async fn put_edit_beekeeper(
         beekeeper: payload.into_inner() 
     };
     let repo = BeekeeperRepositorySqlite { pool: pool.get_ref().clone() };
-    let result = put_edit_beekeeper_use_case::run(&repo, dto, pool.get_ref()).await;
+    let result = put_edit_beekeeper_use_case::run(&repo, dto, pool.get_ref(), auth.user_id).await;
+
+    info!("user_id={}, username={}, action=put_edit_beekeeper, beekeeper_id={}, success={}", auth.user_id, auth.username, id, result.success);
+
     if result.success {
         Ok(HttpResponse::Ok().json(result))
     } else {

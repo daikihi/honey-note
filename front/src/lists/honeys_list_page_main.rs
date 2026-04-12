@@ -1,11 +1,16 @@
 use wasm_bindgen::JsValue;
 use web_sys::{Document, Window};
 
-use crate::commons::{ajax::get_list_data, validators::is_valid_path};
+use crate::commons::{ajax::{get_list_data, check_authentication}, validators::is_valid_path};
 
 use common_type::models::honey::Honey as ModelHoney;
 
 pub async fn run() {
+    // 認証チェック
+    if let Err(_) = check_authentication().await {
+        return;
+    }
+    
     web_sys::console::log_1(&"run main".into());
     if is_valid_path("/honey_note/honeys/lists.html") {
         web_sys::console::log_1(&"Flower List Page is running.".into());

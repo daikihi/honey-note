@@ -1,10 +1,11 @@
 use crate::beekeeper_loader_request::BeekeeperLoaderRequestDto;
 use common::errors::AppError;
 use common::infrastructure::gateway::filesystem::load_master_data::load_master_data;
+use common::repository::beekeepers::{BeekeeperRepository, BeekeeperRepositorySqlite};
 use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 use log::{error, info};
 
-pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) -> Result<(), AppError> {
+pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>, user_id: i32) -> Result<(), AppError> {
     let file_name = request_dto.file_name;
     let connection_pool = request_dto.pool;
 
@@ -16,8 +17,19 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) -> Result<(), AppEr
         )));
     }
 
-    info!("master data {}", master_data);
-    let mut tx = connection_pool.begin().await.map_err(|e| AppError::DatabaseError(e.to_string()))?;
+    let line_count = master_data.lines().count();
+    info!(
+        "master data loaded: file={}, lines={}, user_id={}",
+        file_name, line_count, user_id
+    );
+
+    let mut tx = connection_pool
+        .begin()
+        .await
+        .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+    let repo = BeekeeperRepositorySqlite {
+        pool: connection_pool.clone(),
+    };
     for line in master_data.lines() {
         info!("Processing line: {}", line);
         let beekeeper_master_data: Vec<&str> = line.split(',').collect();
@@ -52,7 +64,10 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) -> Result<(), AppEr
             match prefecture_opt {
                 Ok(prefecture) => Some(prefecture.id),
                 Err(e) => {
-                    error!("Error getting prefecture ID for {}: {}", beekeeper_prefecture, e);
+                    error!(
+                        "Error getting prefecture ID for {}: {}",
+                        beekeeper_prefecture, e
+                    );
                     return Err(e);
                 }
             }
@@ -66,17 +81,20 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>) -> Result<(), AppEr
         );
 
         info!("Loaded beekeeper: {:?}", &model_beekeeper);
-        let has_beekeeper =
-            common::repository::beekeepers::has_beekeeper(&model_beekeeper, &mut *tx).await;
+        let has_beekeeper = repo
+            .has_beekeeper(&model_beekeeper, user_id, &mut *tx)
+            .await;
         if !has_beekeeper {
             info!("Inserting new beekeeper: {:?}", &model_beekeeper);
-            let _ = common::repository::beekeepers::insert_beekeeper(&model_beekeeper, &mut *tx)
-                .await;
+            repo.insert_beekeeper(&model_beekeeper, user_id, &mut *tx)
+                .await?;
         } else {
             info!("Beekeeper already exists: {:?}", &model_beekeeper);
             continue;
         }
     }
-    tx.commit().await.map_err(|e| AppError::DatabaseError(e.to_string()))?;
+    tx.commit()
+        .await
+        .map_err(|e| AppError::DatabaseError(e.to_string()))?;
     Ok(())
 }

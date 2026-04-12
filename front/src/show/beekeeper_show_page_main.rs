@@ -2,11 +2,16 @@ use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{Document, Window, Response};
 
-use crate::commons::ajax::get_list_data;
+use crate::commons::ajax::{get_list_data, check_authentication};
 use common_type::models::beekeeper::Beekeeper;
 use common_type::models::prefectures::Prefecture;
 
 pub async fn run() {
+    // 認証チェック
+    if let Err(_) = check_authentication().await {
+        return;
+    }
+
     let window: Window = web_sys::window().expect("no global `window` exists");
     let document: Document = window.document().expect("should have a document on window");
 

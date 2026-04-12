@@ -17,5 +17,9 @@ jobs:
         with:
           toolchain: stable
           override: true
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
       - name: Run tests (all workspace members)
         run: cargo test --workspace --all-features --all-targets
+      - name: Run WASM tests (front)
+        run: cd front && wasm-pack test --chrome --headless

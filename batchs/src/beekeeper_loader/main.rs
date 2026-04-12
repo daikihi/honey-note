@@ -12,9 +12,10 @@ async fn main() {
         .get(1)
         .expect("マスターデータファイルのパスを指定してください");
     let db_url = args.get(2).expect("データベースのURLを指定してください");
+    let user_id = args.get(3).expect("ユーザーIDを指定してください").parse::<i32>().expect("ユーザーIDは数値で指定してください");
     let pool = common::infrastructure::db::sqlx::get_sqlite_pool(db_url.to_string());
     let _dao = BeekeeperLoaderRequestDto::new(master_data_file, pool);
-    if let Err(e) = beekeeper_loader_usecase::run(_dao).await {
+    if let Err(e) = beekeeper_loader_usecase::run(_dao, user_id).await {
         eprintln!("Error: {}", e);
         std::process::exit(1);
     }
