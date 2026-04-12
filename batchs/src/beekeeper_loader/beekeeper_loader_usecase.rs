@@ -86,9 +86,8 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>, user_id: i32) -> Re
             .await;
         if !has_beekeeper {
             info!("Inserting new beekeeper: {:?}", &model_beekeeper);
-            let _ = repo
-                .insert_beekeeper(&model_beekeeper, user_id, &mut *tx)
-                .await;
+            repo.insert_beekeeper(&model_beekeeper, user_id, &mut *tx)
+                .await?;
         } else {
             info!("Beekeeper already exists: {:?}", &model_beekeeper);
             continue;
