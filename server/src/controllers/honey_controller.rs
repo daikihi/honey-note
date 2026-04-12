@@ -29,10 +29,15 @@ pub async fn get_all_honeys(
     };
     let use_case_result: Result<GetAllHoneysResponseDto, String> =
         get_all_honies_use_case::run(&repo, request_dto, auth.user_id).await;
-    log::info!(
+    log::debug!(
         "user_id={}, username={}, action=get_all_honeys, count={}",
         auth.user_id,
         auth.username,
+        use_case_result.clone().unwrap().honeys.len()
+    );
+    log::info!(
+        "user_id={}, action=get_all_honeys, count={}",
+        auth.user_id,
         use_case_result.clone().unwrap().honeys.len()
     );
     Ok(actix_web::HttpResponse::Ok().json(use_case_result.unwrap().honeys))
