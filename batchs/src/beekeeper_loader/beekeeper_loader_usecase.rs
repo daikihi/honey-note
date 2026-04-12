@@ -1,8 +1,8 @@
 use crate::beekeeper_loader_request::BeekeeperLoaderRequestDto;
 use common::errors::AppError;
 use common::infrastructure::gateway::filesystem::load_master_data::load_master_data;
-use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 use common::repository::beekeepers::{BeekeeperRepository, BeekeeperRepositorySqlite};
+use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 use log::{error, info};
 
 pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>, user_id: i32) -> Result<(), AppError> {
@@ -17,8 +17,16 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>, user_id: i32) -> Re
         )));
     }
 
-    info!("master data {}, user_id={}", master_data, user_id);
-    let mut tx = connection_pool.begin().await.map_err(|e| AppError::DatabaseError(e.to_string()))?;
+    let line_count = master_data.lines().count();
+    info!(
+        "master data loaded: file={}, lines={}, user_id={}",
+        file_name, line_count, user_id
+    );
+
+    let mut tx = connection_pool
+        .begin()
+        .await
+        .map_err(|e| AppError::DatabaseError(e.to_string()))?;
     for line in master_data.lines() {
         info!("Processing line: {}", line);
         let beekeeper_master_data: Vec<&str> = line.split(',').collect();
@@ -53,7 +61,10 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>, user_id: i32) -> Re
             match prefecture_opt {
                 Ok(prefecture) => Some(prefecture.id),
                 Err(e) => {
-                    error!("Error getting prefecture ID for {}: {}", beekeeper_prefecture, e);
+                    error!(
+                        "Error getting prefecture ID for {}: {}",
+                        beekeeper_prefecture, e
+                    );
                     return Err(e);
                 }
             }
@@ -67,16 +78,24 @@ pub async fn run(request_dto: BeekeeperLoaderRequestDto<'_>, user_id: i32) -> Re
         );
 
         info!("Loaded beekeeper: {:?}", &model_beekeeper);
-        let repo = BeekeeperRepositorySqlite { pool: connection_pool.clone() };
-        let has_beekeeper = repo.has_beekeeper(&model_beekeeper, user_id, &mut *tx).await;
+        let repo = BeekeeperRepositorySqlite {
+            pool: connection_pool.clone(),
+        };
+        let has_beekeeper = repo
+            .has_beekeeper(&model_beekeeper, user_id, &mut *tx)
+            .await;
         if !has_beekeeper {
             info!("Inserting new beekeeper: {:?}", &model_beekeeper);
-            let _ = repo.insert_beekeeper(&model_beekeeper, user_id, &mut *tx).await;
+            let _ = repo
+                .insert_beekeeper(&model_beekeeper, user_id, &mut *tx)
+                .await;
         } else {
             info!("Beekeeper already exists: {:?}", &model_beekeeper);
             continue;
         }
     }
-    tx.commit().await.map_err(|e| AppError::DatabaseError(e.to_string()))?;
+    tx.commit()
+        .await
+        .map_err(|e| AppError::DatabaseError(e.to_string()))?;
     Ok(())
 }
