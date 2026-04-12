@@ -23,6 +23,7 @@
 ## 開発環境のセットアップ
 
 ### 必須ツール
+
 - Rust (rustupを推奨: [rustup.rs](https://rustup.rs/))
 - wasm-pack (フロントエンドのビルドに使用)
 - sqlx-cli (データベースマイグレーションに使用)
@@ -57,6 +58,25 @@ cd front/
 wasm-pack build --target web --out-dir ../server/src/assets/javascript/
 ```
 
+### フロントエンドのテスト実行
+
+WebAssembly コードのテストには、ブラウザ環境（Chrome 等）と `wasm-pack` が必要です。
+ローカル環境に WebDriver (ChromeDriver, Geckodriver 等) がインストールされている必要があります。
+
+```bash
+cd front/
+# Chrome ヘッドレスモードでのテスト実行
+wasm-pack test --chrome --headless -- --test signup_tests
+```
+
+**テストが失敗する場合の確認事項:**
+
+1. **ChromeDriver のバージョン**: ブラウザのバージョンと一致しているか確認してください。
+2. **接続制限**: セキュリティソフト等で `127.0.0.1` への接続が制限されていないか確認してください。
+3. **ヘッドレス設定**: GUI環境がある場合は `--headless` を外して実行し、ブラウザが起動するか確認してください。
+
+※ テストコード本体は `front/tests/signup_tests.rs` にあり、Fetch API や リダイレクトをスタブ化して検証しています。
+
 ### サーバーの起動
 
 ```bash
@@ -72,21 +92,25 @@ RUST_LOG=info cargo run -p server
 各バッチは `batchs` サブプロジェクトに含まれています。トランザクション内で処理されるため、再試行が可能です。
 
 #### 都道府県マスター
+
 ```bash
 RUST_LOG=info cargo run -p batchs --bin prefecture_loader resources/master_data/japanese_prefectures.csv resources/db/honey_note.db
 ```
 
 #### 花名マスター
+
 ```bash
 RUST_LOG=info cargo run -p batchs --bin flower_loader resources/master_data/flower.csv resources/db/honey_note.db
 ```
 
 #### 養蜂業者マスター
+
 ```bash
 RUST_LOG=info cargo run -p batchs --bin beekeeper_loader resources/master_data/beekeeper.csv resources/db/honey_note.db
 ```
 
 #### ハチミツデータ（JSONL形式）
+
 ```bash
 RUST_LOG=info cargo run -p batchs --bin honey_loader resources/master_data/honey_data.jsonl resources/db/honey_note.db
 ```
@@ -96,12 +120,14 @@ RUST_LOG=info cargo run -p batchs --bin honey_loader resources/master_data/honey
 主要なエンドポイントは以下の通りです。ベースURLは `/honey-note/api` です。
 
 ### ハチミツ関連
+
 - `GET /honeys`: ハチミツ一覧の取得
 - `GET /honey/{id}`: ハチミツ詳細の取得
 - `PUT /honey/new`: ハチミツの新規登録
 - `PUT /honey/edit`: ハチミツの更新
 
 ### マスターデータ関連
+
 - `GET /flowers`: 花一覧の取得
 - `GET /flower/{id}`: 花詳細の取得
 - `PUT /flower/new`: 花の新規登録
@@ -113,6 +139,7 @@ RUST_LOG=info cargo run -p batchs --bin honey_loader resources/master_data/honey
 - `GET /prefectures`: 都道府県一覧の取得
 
 ### その他
+
 - `GET /health`: ヘルスチェック
 
 ## 仕様書

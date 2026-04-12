@@ -7,27 +7,31 @@ edition.workspace = true
 build = "src/build.rs"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 common-type = { path = "../common-type" }
 wasm-bindgen = "0.2"
-wasm-bindgen-futures ="0.4"
+wasm-bindgen-futures = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde-wasm-bindgen = "0.6"
 serde_json = "1.0"
+async-trait = "0.1"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3"
 
 [dependencies.web-sys]
 version = "0.3"
 features = [
-    "console", 
+    "console",
     "Location",
     "Window",
     "Url",
     "Headers",
-    "Request", 
-    "RequestInit", 
-    "RequestMode", 
+    "Request",
+    "RequestInit",
+    "RequestMode",
     "Response",
     "Document",
     "Element",
@@ -45,5 +49,5 @@ features = [
     "HtmlOptionsCollection",
     "CssStyleDeclaration",
     "HtmlFormElement",
-    ]
+]
 

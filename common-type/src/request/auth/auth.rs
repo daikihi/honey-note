@@ -1,8 +1,10 @@
 use serde::{Deserialize, Serialize};
+use validator::Validate;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Validate)]
 pub struct SignupRequest {
     pub username: String,
+    #[validate(email)]
     pub email: String,
     pub password: String,
     pub display_name: Option<String>,

@@ -3,7 +3,8 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
     js_sys::{JsString, Reflect},
-    Document, Window, HtmlFormElement, HtmlInputElement, Request, RequestInit, Response, HtmlElement
+    Document, HtmlElement, HtmlFormElement, HtmlInputElement, Request, RequestInit, Response,
+    Window,
 };
 
 pub async fn run() {
@@ -17,8 +18,16 @@ pub async fn run() {
         return;
     }
 
-    let form = document.get_element_by_id("login_form").unwrap().dyn_into::<HtmlFormElement>().unwrap();
-    let error_div = document.get_element_by_id("error_message").unwrap().dyn_into::<HtmlElement>().unwrap();
+    let form = document
+        .get_element_by_id("login_form")
+        .unwrap()
+        .dyn_into::<HtmlFormElement>()
+        .unwrap();
+    let error_div = document
+        .get_element_by_id("error_message")
+        .unwrap()
+        .dyn_into::<HtmlElement>()
+        .unwrap();
 
     let closure = Closure::wrap(Box::new(move |event: web_sys::Event| {
         event.prevent_default();
@@ -32,21 +41,27 @@ pub async fn run() {
         });
     }) as Box<dyn FnMut(_)>);
 
-    document.get_element_by_id("login_form").unwrap().add_event_listener_with_callback("submit", closure.as_ref().unchecked_ref()).unwrap();
+    document
+        .get_element_by_id("login_form")
+        .unwrap()
+        .add_event_listener_with_callback("submit", closure.as_ref().unchecked_ref())
+        .unwrap();
     closure.forget();
 }
 
 async fn check_already_logged_in(window: &Window) -> Result<bool, JsValue> {
     let opts = RequestInit::new();
     Reflect::set(&opts, &JsString::from("method"), &JsString::from("GET"))?;
-    
+
     let request = Request::new_with_str_and_init("/api/auth/me", &opts)?;
     let response_value = JsFuture::from(window.fetch_with_request(&request)).await?;
     let resp: Response = response_value.dyn_into()?;
 
     if resp.status() == 200 {
         let json = JsFuture::from(resp.json()?).await?;
-        let logged_in = Reflect::get(&json, &JsValue::from_str("logged_in"))?.as_bool().unwrap_or(false);
+        let logged_in = Reflect::get(&json, &JsValue::from_str("logged_in"))?
+            .as_bool()
+            .unwrap_or(false);
         if logged_in {
             return Ok(true);
         }
@@ -54,15 +69,33 @@ async fn check_already_logged_in(window: &Window) -> Result<bool, JsValue> {
     Err(JsValue::from_str("not logged in"))
 }
 
-async fn handle_login(form: &HtmlFormElement, error_div: &HtmlElement) -> Result<(), JsValue> {
+async fn handle_login(_form: &HtmlFormElement, error_div: &HtmlElement) -> Result<(), JsValue> {
     let window = web_sys::window().unwrap();
     let document = web_sys::window().unwrap().document().unwrap();
-    let username = document.get_element_by_id("username").unwrap().dyn_into::<HtmlInputElement>().unwrap().value();
-    let password = document.get_element_by_id("password").unwrap().dyn_into::<HtmlInputElement>().unwrap().value();
+    let username = document
+        .get_element_by_id("username")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .value();
+    let password = document
+        .get_element_by_id("password")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap()
+        .value();
 
     let body_obj = web_sys::js_sys::Object::new();
-    Reflect::set(&body_obj, &JsValue::from_str("username"), &JsValue::from_str(&username))?;
-    Reflect::set(&body_obj, &JsValue::from_str("password"), &JsValue::from_str(&password))?;
+    Reflect::set(
+        &body_obj,
+        &JsValue::from_str("username"),
+        &JsValue::from_str(&username),
+    )?;
+    Reflect::set(
+        &body_obj,
+        &JsValue::from_str("password"),
+        &JsValue::from_str(&password),
+    )?;
     let body_str = web_sys::js_sys::JSON::stringify(&body_obj)?;
 
     let opts = RequestInit::new();
@@ -79,7 +112,9 @@ async fn handle_login(form: &HtmlFormElement, error_div: &HtmlElement) -> Result
         window.location().assign("/honey_note/index.html")?;
     } else {
         let json = JsFuture::from(resp.json()?).await?;
-        let message = Reflect::get(&json, &JsValue::from_str("message"))?.as_string().unwrap_or_else(|| "ログインに失敗しました".to_string());
+        let message = Reflect::get(&json, &JsValue::from_str("message"))?
+            .as_string()
+            .unwrap_or_else(|| "ログインに失敗しました".to_string());
         error_div.set_text_content(Some(&message));
         let _ = error_div.style().set_property("display", "block");
     }

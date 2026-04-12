@@ -1,15 +1,26 @@
+use crate::commons::browser_adapter::WebBrowserAdapter;
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 
-mod commons;
-mod lists;
-mod models;
+pub mod commons;
 mod edit_and_new;
-mod show;
+mod lists;
 mod login_page_main;
+mod models;
+mod show;
+pub mod signup_page_main;
 
 #[wasm_bindgen]
 pub async fn login_main() {
     login_page_main::run().await;
+}
+
+#[wasm_bindgen]
+pub async fn signup_main() {
+    let adapter = Rc::new(WebBrowserAdapter);
+    if let Err(e) = signup_page_main::run(adapter).await {
+        web_sys::console::error_1(&format!("Signup initialization failed: {:?}", e).into());
+    }
 }
 
 #[wasm_bindgen]
@@ -24,7 +35,6 @@ pub async fn top_page_main() {
 /**
  *  For List Pages
  */
-
 
 #[wasm_bindgen]
 pub async fn honey_list_main() {
@@ -77,11 +87,9 @@ pub async fn beekeeper_show_main() {
     show::beekeeper_show_page_main::run().await;
 }
 
-
 /**
  *  For Common Functions as library
  */
-
 
 //  For Filtering
 #[wasm_bindgen]
