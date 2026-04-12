@@ -12,7 +12,7 @@ use actix_web::{get, put, web, Error, HttpRequest, HttpResponse};
 use common::repository::honeys::HoneyRepositorySqlite;
 use common_type::request::honey::edit::HoneyEditRequest;
 use common_type::request::honey::new::HoneyNewRequest;
-use log::info;
+use log::{debug, info};
 
 use crate::middleware::auth::AuthenticatedUser;
 use crate::use_case::get_all_honies::get_all_honies_dto::GetAllHoneysResponseDto;
@@ -29,13 +29,13 @@ pub async fn get_all_honeys(
     };
     let use_case_result: Result<GetAllHoneysResponseDto, String> =
         get_all_honies_use_case::run(&repo, request_dto, auth.user_id).await;
-    log::debug!(
+    debug!(
         "user_id={}, username={}, action=get_all_honeys, count={}",
         auth.user_id,
         auth.username,
         use_case_result.clone().unwrap().honeys.len()
     );
-    log::info!(
+    info!(
         "user_id={}, action=get_all_honeys, count={}",
         auth.user_id,
         use_case_result.clone().unwrap().honeys.len()
@@ -89,9 +89,14 @@ pub async fn put_new_honey(
     let result: PutNewHoneyResponseDto =
         put_new_honey_use_case::run(&repo, dto, auth.user_id).await;
 
-    info!(
+    debug!(
         "user_id={}, username={}, action=put_new_honey, honey_id={:?}, success={}",
         auth.user_id, auth.username, result.id, result.success
+    );
+
+    info!(
+        "user_id={}, action=put_new_honey, honey_id={:?}, success={}",
+        auth.user_id, result.id, result.success
     );
 
     if result.success {
@@ -125,9 +130,14 @@ pub async fn put_edit_honey(
     let result: PutEditHoneyResponseDto =
         put_edit_honey_use_case::run(&repo, dto, auth.user_id).await;
 
-    info!(
+    debug!(
         "user_id={}, username={}, action=put_edit_honey, honey_id={}, success={}",
         auth.user_id, auth.username, log_id, result.success
+    );
+
+    info!(
+        "user_id={}, action=put_edit_honey, honey_id={}, success={}",
+        auth.user_id, log_id, result.success
     );
 
     if result.success {
