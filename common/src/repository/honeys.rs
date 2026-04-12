@@ -45,7 +45,7 @@ impl HoneyRepository for HoneyRepositorySqlite {
                         let model_bk = ModelBeekeeper::from_string_csv(&name, None, None, None);
                         let bk_repo_inst = BeekeeperRepositorySqlite { pool: self.pool.clone() };
                         if !bk_repo_inst.has_beekeeper(&model_bk, user_id, &mut *tx).await {
-                            let _ = bk_repo_inst.insert_beekeeper(&model_bk, user_id, &mut *tx).await;
+                            bk_repo_inst.insert_beekeeper(&model_bk, user_id, &mut *tx).await.map_err(|e| e.to_string())?;
                         }
                         // 再取得
                         beekeeper_id_opt = bk_repo::get_beekeeper_id_by_name(&name, user_id, &mut *tx).await;
@@ -92,7 +92,7 @@ impl HoneyRepository for HoneyRepositorySqlite {
                 let fl_repo_inst = FlowerRepositorySqlite { pool: self.pool.clone() };
                 match fl_repo_inst.has_flower(&model, user_id, &mut *tx).await {
                     Ok(false) => {
-                        let _ = fl_repo_inst.insert_flower(&model, user_id, &mut *tx).await;
+                        fl_repo_inst.insert_flower(&model, user_id, &mut *tx).await.map_err(|e| e.to_string())?;
                     }
                     _ => {}
                 }
