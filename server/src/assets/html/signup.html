@@ -20,7 +20,7 @@
 <main>
     <div class="signup-container">
         <h1>新規登録</h1>
-        <div id="error_message" class="error-message"></div>
+        <div id="error_message" class="error-message" role="alert" aria-live="assertive"></div>
         <form id="signup_form" method="post">
             <div class="form-group">
                 <label for="username">ユーザー名</label>
@@ -46,7 +46,8 @@
     </div>
 
     <script type="module">
-        import init, { signup_main } from '/honey_note/javascript/front.js?v=1';
+        import init, {signup_main} from '/honey_note/javascript/front.js?v=1';
+
         init().then(() => {
             signup_main();
         });
