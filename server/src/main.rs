@@ -37,18 +37,40 @@ async fn main() -> std::io::Result<()> {
         .finish()
         .unwrap();
 
-    // Cookie signing key (in production, this should be from config/env)
-    // let secret_key = Key::generate();
-    let secret_key = std::env::var("SESSION_SECRET_KEY")
-        .map(|k| Key::from(k.as_bytes()))
-        .unwrap_or_else(|_| Key::generate()); // 開発環境だけ generate でも許容
+    // Cookie signing key (must be exactly 64 bytes in production, or generated in dev)
+    let secret_key = match std::env::var("SESSION_SECRET_KEY") {
+        Ok(k) => {
+            let key_bytes = k.as_bytes();
+            if key_bytes.len() != 64 {
+                eprintln!("SESSION_SECRET_KEY must be exactly 64 bytes long, got {}", key_bytes.len());
+                std::process::exit(1);
+            }
+            Key::from(key_bytes)
+        }
+        Err(_) => {
+            // Only allow Key::generate() in development
+            #[cfg(debug_assertions)]
+            {
+                log::warn!("SESSION_SECRET_KEY not set; using generated key (development only)");
+                Key::generate()
+            }
+            #[cfg(not(debug_assertions))]
+            {
+                eprintln!("SESSION_SECRET_KEY environment variable is required in production");
+                std::process::exit(1);
+            }
+        }
+    };
+
+    let is_production = !cfg!(debug_assertions);
+
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
                     .cookie_name("honey_note_session".to_string())
-                    .cookie_secure(false) // Set to true if using HTTPS
+                    .cookie_secure(is_production) // Secure in production, allow false in development
                     .build(),
             )
             .wrap(Logger::default())
