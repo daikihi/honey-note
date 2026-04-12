@@ -120,6 +120,7 @@ pub async fn login(
             let user_id = user.id.unwrap();
             let session_data = SessionData::new(user_id, username.clone());
 
+            session.renew();
             session
                 .insert("user", session_data)
                 .map_err(|e| actix_web::error::ErrorInternalServerError(e.to_string()))?;
