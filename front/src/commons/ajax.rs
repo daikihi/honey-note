@@ -3,7 +3,7 @@ use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
     js_sys::{JsString, Reflect},
-    Request, RequestInit, Window, Response, HtmlElement
+    Request, RequestInit, Window, Response
 };
 use wasm_bindgen::JsCast;
 

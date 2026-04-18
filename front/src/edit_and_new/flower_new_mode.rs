@@ -29,9 +29,11 @@ async fn handle_save(document: &Document) -> Result<(), JsValue> {
     let flower = collect_form_data(document)?;
     let api_url = "/honey-note/api/flower/new";
     
-    let mut opts = web_sys::RequestInit::new();
-    opts.method("PUT");
-    opts.body(Some(&JsValue::from_str(&serde_json::to_string(&flower).unwrap())));
+    let opts = web_sys::RequestInit::new();
+    opts.set_method("PUT");
+    let body = serde_json::to_string(&flower)
+        .map_err(|e| JsValue::from_str(&format!("Serialization failed: {}", e)))?;
+    opts.set_body(&JsValue::from_str(&body));
     
     let request = web_sys::Request::new_with_str_and_init(api_url, &opts)?;
     request.headers().set("Content-Type", "application/json")?;
