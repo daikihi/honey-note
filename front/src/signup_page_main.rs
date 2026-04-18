@@ -78,6 +78,25 @@ async fn check_already_logged_in<A: BrowserAdapter>(
     Err(JsValue::from_str("not logged in"))
 }
 
+/// Handles the user signup flow: reads form fields, validates passwords, sends a signup request, and updates the UI or redirects based on the response.
+///
+/// On success (HTTP 200 or 201) redirects to "/honey_note/login.html". If the password fields do not match or the server returns an error, sets `error_div`'s text content to a user-facing message and makes it visible.
+///
+/// # Returns
+///
+/// `Ok(())` when the function completes its UI updates and network interaction successfully; `Err(JsValue)` if DOM element lookup/type conversion, JSON/stringify, or the network request fails.
+///
+/// # Examples
+///
+/// ```no_run
+/// use wasm_bindgen::JsValue;
+/// use web_sys::{Document, HtmlElement, HtmlFormElement, Window};
+/// // `adapter` must implement BrowserAdapter; obtain `document`, `window`, and DOM elements in your wasm context.
+/// # async fn example<A: BrowserAdapter>(adapter: &A, document: &Document, window: &Window, form: &HtmlFormElement, err_div: &HtmlElement) -> Result<(), JsValue> {
+/// handle_signup::<A>(form, err_div, document, window, adapter).await?;
+/// # Ok(())
+/// # }
+/// ```
 async fn handle_signup<A: BrowserAdapter>(
     _form: &HtmlFormElement,
     error_div: &HtmlElement,
