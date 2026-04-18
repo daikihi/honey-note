@@ -3,6 +3,7 @@ use crate::infrastructure::db::sqlx::prefecture;
 use common_type::models::prefectures::Prefecture as PrefectureModel;
 use log::info;
 
+#[allow(async_fn_in_trait)]
 pub trait PrefectureRepository: Send + Sync {
     async fn get_all_prefectures(&self) -> Result<Vec<PrefectureModel>, AppError>;
     async fn get_prefecture_by_name(&self, name: &str) -> Result<PrefectureModel, AppError>;

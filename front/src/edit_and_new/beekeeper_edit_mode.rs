@@ -86,9 +86,9 @@ async fn handle_update(id: i32, document: &Document) -> Result<(), JsValue> {
     beekeeper.id = Some(id);
     let api_url = format!("/honey-note/api/beekeeper/edit/{}", id);
     
-    let mut opts = web_sys::RequestInit::new();
-    opts.method("PUT");
-    opts.body(Some(&JsValue::from_str(&serde_json::to_string(&beekeeper).unwrap())));
+    let opts = web_sys::RequestInit::new();
+    opts.set_method("PUT");
+    opts.set_body(&JsValue::from_str(&serde_json::to_string(&beekeeper).unwrap()));
     
     let request = web_sys::Request::new_with_str_and_init(&api_url, &opts)?;
     request.headers().set("Content-Type", "application/json")?;

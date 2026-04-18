@@ -86,15 +86,3 @@ fn write_flowers_to_table(flowers: Vec<ModelFlower>) {
     }
 }
 
-fn print_message(message: &JsValue) {
-    web_sys::console::log_2(&"Fetched data:".into(), &message);
-
-    use web_sys::console;
-    use web_sys::js_sys::JSON;
-
-    match JSON::stringify_with_replacer_and_space(message, &JsValue::NULL, &JsValue::from_str("  "))
-    {
-        Ok(pretty) => console::log_1(&pretty),
-        Err(_) => console::log_1(&"Failed to stringify JsValue".into()),
-    }
-}

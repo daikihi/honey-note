@@ -1,4 +1,3 @@
-use log::info;
 
 use crate::errors::AppError;
 use common_type::models::flowers::Flower as ModelFlower;
