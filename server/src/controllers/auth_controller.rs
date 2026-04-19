@@ -16,18 +16,7 @@ use validator::Validate;
 ///
 /// # Examples
 ///
-/// ```
-/// assert_eq!(mask_username("alice"), "a***");
-/// assert_eq!(mask_username(""), "***");
-/// assert_eq!(mask_username("あ"), "あ***");
-/// ```
-fn mask_username(username: &str) -> String {
-    if username.is_empty() {
-        return "***".to_string();
-    }
-    let first_char = username.chars().next().unwrap_or('*');
-    format!("{}***", first_char)
-}
+///
 
 /// Handles user signup requests: validates input, ensures username/email uniqueness,
 /// creates a new user with hashed password and returns an authentication response.
