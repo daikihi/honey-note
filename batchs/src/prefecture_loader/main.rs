@@ -8,6 +8,21 @@ use std::env;
 use common::infrastructure::db::sqlx::get_sqlite_pool;
 use prefecture_loader_request::PrefectureLoaderRequestDto;
 
+/**
+ * 日本の都道府県マスタデータをデータベースに保存するバッチプロセス
+ *
+ * 目的:
+ *   指定されたCSVファイルから都道府県情報を読み込み、SQLiteデータベースに登録する
+ *
+ * 引数:
+ *   args[1]: マスタデータファイルのパス（通常は CSV 形式）
+ *   args[2]: SQLiteデータベースのファイルパス
+ *
+ * 特徴:
+ *   - 都道府県は全ユーザーで共通の静的マスタデータのため、UserID は考慮しない
+ *   - 各実行は独立した処理として動作する（バッチ実行ごとに再初期化可能）
+ */
+
 #[tokio::main]
 async fn main() {
     env_logger::init();
