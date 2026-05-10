@@ -43,10 +43,7 @@ async fn load_and_filter_honeys(file_name: &str) -> Vec<JsonHoney> {
 
     let non_empty_honeys: Vec<JsonHoney> = json_honeys
         .into_iter()
-        .filter(|honey| {
-            let name = honey.name.clone();
-            name.or_else(|| Some("".to_string())) != Some("".to_string())
-        })
+        .filter(|honey| honey.name.as_deref().map_or(false, |n| !n.is_empty()))
         .collect();
     log::info!("非空のハニー: {} 件", non_empty_honeys.len());
 
@@ -114,16 +111,21 @@ async fn process_and_insert_honeys(
 ) {
     let mut model_honeys: Vec<common_type::models::honey::Honey> = Vec::new();
 
+    let bk_repo =
+        common::repository::beekeepers::BeekeeperRepositorySqlite { pool: pool.clone() };
+
     for json_honey in honeys {
-        let bk_repo =
-            common::repository::beekeepers::BeekeeperRepositorySqlite { pool: pool.clone() };
-        let beekeeper_id = bk_repo
-            .get_beekeeper_id_by_name(
-                &json_honey.beekeeper.clone().unwrap_or_default(),
-                user_id,
-                &mut **tx,
-            )
-            .await;
+        let beekeeper_id = if let Some(name) = json_honey.beekeeper.as_deref() {
+            if !name.is_empty() {
+                bk_repo
+                    .get_beekeeper_id_by_name(name, user_id, &mut **tx)
+                    .await
+            } else {
+                None
+            }
+        } else {
+            None
+        };
 
         model_honeys.push(common_type::models::honey::Honey {
             id: Some(json_honey.id),
