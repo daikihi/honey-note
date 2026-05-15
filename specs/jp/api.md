@@ -1,149 +1,62 @@
 # API仕様書
 
 このドキュメントは、現行ブランチのコードを基準にした API 仕様をまとめたものである。  
-ここでは実装されている振る舞いを整理し、エンドポイント、認証要否、主要な入出力を確認できるようにする。
+エンドポイント、認証要否、主要な入出力を一覧しやすいように整理する。
 
 ## 共通事項
 
-- ベースURLは `/honey-note/api` である
-- 認証が必要な API はセッションからログインユーザーを取得する
-- 未ログインの場合は `401 Unauthorized` になる
-- PUT 系のリクエストは JSON 本文を受け取り、本文ログも残す
-- レスポンスは主に JSON で返す
+| 項目 | 内容 |
+| :--- | :--- |
+| ベースURL | `/honey-note/api` |
+| 認証方式 | セッションからログインユーザーを取得する |
+| 認証失敗時 | `401 Unauthorized` |
+| PUT リクエスト | JSON 本文を受け取り、本文ログも残す |
+| 主なレスポンス形式 | JSON |
 
 ## 認証関連
 
-### `POST /api/auth/signup`
-
-- 新規ユーザーを登録する
-- リクエスト
-  - `username`
-  - `email`
-  - `password`
-  - `display_name`
-- 振る舞い
-  - `username` は小文字化して保存する
-  - `email` は SHA-256 でハッシュ化して重複確認に使う
-  - `password` は bcrypt でハッシュ化する
-  - `display_name` がなければ `username` を表示名に使う
-- 主なレスポンス
-  - `200 OK`
-  - `400 Bad Request`
-  - `500 Internal Server Error`
-
-### `POST /api/auth/login`
-
-- ログインしてセッションを発行する
-- リクエスト
-  - `username`
-  - `password`
-- 振る舞い
-  - `username` は小文字化して照合する
-  - 認証成功時は `SessionData` を `user` キーで保存する
-- 主なレスポンス
-  - `200 OK`
-  - `401 Unauthorized`
-
-### `POST /api/auth/logout`
-
-- セッションを破棄する
-- 主なレスポンス
-  - `200 OK`
-
-### `GET /api/auth/me`
-
-- 現在のログイン状態を返す
-- 主なレスポンス
-  - `200 OK`
+| メソッド | パス | 認証 | 主な入力 | 主な振る舞い | 主なレスポンス |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| POST | `/api/auth/signup` | 不要 | `username`, `email`, `password`, `display_name` | `username` を小文字化し、`email` はハッシュ化して重複確認する。`password` は bcrypt でハッシュ化する。`display_name` がなければ `username` を使う | `200 OK`, `400 Bad Request`, `500 Internal Server Error` |
+| POST | `/api/auth/login` | 不要 | `username`, `password` | `username` を小文字化して照合し、成功時に `SessionData` を `user` キーで保存する | `200 OK`, `401 Unauthorized` |
+| POST | `/api/auth/logout` | 必要 | なし | セッションを破棄する | `200 OK` |
+| GET | `/api/auth/me` | 必要 | なし | 現在のログイン状態を返す | `200 OK` |
 
 ## マスターデータ
 
-### `GET /honey-note/api/prefectures`
-
-- 都道府県一覧を取得する
-- 認証は不要
+| メソッド | パス | 認証 | 主な入力 | 主な振る舞い | 主なレスポンス |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/honey-note/api/prefectures` | 不要 | なし | 都道府県一覧を取得する | `200 OK`, `500 Internal Server Error` |
 
 ## 養蜂家
 
-### `GET /honey-note/api/beekeepers`
-
-- ログインユーザーに紐付く養蜂家一覧を返す
-
-### `GET /honey-note/api/beekeeper/{id}`
-
-- 指定 ID の養蜂家詳細を返す
-- 所有権がない場合は見つからない扱いになる
-
-### `PUT /honey-note/api/beekeeper/new`
-
-- 養蜂家を新規登録する
-- リクエスト
-  - `Beekeeper`
-
-### `PUT /honey-note/api/beekeeper/edit/{id}`
-
-- 指定 ID の養蜂家を更新する
-- リクエスト
-  - `Beekeeper`
+| メソッド | パス | 認証 | 主な入力 | 主な振る舞い | 主なレスポンス |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/honey-note/api/beekeepers` | 必要 | なし | ログインユーザーに紐付く養蜂家一覧を返す | `200 OK`, `500 Internal Server Error` |
+| GET | `/honey-note/api/beekeeper/{id}` | 必要 | `id` | 指定 ID の養蜂家詳細を返す。所有権がない場合は見つからない扱いになる | `200 OK`, `404 Not Found` |
+| PUT | `/honey-note/api/beekeeper/new` | 必要 | `Beekeeper` | 養蜂家を新規登録する | `200 OK`, `400 Bad Request` |
+| PUT | `/honey-note/api/beekeeper/edit/{id}` | 必要 | `id`, `Beekeeper` | 指定 ID の養蜂家を更新する | `200 OK`, `400 Bad Request` |
 
 ## 蜜源
 
-### `GET /honey-note/api/flowers`
-
-- ログインユーザーに紐付く蜜源一覧を返す
-
-### `GET /honey-note/api/flower/{id}`
-
-- 指定 ID の蜜源詳細を返す
-- 所有権がない場合は見つからない扱いになる
-
-### `PUT /honey-note/api/flower/new`
-
-- 蜜源を新規登録する
-- リクエスト
-  - `Flower`
-
-### `PUT /honey-note/api/flower/edit/{id}`
-
-- 指定 ID の蜜源を更新する
-- リクエスト
-  - `Flower`
+| メソッド | パス | 認証 | 主な入力 | 主な振る舞い | 主なレスポンス |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/honey-note/api/flowers` | 必要 | なし | ログインユーザーに紐付く蜜源一覧を返す | `200 OK`, `500 Internal Server Error` |
+| GET | `/honey-note/api/flower/{id}` | 必要 | `id` | 指定 ID の蜜源詳細を返す。所有権がない場合は見つからない扱いになる | `200 OK`, `404 Not Found` |
+| PUT | `/honey-note/api/flower/new` | 必要 | `Flower` | 蜜源を新規登録する | `200 OK`, `400 Bad Request` |
+| PUT | `/honey-note/api/flower/edit/{id}` | 必要 | `id`, `Flower` | 指定 ID の蜜源を更新する | `200 OK`, `400 Bad Request` |
 
 ## はちみつ
 
-### `GET /honey-note/api/honeys`
-
-- ログインユーザーに紐付くはちみつ一覧を返す
-
-### `GET /honey-note/api/honey/{id}`
-
-- 指定 ID のはちみつ詳細を返す
-- 所有権がない場合は見つからない扱いになる
-
-### `PUT /honey-note/api/honey/new`
-
-- はちみつを新規登録する
-- リクエスト
-  - `HoneyNewRequest`
-  - `basic`
-  - `dynamic`
-  - `created_at`
-- 振る舞い
-  - 養蜂家名が未登録なら作成して関連付ける
-  - 花名が未登録なら作成して関連付ける
-
-### `PUT /honey-note/api/honey/edit`
-
-- 指定 ID のはちみつを更新する
-- リクエスト
-  - `HoneyEditRequest`
-  - `id`
-  - `basic`
-  - `dynamic`
-  - `updated_at`
+| メソッド | パス | 認証 | 主な入力 | 主な振る舞い | 主なレスポンス |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/honey-note/api/honeys` | 必要 | なし | ログインユーザーに紐付くはちみつ一覧を返す | `200 OK`, `500 Internal Server Error` |
+| GET | `/honey-note/api/honey/{id}` | 必要 | `id` | 指定 ID のはちみつ詳細を返す。所有権がない場合は見つからない扱いになる | `200 OK`, `404 Not Found` |
+| PUT | `/honey-note/api/honey/new` | 必要 | `HoneyNewRequest` | はちみつを新規登録する。養蜂家名や花名が未登録なら作成して関連付ける | `200 OK`, `400 Bad Request` |
+| PUT | `/honey-note/api/honey/edit` | 必要 | `HoneyEditRequest` | 指定 ID のはちみつを更新する | `200 OK`, `400 Bad Request` |
 
 ## その他
 
-### `GET /health`
-
-- サーバーの生存確認を返す
+| メソッド | パス | 認証 | 振る舞い | 主なレスポンス |
+| :--- | :--- | :--- | :--- | :--- |
+| GET | `/health` | 不要 | サーバーの生存確認を返す | `200 OK` |

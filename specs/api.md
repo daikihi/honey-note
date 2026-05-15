@@ -1,149 +1,62 @@
 # API Specification
 
-This document describes the API specification of the current branch of honey-note.
-It focuses on the behavior that is already implemented, including endpoints, authentication requirements, and the main request/response shapes.
+This document summarizes the API specification of the current branch of honey-note.
+It is organized as a table-first reference so that endpoints, authentication requirements, and main inputs/outputs are easy to scan.
 
 ## Common Rules
 
-- The base API prefix is `/honey-note/api`
-- Authenticated endpoints read the current user from the session
-- Unauthenticated access to protected endpoints results in `401 Unauthorized`
-- `PUT` requests are accepted as JSON and their bodies are logged
-- Responses are primarily JSON
+| Item | Value |
+| :--- | :--- |
+| Base URL | `/honey-note/api` |
+| Authentication model | Read the current user from the session |
+| Failure when unauthenticated | `401 Unauthorized` |
+| PUT requests | Accepted as JSON and logged with their bodies |
+| Main response format | JSON |
 
 ## Authentication
 
-### `POST /api/auth/signup`
-
-- Registers a new user
-- Request fields
-  - `username`
-  - `email`
-  - `password`
-  - `display_name`
-- Behavior
-  - `username` is normalized to lowercase
-  - `email` is hashed with SHA-256 for duplicate checks
-  - `password` is hashed with bcrypt
-  - `display_name` falls back to `username` if omitted
-- Typical responses
-  - `200 OK`
-  - `400 Bad Request`
-  - `500 Internal Server Error`
-
-### `POST /api/auth/login`
-
-- Logs in a user and creates a session
-- Request fields
-  - `username`
-  - `password`
-- Behavior
-  - `username` is normalized to lowercase before lookup
-  - On success, `SessionData` is stored under the `user` key
-- Typical responses
-  - `200 OK`
-  - `401 Unauthorized`
-
-### `POST /api/auth/logout`
-
-- Clears the session
-- Typical response
-  - `200 OK`
-
-### `GET /api/auth/me`
-
-- Returns the current login state
-- Typical response
-  - `200 OK`
+| Method | Path | Auth | Main Input | Main Behavior | Typical Responses |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| POST | `/api/auth/signup` | No | `username`, `email`, `password`, `display_name` | Normalize `username` to lowercase. Hash `email` for duplicate checks. Hash `password` with bcrypt. Use `username` as `display_name` if omitted | `200 OK`, `400 Bad Request`, `500 Internal Server Error` |
+| POST | `/api/auth/login` | No | `username`, `password` | Normalize `username` to lowercase and verify credentials. On success, store `SessionData` under the `user` key | `200 OK`, `401 Unauthorized` |
+| POST | `/api/auth/logout` | Yes | None | Clear the session | `200 OK` |
+| GET | `/api/auth/me` | Yes | None | Return the current login state | `200 OK` |
 
 ## Master Data
 
-### `GET /honey-note/api/prefectures`
-
-- Returns all prefectures
-- Authentication is not required
+| Method | Path | Auth | Main Input | Main Behavior | Typical Responses |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/honey-note/api/prefectures` | No | None | Return the list of prefectures | `200 OK`, `500 Internal Server Error` |
 
 ## Beekeepers
 
-### `GET /honey-note/api/beekeepers`
-
-- Returns the authenticated user's beekeepers
-
-### `GET /honey-note/api/beekeeper/{id}`
-
-- Returns one beekeeper by ID
-- Returns not found when the current user does not own the record
-
-### `PUT /honey-note/api/beekeeper/new`
-
-- Creates a beekeeper
-- Request body
-  - `Beekeeper`
-
-### `PUT /honey-note/api/beekeeper/edit/{id}`
-
-- Updates a beekeeper by ID
-- Request body
-  - `Beekeeper`
+| Method | Path | Auth | Main Input | Main Behavior | Typical Responses |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/honey-note/api/beekeepers` | Yes | None | Return the authenticated user’s beekeepers | `200 OK`, `500 Internal Server Error` |
+| GET | `/honey-note/api/beekeeper/{id}` | Yes | `id` | Return one beekeeper by ID. If the current user does not own the record, it is treated as not found | `200 OK`, `404 Not Found` |
+| PUT | `/honey-note/api/beekeeper/new` | Yes | `Beekeeper` | Create a beekeeper | `200 OK`, `400 Bad Request` |
+| PUT | `/honey-note/api/beekeeper/edit/{id}` | Yes | `id`, `Beekeeper` | Update a beekeeper by ID | `200 OK`, `400 Bad Request` |
 
 ## Flowers
 
-### `GET /honey-note/api/flowers`
-
-- Returns the authenticated user's flowers
-
-### `GET /honey-note/api/flower/{id}`
-
-- Returns one flower by ID
-- Returns not found when the current user does not own the record
-
-### `PUT /honey-note/api/flower/new`
-
-- Creates a flower
-- Request body
-  - `Flower`
-
-### `PUT /honey-note/api/flower/edit/{id}`
-
-- Updates a flower by ID
-- Request body
-  - `Flower`
+| Method | Path | Auth | Main Input | Main Behavior | Typical Responses |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/honey-note/api/flowers` | Yes | None | Return the authenticated user’s flowers | `200 OK`, `500 Internal Server Error` |
+| GET | `/honey-note/api/flower/{id}` | Yes | `id` | Return one flower by ID. If the current user does not own the record, it is treated as not found | `200 OK`, `404 Not Found` |
+| PUT | `/honey-note/api/flower/new` | Yes | `Flower` | Create a flower | `200 OK`, `400 Bad Request` |
+| PUT | `/honey-note/api/flower/edit/{id}` | Yes | `id`, `Flower` | Update a flower by ID | `200 OK`, `400 Bad Request` |
 
 ## Honeys
 
-### `GET /honey-note/api/honeys`
-
-- Returns the authenticated user's honeys
-
-### `GET /honey-note/api/honey/{id}`
-
-- Returns one honey by ID
-- Returns not found when the current user does not own the record
-
-### `PUT /honey-note/api/honey/new`
-
-- Creates a honey record
-- Request body
-  - `HoneyNewRequest`
-  - `basic`
-  - `dynamic`
-  - `created_at`
-- Behavior
-  - Automatically creates and links a beekeeper if needed
-  - Automatically creates and links flowers if needed
-
-### `PUT /honey-note/api/honey/edit`
-
-- Updates a honey record
-- Request body
-  - `HoneyEditRequest`
-  - `id`
-  - `basic`
-  - `dynamic`
-  - `updated_at`
+| Method | Path | Auth | Main Input | Main Behavior | Typical Responses |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| GET | `/honey-note/api/honeys` | Yes | None | Return the authenticated user’s honeys | `200 OK`, `500 Internal Server Error` |
+| GET | `/honey-note/api/honey/{id}` | Yes | `id` | Return one honey by ID. If the current user does not own the record, it is treated as not found | `200 OK`, `404 Not Found` |
+| PUT | `/honey-note/api/honey/new` | Yes | `HoneyNewRequest` | Create a honey record. Automatically create and link a beekeeper or flowers when needed | `200 OK`, `400 Bad Request` |
+| PUT | `/honey-note/api/honey/edit` | Yes | `HoneyEditRequest` | Update a honey record | `200 OK`, `400 Bad Request` |
 
 ## Other
 
-### `GET /health`
-
-- Returns a server health check response
+| Method | Path | Auth | Behavior | Typical Responses |
+| :--- | :--- | :--- | :--- | :--- |
+| GET | `/health` | No | Return a server health check response | `200 OK` |

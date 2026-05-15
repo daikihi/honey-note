@@ -4,75 +4,76 @@ This document describes the user model, authentication flow, and session structu
 
 ## User Model
 
-- A user is the authenticated actor of the system
-- `username` is the login identifier and is normalized to lowercase
-- `email` is not stored in plain text
-- `password` is stored as a bcrypt hash
-- `display_name` is shown in the UI
-- A user with `terminated_at` set is treated as inactive
+| Item | Description |
+| :--- | :--- |
+| Actor | The authenticated user of the system |
+| `username` | Login identifier, normalized to lowercase |
+| `email` | Not stored in plain text |
+| `password` | Stored as a bcrypt hash |
+| `display_name` | Displayed in the UI |
+| `terminated_at` | Marks an inactive user |
 
 ## Database
 
 ### `users`
 
-- `id`
-- `username`
-- `email_hash`
-- `password_hash`
-- `display_name`
-- `created_at`
-- `terminated_at`
-- `updated_at`
+| Column | Description |
+| :--- | :--- |
+| `id` | Primary key |
+| `username` | Unique login identifier |
+| `email_hash` | Unique hash used for duplicate checks |
+| `password_hash` | Bcrypt hash of the password |
+| `display_name` | UI display name |
+| `created_at` | Creation timestamp |
+| `terminated_at` | Inactive timestamp |
+| `updated_at` | Auto-updated timestamp |
 
 ### Constraints
 
-- `username` is unique
-- `email_hash` is unique
-- `updated_at` is maintained by an update trigger
+| Constraint | Description |
+| :--- | :--- |
+| `username` UNIQUE | Usernames must be unique |
+| `email_hash` UNIQUE | Email hashes must be unique |
+| `updated_at` trigger | Updated automatically on row updates |
 
 ### User-owned tables
 
-- `honey`
-- `beekeeper`
-- `flower`
+| Table | Meaning |
+| :--- | :--- |
+| `honey` | Honey records owned by a user |
+| `beekeeper` | Beekeeper records owned by a user |
+| `flower` | Flower records owned by a user |
 
 Each of these tables has a `user_id` column so records can be separated per user.
 
 ## Session
 
-- Login state is stored in the `honey_note_session` cookie
-- Session data uses `SessionData`
-- `SessionData` contains
-  - `version`
-  - `user_id`
-  - `username`
+| Item | Description |
+| :--- | :--- |
+| Cookie name | `honey_note_session` |
+| Stored object | `SessionData` |
+
+### `SessionData`
+
+| Field | Description |
+| :--- | :--- |
+| `version` | Version number for future compatibility |
+| `user_id` | Logged-in user ID |
+| `username` | Logged-in username |
 
 ## Authentication Flow
 
-### Sign up
-
-- `POST /api/auth/signup`
-- Accepts `username`, `email`, `password`, and `display_name`
-- Fails on validation errors or duplicates
-
-### Log in
-
-- `POST /api/auth/login`
-- Accepts `username` and `password`
-- Creates a session on success
-
-### Log out
-
-- `POST /api/auth/logout`
-- Clears the session
-
-### Current user
-
-- `GET /api/auth/me`
-- Returns the current login state and the current user's identifiers
+| Step | Endpoint | Summary |
+| :--- | :--- | :--- |
+| Sign up | `POST /api/auth/signup` | Accepts `username`, `email`, `password`, and `display_name`. Fails on validation errors or duplicates |
+| Log in | `POST /api/auth/login` | Accepts `username` and `password`. Creates a session on success |
+| Log out | `POST /api/auth/logout` | Clears the session |
+| Current user | `GET /api/auth/me` | Returns the current login state and the current user's identifiers |
 
 ## Authorization
 
-- Protected endpoints use the `AuthenticatedUser` extractor
-- Missing or invalid sessions return `401 Unauthorized`
-- Detail and update operations check ownership before proceeding
+| Rule | Description |
+| :--- | :--- |
+| Protected endpoints | Use the `AuthenticatedUser` extractor |
+| Missing or invalid session | Returns `401 Unauthorized` |
+| Ownership checks | Detail and update operations check ownership before proceeding |
