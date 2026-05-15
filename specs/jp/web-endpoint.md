@@ -1,41 +1,103 @@
 # Webページ仕様書
 
-このドキュメントでは、本プロジェクトで提供されるWebページのエンドポイント仕様について説明します。
+このドキュメントは、現行ブランチの `server/src/assets/html` を基準にした Web ページ仕様をまとめたものである。  
+どの HTML が存在し、どの WASM 入口とつながっているかを確認できるようにする。
 
-ベースURL: `/honey-note`
+## 共通事項
 
-## 画面一覧
+- ベースURLは `/honey_note` である
+- HTML は `server` から静的配信される
+- 各ページは `front.js` を読み込み、対応する WASM 入口関数を呼ぶ
+- 画面共通の見た目は `server/src/assets/css` で定義される
 
-### ハチミツ (Honey)
+## トップ・認証
 
-| パス | 説明 |
-| :--- | :--- |
-| `/honeys/lists.html` | 登録されているハチミツの一覧を表示します。 |
-| `/honeys/show.html?id={id}` | 指定したIDのハチミツ詳細を表示します。 |
-| `/honeys/new.html` | 新しいハチミツを登録する画面です。 |
-| `/honeys/edit.html?id={id}` | 登録済みのハチミツ情報を編集する画面です。 |
+### `/index.html`
 
-### 蜜源植物 (Flower)
+- トップページ
+- `top_page_main()` を呼ぶ
 
-| パス | 説明 |
-| :--- | :--- |
-| `/flowers/lists.html` | 登録されている花の一覧を表示します。 |
-| `/flowers/show.html?id={id}` | 指定したIDの花詳細を表示します。 |
-| `/flowers/new.html` | 新しい花を登録する画面です。 |
-| `/flowers/edit.html?id={id}` | 登録済みの花情報を編集する画面です。 |
+### `/login.html`
 
-### 養蜂業者 (Beekeeper)
+- ログインフォーム
+- `login_main()` を呼ぶ
 
-| パス | 説明 |
-| :--- | :--- |
-| `/beekeepers/lists.html` | 登録されている養蜂業者の一覧を表示します。 |
-| `/beekeepers/new.html` | 新しい養蜂業者を登録する画面です。 |
-| `/beekeepers/edit.html?id={id}` | 登録済みの養蜂業者情報を編集する画面です。 |
+### `/signup.html`
 
-## 静的資産 (Assets)
+- 新規登録フォーム
+- `signup_main()` を呼ぶ
 
-| パス | 説明 |
-| :--- | :--- |
-| `/javascript/` | WebAssemblyおよび関連するJavaScriptファイル |
-| `/css/` | スタイルシート |
-| `/icons/` | アイコン素材 |
+## はちみつ
+
+### `/honeys/lists.html`
+
+- はちみつ一覧
+- `honey_list_main()` を呼ぶ
+
+### `/honeys/show.html?id={id}`
+
+- はちみつ詳細
+- `honey_show_main()` を呼ぶ
+
+### `/honeys/new.html`
+
+- はちみつ新規登録
+- `honey_edit_and_new_main()` を呼ぶ
+
+### `/honeys/edit.html?id={id}`
+
+- はちみつ編集
+- `honey_edit_and_new_main()` を呼ぶ
+
+## 蜜源
+
+### `/flowers/lists.html`
+
+- 蜜源一覧
+- `flower_list_main()` を呼ぶ
+
+### `/flowers/show.html?id={id}`
+
+- 蜜源詳細
+- 静的な詳細ページとして配置されている
+
+### `/flowers/new.html`
+
+- 蜜源新規登録
+- `flower_edit_and_new_main()` を呼ぶ
+
+### `/flowers/edit.html?id={id}`
+
+- 蜜源編集
+- `flower_edit_and_new_main()` を呼ぶ
+
+## 養蜂家
+
+### `/beekeepers/lists.html`
+
+- 養蜂家一覧
+- `beekeepers_list_main()` を呼ぶ
+
+### `/beekeepers/show.html?id={id}`
+
+- 養蜂家詳細
+- `beekeeper_show_main()` を呼ぶ
+
+### `/beekeepers/new.html`
+
+- 養蜂家新規登録
+- `beekeeper_edit_and_new_main()` を呼ぶ
+
+### `/beekeepers/edit.html?id={id}`
+
+- 養蜂家編集
+- `beekeeper_edit_and_new_main()` を呼ぶ
+
+## 静的資産
+
+- `/javascript/`
+  - WebAssembly と関連 JavaScript
+- `/css/`
+  - スタイルシート
+- `/icons/`
+  - アイコン素材

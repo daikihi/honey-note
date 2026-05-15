@@ -1,93 +1,78 @@
 # ユーザー概念・認証仕様
 
-本システムにおけるユーザーの定義、データベース設計、および認証方式について説明します。
+このドキュメントは、現行ブランチのコードを基準にしたユーザー概念、認証方式、セッション構造をまとめたものである。
 
-## 1. ユーザー概念 (User Model)
+## ユーザー概念
 
-システムを利用する主体を「ユーザー」として定義し、以下の属性を管理します。
+- 本システムの利用主体を `user` とする
+- `username` はログイン識別子であり、小文字化して保存・照合する
+- `email` は平文保存せず、ハッシュ値で重複確認に使う
+- `password` は bcrypt でハッシュ化して保存する
+- `display_name` は画面に表示する名前として使う
+- `terminated_at` が入っているユーザーは有効ユーザーとして扱わない
 
-### 属性
-- **ID**: システム内の一意な識別子（連番）。
-- **ユーザー名 (username)**: ログインに使用する識別子。
-  - **仕様**: 常に小文字 (lowercase) に正規化して保存・比較されます。
-- **メールアドレスハッシュ (email_hash)**: 重複チェックおよび本人確認用のハッシュ値。
-  - **仕様**: 本システムではメール送信機能を持たないため、平文のメールアドレスは保存しません。ハッシュ値のみを比較専用として保持します。
-- **パスワードハッシュ (password_hash)**: 安全にハッシュ化されたパスワード。
-  - **仕様**: `bcrypt` 等のセキュアなアルゴリズムでハッシュ化されます。
-- **表示名 (display_name)**: 画面上に表示される名前。
-- **状態管理**:
-  - `created_at`: 登録日時。
-  - `updated_at`: 最終更新日時（トリガーにより自動更新）。
-  - `terminated_at`: 退会日時。論理削除に使用されます。
+## DB 仕様
 
----
+### `users` テーブル
 
-## 2. データベース設計
+- `id`
+- `username`
+- `email_hash`
+- `password_hash`
+- `display_name`
+- `created_at`
+- `terminated_at`
+- `updated_at`
 
-### users テーブル (本体DB)
-ユーザー情報を格納するメインテーブルです。
+### 制約
 
-| カラム名 | 型 | 説明 |
-| :--- | :--- | :--- |
-| id | INTEGER | 主キー (AUTOINCREMENT) |
-| username | TEXT | ログインID (UNIQUE, 小文字正規化) |
-| email_hash | TEXT | メールアドレスのハッシュ (UNIQUE) |
-| password_hash | TEXT | ハッシュ化されたパスワード |
-| display_name | TEXT | 表示名 |
-| created_at | DATETIME | 登録日時 (DEFAULT: CURRENT_TIMESTAMP) |
-| terminated_at | DATETIME | 退会日時 (論理削除用) |
-| updated_at | DATETIME | 更新日時 (DEFAULT: CURRENT_TIMESTAMP) |
+- `username` は UNIQUE
+- `email_hash` は UNIQUE
+- `updated_at` は UPDATE トリガーで自動更新される
 
-### 既存テーブルへの影響
-以下のテーブルに `user_id` カラムが追加され、ユーザーごとのデータ管理が行われます。
+### ユーザー単位のデータ管理
+
 - `honey`
 - `beekeeper`
 - `flower`
 
----
+これらのテーブルには `user_id` が追加されており、ログインユーザーごとにデータを分けて扱う。
 
-## 3. セッション設計
+## セッション仕様
 
-セッション情報は、パフォーマンスと分離性を考慮し、**アプリケーション本体とは別の SQLite データベースファイル** に保存されます。
+- ログイン状態はセッション cookie `honey_note_session` で管理する
+- セッションには `SessionData` を保存する
+- `SessionData` は次の項目を持つ
+  - `version`
+  - `user_id`
+  - `username`
 
-### sessions テーブル (セッション専用DB)
-| カラム名 | 型 | 説明 |
-| :--- | :--- | :--- |
-| id | TEXT | セッションID (主キー) |
-| session_data | BLOB | シリアライズされたセッション情報 |
-| expires_at | DATETIME | 有効期限 |
-| created_at | DATETIME | 作成日時 |
+## 認証フロー
 
-### セッションデータ構造
-将来の構造変更に備え、JSON データにはバージョン番号を含めます。
-```json
-{
-  "version": 1,
-  "user_id": 1,
-  "username": "daiki"
-}
-```
+### 新規登録
 
----
+- `POST /api/auth/signup`
+- `username`, `email`, `password`, `display_name` を受け取る
+- バリデーションに通らない場合は失敗する
 
-## 4. 認証・認可フロー
+### ログイン
 
-### 認証方式
-- Actix Web のミドルウェアベースで認証を行います。
-- 各 API リクエスト時にミドルウェアがセッションを確認し、ユーザー情報を抽出します。
-- 未ログインまたは無効なセッションの場合は `401 Unauthorized` を返却します。
+- `POST /api/auth/login`
+- `username`, `password` を受け取る
+- 認証成功時にセッションを発行する
 
-### セキュリティ対策
-- **Rate Limit**: `/api/auth/login` などの機密性の高いエンドポイントには、DoS やブルートフォース攻撃を防ぐための流量制限を適用します。
-- **ログインログ**: 成功・失敗に関わらず、IPアドレスやユーザーエージェントを含むログイン試行ログを記録します。
+### ログアウト
 
----
+- `POST /api/auth/logout`
+- セッションを破棄する
 
-## 5. 認証関連 API エンドポイント
+### 現在のログイン状態
 
-| メソッド | パス | 説明 |
-| :--- | :--- | :--- |
-| POST | `/api/auth/signup` | 新規ユーザー登録 |
-| POST | `/api/auth/login` | ログイン（セッション発行） |
-| POST | `/api/auth/logout` | ログアウト（セッション破棄） |
-| GET | `/api/auth/me` | 現在のログインユーザー情報取得 |
+- `GET /api/auth/me`
+- ログイン中かどうか、`user_id` と `username` を返す
+
+## 認証と認可
+
+- 認証が必要な API は `AuthenticatedUser` extractor を使う
+- セッションがなければ `401 Unauthorized` になる
+- 養蜂家、蜜源、はちみつの詳細取得や更新は所有者確認を行う
