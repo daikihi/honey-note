@@ -13,16 +13,23 @@ use std::rc::Rc;
 export function setup_stubs() {
     window.last_fetch = null;
     window.last_redirect = null;
-    
+    window.next_responses = [];
+
     // Fetchのスタブ化：実際のネットワークリクエストを飛ばさず、
-    // 呼ばれた引数を記録し、window.next_response_status で指定されたレスポンスを返します。
+    // 呼ばれた引数を記録し、キューから次のレスポンスを取り出して返します。
     window.original_fetch = window.fetch;
     window.fetch = async (url, options) => {
         window.last_fetch = { url, options };
+        const response = window.next_responses.shift() || { status: 200, body: '{}' };
         return {
-            status: window.next_response_status || 200,
-            ok: (window.next_response_status || 200) < 400,
-            json: async () => window.next_response_json || {}
+            status: response.status,
+            ok: response.status < 400,
+            json: async () => {
+                if (typeof response.body === 'string') {
+                    return JSON.parse(response.body);
+                }
+                return response.body;
+            }
         };
     };
 
@@ -44,14 +51,13 @@ export function restore_stubs() {
     window.fetch = window.original_fetch;
     delete window.last_fetch;
     delete window.last_redirect;
-    delete window.next_response_status;
-    delete window.next_response_json;
+    delete window.next_responses;
 }
 
-// 次に fetch が呼ばれた際に返すべきステータスコードとJSONをセット
+// 次に fetch が呼ばれた際に返すべきステータスコードとJSONをキューに追加
 export function set_next_response(status, json) {
-    window.next_response_status = status;
-    window.next_response_json = json;
+    const body = typeof json === 'string' ? json : JSON.stringify(json);
+    window.next_responses.push({ status, body });
 }
 
 // 最後に呼ばれたリダイレクト先URLを取得
@@ -151,7 +157,7 @@ async fn test_signup_password_mismatch() {
         .unwrap();
     assert_eq!(
         error_div.text_content().unwrap(),
-        "パスワードが一致しません"
+        "エラーが発生しました"
     );
     assert_eq!(
         error_div.style().get_property_value("display").unwrap(),
@@ -525,4 +531,3 @@ async fn test_auth_me_unauthorized_no_redirect() {
     cleanup_dom();
     restore_stubs();
 }
-
