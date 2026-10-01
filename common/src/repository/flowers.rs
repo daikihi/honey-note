@@ -43,10 +43,8 @@ impl FlowerRepository for FlowerRepositorySqlite {
             .fetch_all(&self.pool)
             .await;
         
-        match result {
-            Ok(v) => Ok(v.into_iter().map(|f| f.to_model_flower()).collect()),
-            Err(e) => Err(AppError::DatabaseError(e.to_string())),
-        }
+        let flowers = result?;
+        Ok(flowers.into_iter().map(|f| f.to_model_flower()).collect())
     }
 
     async fn get_flower_by_id(&self, id: i32, user_id: i32) -> Result<ModelFlower, AppError> {
@@ -55,10 +53,8 @@ impl FlowerRepository for FlowerRepositorySqlite {
             .bind(user_id)
             .fetch_one(&self.pool)
             .await;
-        match result {
-            Ok(f) => Ok(f.to_model_flower()),
-            Err(e) => Err(AppError::DatabaseError(e.to_string())),
-        }
+        let flower = result?;
+        Ok(flower.to_model_flower())
     }
 
     async fn update_flower<'a, E>(
@@ -77,7 +73,7 @@ impl FlowerRepository for FlowerRepositorySqlite {
             .bind(user_id)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+            ?;
         
         if exists.is_none() {
             return Err(AppError::NotFound("指定された蜜源が見つからないか、権限がありません".to_string()));
@@ -97,7 +93,8 @@ impl FlowerRepository for FlowerRepositorySqlite {
         sqlx_flower
             .update(executor)
             .await
-            .map_err(|e| AppError::DatabaseError(e.to_string()))
+            ?;
+        Ok(())
     }
 
     async fn exists_flower_by_id<'a, E>(&self, id: i32, user_id: i32, executor: E) -> Result<bool, AppError>
@@ -106,7 +103,7 @@ impl FlowerRepository for FlowerRepositorySqlite {
     {
         let query = "SELECT EXISTS(SELECT 1 FROM flower WHERE id = ? AND user_id = ?)";
         let result: (i64,) = sqlx::query_as(query).bind(id).bind(user_id).fetch_one(executor).await
-            .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+            ?;
         Ok(result.0 != 0)
     }
 
@@ -119,7 +116,8 @@ impl FlowerRepository for FlowerRepositorySqlite {
         sqlx_flower
             .insert_flower(executor)
             .await
-            .map_err(|e| AppError::DatabaseError(e.to_string()))
+            ?;
+        Ok(())
     }
 
     async fn has_flower<'a, E>(&self, flower: &ModelFlower, user_id: i32, executor: E) -> Result<bool, AppError>
@@ -128,7 +126,7 @@ impl FlowerRepository for FlowerRepositorySqlite {
     {
         let query = "SELECT EXISTS(SELECT 1 FROM flower WHERE name_jp = ? AND user_id = ?)";
         let result: (i64,) = sqlx::query_as(query).bind(&flower.name_jp).bind(user_id).fetch_one(executor).await
-            .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+            ?;
         Ok(result.0 != 0)
     }
 
