@@ -12,3 +12,9 @@ pub enum AppError {
     InvalidInput(String),
     // 必要に応じて追加
 }
+
+impl From<sqlx::Error> for AppError {
+    fn from(error: sqlx::Error) -> Self {
+        Self::DatabaseError(error.to_string())
+    }
+}
