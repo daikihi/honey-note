@@ -43,10 +43,7 @@ async fn load_and_filter_honeys(file_name: &str) -> Vec<JsonHoney> {
 
     let non_empty_honeys: Vec<JsonHoney> = json_honeys
         .into_iter()
-        .filter(|honey| {
-            let name = honey.name.clone();
-            name.or_else(|| Some("".to_string())) != Some("".to_string())
-        })
+        .filter(|honey| honey.name.as_deref().map_or(false, |n| !n.is_empty()))
         .collect();
     log::info!("非空のハニー: {} 件", non_empty_honeys.len());
 
@@ -60,11 +57,13 @@ async fn process_and_insert_beekeepers(
     pool: &sqlx::SqlitePool,
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
 ) {
-    let beekeepers = honeys
+    use std::collections::HashSet;
+
+    let beekeepers: HashSet<String> = honeys
         .iter()
         .filter_map(|json_honey| json_honey.beekeeper.clone())
-        .filter(|b| b != &"".to_string())
-        .collect::<Vec<_>>();
+        .filter(|b| !b.is_empty())
+        .collect();
 
     for beekeeper in beekeepers {
         let bk = Beekeeper {
@@ -83,8 +82,20 @@ async fn process_and_insert_beekeepers(
         let is_exist = bk_repo.has_beekeeper(&bk, user_id, &mut **tx).await;
 
         if !is_exist {
-            let _ = bk_repo.insert_beekeeper(&bk, user_id, &mut **tx).await;
-            log::info!("養蜂家をデータベースに挿入: {:?}", beekeeper);
+            match bk_repo.insert_beekeeper(&bk, user_id, &mut **tx).await {
+                Ok(_) => {
+                    log::info!("養蜂家をデータベースに挿入: {:?}", beekeeper);
+                }
+                Err(e) => {
+                    log::error!(
+                        "養蜂家の挿入に失敗しました: beekeeper={:?}, user_id={}, error={:?}",
+                        beekeeper,
+                        user_id,
+                        e
+                    );
+                    panic!("Failed to insert beekeeper: {:?}", e);
+                }
+            }
         } else {
             log::info!("養蜂家は既に存在します: {:?}", beekeeper);
         }
@@ -100,16 +111,21 @@ async fn process_and_insert_honeys(
 ) {
     let mut model_honeys: Vec<common_type::models::honey::Honey> = Vec::new();
 
+    let bk_repo =
+        common::repository::beekeepers::BeekeeperRepositorySqlite { pool: pool.clone() };
+
     for json_honey in honeys {
-        let bk_repo =
-            common::repository::beekeepers::BeekeeperRepositorySqlite { pool: pool.clone() };
-        let beekeeper_id = bk_repo
-            .get_beekeeper_id_by_name(
-                &json_honey.beekeeper.clone().unwrap_or_default(),
-                user_id,
-                &mut **tx,
-            )
-            .await;
+        let beekeeper_id = if let Some(name) = json_honey.beekeeper.as_deref() {
+            if !name.is_empty() {
+                bk_repo
+                    .get_beekeeper_id_by_name(name, user_id, &mut **tx)
+                    .await
+            } else {
+                None
+            }
+        } else {
+            None
+        };
 
         model_honeys.push(common_type::models::honey::Honey {
             id: Some(json_honey.id),
@@ -136,8 +152,20 @@ async fn process_and_insert_honeys(
     }
 
     for model_honey in model_honeys {
-        let _ =
-            repository::honeys::insert_honey_if_not_exists(&model_honey, user_id, &mut **tx).await;
-        log::info!("ハニーをデータベースに挿入: {:?}", model_honey);
+        match repository::honeys::insert_honey_if_not_exists(&model_honey, user_id, &mut **tx).await
+        {
+            Ok(_) => {
+                log::info!("ハニーをデータベースに挿入: {:?}", model_honey);
+            }
+            Err(e) => {
+                log::error!(
+                    "ハニーの挿入に失敗しました: honey={:?}, user_id={}, error={:?}",
+                    model_honey,
+                    user_id,
+                    e
+                );
+                panic!("Failed to insert honey: {:?}", e);
+            }
+        }
     }
 }

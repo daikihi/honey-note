@@ -102,4 +102,23 @@ fn render_detail(document: &Document, detail: &HoneyDetail) {
             let _ = container.append_child(&span);
         }
     }
+
+    // 動的情報（バッチ・風味）の表示
+    if let Some(dynamic_container) = document.get_element_by_id("dynamic_info_container") {
+        let doc = document.clone();
+        dynamic_container.set_inner_html("");
+        for (i, d) in detail.dynamic.iter().enumerate() {
+            let section = doc.create_element("div").unwrap();
+            section.set_class_name("section");
+            let date_str = d.created_at.map(|dt| dt.format("%Y-%m-%d").to_string()).unwrap_or_else(|| format!("記録 {}", i + 1));
+            
+            let mut html = format!("<h2>バッチ記録: {}</h2>", date_str);
+            html.push_str("<table>");
+            if let Some(color) = &d.color_feature { html.push_str(&format!("<tr><th>色</th><td>{:?}</td></tr>", color)); }
+            if let Some(note) = &d.memo { html.push_str(&format!("<tr><th>メモ</th><td>{}</td></tr>", note.0)); }
+            html.push_str("</table>");
+            section.set_inner_html(&html);
+            let _ = dynamic_container.append_child(&section);
+        }
+    }
 }
