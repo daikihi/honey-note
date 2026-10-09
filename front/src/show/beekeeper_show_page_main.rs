@@ -110,7 +110,18 @@ fn render_detail(document: &Document, beekeeper: &Beekeeper, prefectures: &[Pref
     
     if let Some(url) = &beekeeper.website_url {
         if let Some(el) = document.get_element_by_id("field_website_url") {
-            el.set_inner_html(&format!("<a href='{0}' target='_blank' rel='noopener noreferrer'>{0}</a>", url));
+            el.set_text_content(None);
+            match web_sys::Url::new(url) {
+                Ok(parsed) if parsed.protocol() == "http:" || parsed.protocol() == "https:" => {
+                    let link = document.create_element("a").unwrap();
+                    link.set_attribute("href", url).unwrap();
+                    link.set_attribute("target", "_blank").unwrap();
+                    link.set_attribute("rel", "noopener noreferrer").unwrap();
+                    link.set_text_content(Some(url));
+                    el.append_child(&link).unwrap();
+                }
+                _ => el.set_text_content(Some(url)),
+            }
         }
     } else {
         set_text(document, "field_website_url", "-");

@@ -75,14 +75,20 @@ fn write_flowers_to_table(flowers: Vec<ModelFlower>) {
 
     for flower in flowers {
         let row = document.create_element("tr").unwrap();
-        row.set_inner_html(&format!(
-            "<td>{}</td><td>{}</td><td>{}</td><td><a href='/honey_note/flowers/edit.html?id={}'>編集</a></td>",
-            flower.id.unwrap_or(0.0),
-            flower.name_jp,
-            flower.name_en.unwrap_or_default(),
-            flower.id.unwrap_or(0.0)
-        ));
+        let id = flower.id.unwrap_or(0.0);
+        for value in [id.to_string(), flower.name_jp, flower.name_en.unwrap_or_default()] {
+            let cell = document.create_element("td").unwrap();
+            cell.set_text_content(Some(&value));
+            row.append_child(&cell).unwrap();
+        }
+        let actions = document.create_element("td").unwrap();
+        let edit_link = document.create_element("a").unwrap();
+        edit_link
+            .set_attribute("href", &format!("/honey_note/flowers/edit.html?id={}", id))
+            .unwrap();
+        edit_link.set_text_content(Some("編集"));
+        actions.append_child(&edit_link).unwrap();
+        row.append_child(&actions).unwrap();
         tbody.append_child(&row).unwrap();
     }
 }
-

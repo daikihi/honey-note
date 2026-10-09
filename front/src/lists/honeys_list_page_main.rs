@@ -71,21 +71,22 @@ fn write_honeys_to_table(honeys: Vec<ModelHoney>) {
         let row = document.create_element("tr").unwrap();
         let id = honey.id.unwrap_or(0);
         let link = format!("/honey_note/honeys/show.html?id={}", id);
-        row.set_inner_html(&format!(
-            "<td><a href=\"{0}\">{1}</a></td>\
-     <td><a href=\"{0}\">{2}</a></td>\
-     <td><a href=\"{0}\">{3}</a></td>\
-     <td><a href=\"{0}\">{4}</a></td>\
-     <td><a href=\"{0}\">{5}</a></td>\
-     <td><a href=\"{0}\">{6}</a></td>",
-            link,
-            id,
+        let values = [
+            id.to_string(),
             honey.name_jp,
             honey.name_en.unwrap_or_default(),
             honey.beekkeeper.map(|b| b.name_jp).unwrap_or_default(),
-            "",
-            honey.purchase_date.unwrap_or_default()
-        ));
+            String::new(),
+            honey.purchase_date.unwrap_or_default(),
+        ];
+        for value in values {
+            let cell = document.create_element("td").unwrap();
+            let anchor = document.create_element("a").unwrap();
+            anchor.set_attribute("href", &link).unwrap();
+            anchor.set_text_content(Some(&value));
+            cell.append_child(&anchor).unwrap();
+            row.append_child(&cell).unwrap();
+        }
         tbody.append_child(&row).unwrap();
     }
 }
