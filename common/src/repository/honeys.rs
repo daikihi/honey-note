@@ -127,6 +127,11 @@ impl HoneyRepository for HoneyRepositorySqlite {
     }
 
     async fn update_honey(&self, id: i64, honey: HoneyDetail, user_id: i32) -> Result<(), String> {
+        use crate::repository::beekeepers as bk_repo;
+        use crate::repository::flowers::{FlowerRepository, FlowerRepositorySqlite};
+        use common_type::models::flowers::create_model_flower_from_name;
+        use std::collections::HashSet;
+
         let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
 
         // 所有権チェック
@@ -141,23 +146,88 @@ impl HoneyRepository for HoneyRepositorySqlite {
             return Err("指定されたハチミツが見つからないか、権限がありません".to_string());
         }
 
-        let sqlx_honey = Honey {
-            id: Some(id as i32),
-            name_jp: honey.basic.name_jp.0.clone(),
-            name_en: None,
-            beekeeper_id: None,
-            user_id: Some(user_id),
-            origin_country: honey.basic.country.map(|c| c.0),
-            origin_region: honey.basic.region.map(|r| r.0),
-            harvest_year: honey.basic.harvest_year,
-            purchase_date: honey.basic.purchase_date.map(|d| d.to_rfc3339()),
-            note: None,
+        let beekeeper_name = honey
+            .basic
+            .beekeeper_name
+            .as_ref()
+            .map(|name| name.0.trim())
+            .filter(|name| !name.is_empty());
+        let beekeeper_id = if let Some(name) = beekeeper_name {
+            Some(
+                bk_repo::get_or_insert_beekeeper_id(name, user_id, &mut *tx)
+                    .await
+                    .map_err(|e| e.to_string())?,
+            )
+        } else {
+            None
         };
 
-        sqlx_honey
-            .update(&mut *tx)
+        let mut flower_ids = Vec::new();
+        let mut seen_flower_names = HashSet::new();
+        for flower_name in &honey.basic.flower_names {
+            let name = flower_name.0.trim();
+            if name.is_empty() || !seen_flower_names.insert(name.to_string()) {
+                continue;
+            }
+
+            let existing: Option<(i32,)> = sqlx::query_as(
+                "SELECT id FROM flower WHERE name_jp = ? AND user_id = ? ORDER BY id LIMIT 1",
+            )
+            .bind(name)
+            .bind(user_id)
+            .fetch_optional(&mut *tx)
             .await
             .map_err(|e| e.to_string())?;
+
+            let flower_id = match existing {
+                Some((flower_id,)) => flower_id,
+                None => {
+                    let model = create_model_flower_from_name(name);
+                    FlowerRepositorySqlite {
+                        pool: self.pool.clone(),
+                    }
+                    .insert_flower(&model, user_id, &mut *tx)
+                    .await
+                    .map_err(|e| e.to_string())?;
+                    let (flower_id,): (i32,) = sqlx::query_as("SELECT last_insert_rowid()")
+                        .fetch_one(&mut *tx)
+                        .await
+                        .map_err(|e| e.to_string())?;
+                    flower_id
+                }
+            };
+            flower_ids.push(flower_id);
+        }
+
+        sqlx::query(
+            "UPDATE honey SET name_jp = ?, beekeeper_id = ?, origin_country = ?, origin_region = ?, harvest_year = ?, purchase_date = ? WHERE id = ? AND user_id = ?",
+        )
+            .bind(&honey.basic.name_jp.0)
+            .bind(beekeeper_id)
+            .bind(honey.basic.country.map(|country| country.0))
+            .bind(honey.basic.region.map(|region| region.0))
+            .bind(honey.basic.harvest_year)
+            .bind(honey.basic.purchase_date.map(|date| date.to_rfc3339()))
+            .bind(id as i32)
+            .bind(user_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        sqlx::query("DELETE FROM honey_flower WHERE honey_id = ?")
+            .bind(id as i32)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        for flower_id in flower_ids {
+            sqlx::query("INSERT INTO honey_flower (honey_id, flower_id) VALUES (?, ?)")
+                .bind(id as i32)
+                .bind(flower_id)
+                .execute(&mut *tx)
+                .await
+                .map_err(|e| e.to_string())?;
+        }
 
         tx.commit().await.map_err(|e| e.to_string())?;
         Ok(())
