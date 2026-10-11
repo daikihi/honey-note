@@ -1,7 +1,6 @@
 use crate::errors::AppError;
 use crate::infrastructure::db::sqlx::prefecture;
 use common_type::models::prefectures::Prefecture as PrefectureModel;
-use log::info;
 
 #[allow(async_fn_in_trait)]
 pub trait PrefectureRepository: Send + Sync {
@@ -17,32 +16,21 @@ pub struct PrefectureRepositorySqlite {
 
 impl PrefectureRepository for PrefectureRepositorySqlite {
     async fn get_all_prefectures(&self) -> Result<Vec<PrefectureModel>, AppError> {
-        let db_prefectures = prefecture::Prefecture::get_all_prefectures(&self.pool).await;
-        match db_prefectures {
-            Ok(prefectures) => {
-                let model_prefectures: Vec<PrefectureModel> = prefectures
-                    .into_iter()
-                    .map(|db_pref| PrefectureModel {
-                        id: db_pref.id,
-                        name_jp: db_pref.name_jp,
-                        name_en: db_pref.name_en,
-                    })
-                    .collect();
-                Ok(model_prefectures)
-            }
-            Err(e) => Err(AppError::DatabaseError(e.to_string())),
-        }
+        let db_prefectures = prefecture::Prefecture::get_all_prefectures(&self.pool).await?;
+        let model_prefectures: Vec<PrefectureModel> = db_prefectures
+            .into_iter()
+            .map(|db_pref| PrefectureModel {
+                id: db_pref.id,
+                name_jp: db_pref.name_jp,
+                name_en: db_pref.name_en,
+            })
+            .collect();
+        Ok(model_prefectures)
     }
 
     async fn get_prefecture_by_name(&self, name: &str) -> Result<PrefectureModel, AppError> {
-        let db_prefecture = prefecture::Prefecture::get_prefecture_by_name(name, &self.pool).await;
-        match db_prefecture {
-            Ok(pref) => Ok(pref.to_model()),
-            Err(e) => {
-                info!("Error getting prefecture ID: {}", e);
-                Err(AppError::DatabaseError(e.to_string()))
-            }
-        }
+        let db_prefecture = prefecture::Prefecture::get_prefecture_by_name(name, &self.pool).await?;
+        Ok(db_prefecture.to_model())
     }
 
     async fn insert_prefecture(&self, model: &PrefectureModel) -> Result<(), AppError> {
@@ -50,7 +38,8 @@ impl PrefectureRepository for PrefectureRepositorySqlite {
         db_prefecture
             .insert_prefecture(&self.pool)
             .await
-            .map_err(|e| AppError::DatabaseError(e.to_string()))
+            ?;
+        Ok(())
     }
 
     async fn has_prefecture(&self, model: &PrefectureModel) -> Result<bool, AppError> {
@@ -59,10 +48,10 @@ impl PrefectureRepository for PrefectureRepositorySqlite {
             name_jp: model.name_jp.clone(),
             name_en: model.name_en.clone(),
         });
-        db_prefecture
+        Ok(db_prefecture
             .has_prefecture(&self.pool)
             .await
-            .map_err(|e| AppError::DatabaseError(e.to_string()))
+            ?)
     }
 }
 

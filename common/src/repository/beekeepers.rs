@@ -98,17 +98,11 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
                 .bind(user_id)
                 .fetch_all(&self.pool)
                 .await;
-
-        match result {
-            Ok(beekeepers) => Ok(beekeepers
-                .into_iter()
-                .map(|b| b.to_model_beekeeper())
-                .collect()),
-            Err(e) => {
-                error!("Error fetching all beekeepers: {}", e);
-                Err(AppError::DatabaseError(e.to_string()))
-            }
-        }
+        let beekeepers = result?;
+        Ok(beekeepers
+            .into_iter()
+            .map(|b| b.to_model_beekeeper())
+            .collect())
     }
 
     async fn get_beekeeper_id_by_name<'a, E>(
@@ -144,10 +138,8 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
                 .bind(user_id)
                 .fetch_one(&self.pool)
                 .await;
-        match result {
-            Ok(b) => Ok(b.to_model_beekeeper()),
-            Err(e) => Err(AppError::DatabaseError(e.to_string())),
-        }
+        let beekeeper = result?;
+        Ok(beekeeper.to_model_beekeeper())
     }
 
     async fn update_beekeeper<'a, E>(
@@ -166,9 +158,7 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
                 .bind(id)
                 .bind(user_id)
                 .fetch_optional(&self.pool)
-                .await
-                .map_err(|e| AppError::DatabaseError(e.to_string()))?;
-
+                .await?;
         if exists.is_none() {
             return Err(AppError::NotFound(
                 "指定された養蜂業者が見つからないか、権限がありません".to_string(),
@@ -195,7 +185,8 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
         sqlx_bk
             .update(executor)
             .await
-            .map_err(|e| AppError::DatabaseError(e.to_string()))
+            ?;
+        Ok(())
     }
 
     async fn exists_beekeeper_by_id<'a, E>(
@@ -213,7 +204,7 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
             .bind(user_id)
             .fetch_one(executor)
             .await
-            .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+            ?;
         Ok(result.0 != 0)
     }
 
@@ -236,7 +227,8 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
         inserted_beekeeper
             .insert_beekeeper(executor)
             .await
-            .map_err(|e| AppError::DatabaseError(e.to_string()))
+            ?;
+        Ok(())
     }
 
     async fn has_beekeeper<'a, E>(
@@ -288,7 +280,8 @@ where
     inserted_beekeeper
         .insert_beekeeper(executor)
         .await
-        .map_err(|e| AppError::DatabaseError(e.to_string()))
+        ?;
+    Ok(())
 }
 
 pub async fn get_beekeeper_id_by_name<'a, E>(name: &str, user_id: i32, executor: E) -> Option<i32>

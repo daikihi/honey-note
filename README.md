@@ -144,10 +144,28 @@ RUST_LOG=info cargo run -p batchs --bin honey_loader resources/master_data/honey
 
 ## 仕様書
 
-詳細な仕様については以下のドキュメントを参照してください（日本語）。
+詳細な仕様は以下のドキュメントにまとめています。
 
-- [API仕様書](specs/jp/api.md)
-- [Webページ仕様書](specs/jp/web-endpoint.md)
+### 清書版
+
+#### 日本語
+
+| ドキュメント | 内容 |
+| :--- | :--- |
+| [API仕様書](specs/jp/api.md) | API の一覧、認証要否、主要な入出力 |
+| [Webページ仕様書](specs/jp/web-endpoint.md) | Web ページの一覧と各ページの役割 |
+| [ユーザー概念・認証仕様](specs/jp/auth.md) | ユーザーモデル、認証、セッション |
+| [認証修正メモ](specs/jp/auth_fix_spec.md) | `auth_controller` の修正記録 |
+
+#### English
+
+| Document | Description |
+| :--- | :--- |
+| [API Specification](specs/api.md) | API list, authentication requirements, and main inputs/outputs |
+| [Web Page Specification](specs/web-endpoint.md) | Web page list and each page's role |
+| [User and Authentication Specification](specs/auth.md) | User model, authentication, and session |
+| [Auth Fix Note](specs/auth_fix_spec.md) | Repair note for `auth_controller` |
+
 
 ## その他
 
