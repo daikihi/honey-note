@@ -18,7 +18,7 @@ pub fn setup_edit_mode(_window: &Window, document: &web_sys::Document) {
             let params = url.search_params();
             if let Some(id_str) = params.get("id") {
                 if let Some(h1) = document.get_elements_by_tag_name("h1").item(0) {
-                    h1.set_inner_html(&format!("蜂蜜の編集 (ID: {})", id_str));
+                    h1.set_text_content(Some(&format!("蜂蜜の編集 (ID: {})", id_str)));
                 }
             }
         }
@@ -101,8 +101,8 @@ async fn prefill_existing_honey(window: &Window, document: &web_sys::Document) -
         let date_str = pd.to_rfc3339()[0..10].to_string();
         set_input_value(document, "purchase_date", &date_str);
     }
-    if let Some(bk) = &h.basic.beekeeper_name { 
-        set_select_value(document, "beekeeper_name", &bk.0); 
+    if let Some(bk) = &h.basic.beekeeper_name {
+        set_select_value_or_add_option(document, "beekeeper_name", &bk.0);
     }
 
     // 蜜源植物（複数選択）の初期化
@@ -260,9 +260,32 @@ fn set_input_value(document: &web_sys::Document, id: &str, value: &str) {
     }
 }
 
-fn set_select_value(document: &web_sys::Document, id: &str, value: &str) {
-    if let Some(el) = document.get_element_by_id(id).and_then(|el| el.dyn_into::<HtmlSelectElement>().ok()) {
-        el.set_value(value);
+fn set_select_value_or_add_option(document: &web_sys::Document, id: &str, value: &str) {
+    if let Some(select) = document
+        .get_element_by_id(id)
+        .and_then(|el| el.dyn_into::<HtmlSelectElement>().ok())
+    {
+        let options = select.options();
+        let exists = (0..options.length()).any(|index| {
+            options
+                .item(index)
+                .and_then(|option| option.dyn_into::<web_sys::HtmlOptionElement>().ok())
+                .map(|option| option.value() == value)
+                .unwrap_or(false)
+        });
+
+        if !exists {
+            if let Some(document) = select.owner_document() {
+                if let Ok(element) = document.create_element("option") {
+                    if let Ok(option) = element.dyn_into::<web_sys::HtmlOptionElement>() {
+                        option.set_value(value);
+                        option.set_text(value);
+                        let _ = select.add_with_html_option_element(&option);
+                    }
+                }
+            }
+        }
+        select.set_value(value);
     }
 }
 

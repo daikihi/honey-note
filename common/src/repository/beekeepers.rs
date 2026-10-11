@@ -19,16 +19,36 @@ pub trait BeekeeperRepository: Send + Sync {
     ) -> Result<(), AppError>
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
-    async fn exists_beekeeper_by_id<'a, E>(&self, id: i32, user_id: i32, executor: E) -> Result<bool, AppError>
+    async fn exists_beekeeper_by_id<'a, E>(
+        &self,
+        id: i32,
+        user_id: i32,
+        executor: E,
+    ) -> Result<bool, AppError>
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
-    async fn get_beekeeper_id_by_name<'a, E>(&self, name: &str, user_id: i32, executor: E) -> Option<i32>
+    async fn get_beekeeper_id_by_name<'a, E>(
+        &self,
+        name: &str,
+        user_id: i32,
+        executor: E,
+    ) -> Option<i32>
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
-    async fn insert_beekeeper<'a, E>(&self, beekeeper: &ModelBeekeeper, user_id: i32, executor: E) -> Result<(), AppError>
+    async fn insert_beekeeper<'a, E>(
+        &self,
+        beekeeper: &ModelBeekeeper,
+        user_id: i32,
+        executor: E,
+    ) -> Result<(), AppError>
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
-    async fn has_beekeeper<'a, E>(&self, beekeeper: &ModelBeekeeper, user_id: i32, executor: E) -> bool
+    async fn has_beekeeper<'a, E>(
+        &self,
+        beekeeper: &ModelBeekeeper,
+        user_id: i32,
+        executor: E,
+    ) -> bool
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>;
 }
@@ -37,14 +57,47 @@ pub struct BeekeeperRepositorySqlite {
     pub pool: sqlx::SqlitePool,
 }
 
+/// 同名の養蜂場を再利用し、競合時も確定した ID を返す。
+pub async fn get_or_insert_beekeeper_id(
+    name: &str,
+    user_id: i32,
+    connection: &mut sqlx::SqliteConnection,
+) -> Result<i32, AppError> {
+    let name = name.trim();
+    if name.is_empty() {
+        return Err(AppError::InvalidInput(
+            "養蜂場名を入力してください".to_string(),
+        ));
+    }
+
+    sqlx::query(
+        "INSERT INTO beekeeper (name_jp, user_id) VALUES (?, ?) \
+         ON CONFLICT(user_id, name_jp) DO NOTHING",
+    )
+    .bind(name)
+    .bind(user_id)
+    .execute(&mut *connection)
+    .await
+    .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+
+    let (id,): (i32,) =
+        sqlx::query_as("SELECT id FROM beekeeper WHERE name_jp = ? AND user_id = ?")
+            .bind(name)
+            .bind(user_id)
+            .fetch_one(connection)
+            .await
+            .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+    Ok(id)
+}
+
 #[async_trait]
 impl BeekeeperRepository for BeekeeperRepositorySqlite {
     async fn get_all_beekeepers(&self, user_id: i32) -> Result<Vec<ModelBeekeeper>, AppError> {
-        let result: Result<Vec<SqlBeekeeper>, sqlx::Error> = sqlx::query_as("SELECT * FROM beekeeper WHERE user_id = ?")
-            .bind(user_id)
-            .fetch_all(&self.pool)
-            .await;
-        
+        let result: Result<Vec<SqlBeekeeper>, sqlx::Error> =
+            sqlx::query_as("SELECT * FROM beekeeper WHERE user_id = ?")
+                .bind(user_id)
+                .fetch_all(&self.pool)
+                .await;
         let beekeepers = result?;
         Ok(beekeepers
             .into_iter()
@@ -52,13 +105,25 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
             .collect())
     }
 
-    async fn get_beekeeper_id_by_name<'a, E>(&self, name: &str, user_id: i32, executor: E) -> Option<i32>
+    async fn get_beekeeper_id_by_name<'a, E>(
+        &self,
+        name: &str,
+        user_id: i32,
+        executor: E,
+    ) -> Option<i32>
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
+        let name = name.trim();
+        if name.is_empty() {
+            return None;
+        }
         let query = "SELECT id FROM beekeeper WHERE name_jp = ? AND user_id = ?";
-        let result: Result<(i32,), sqlx::Error> =
-            sqlx::query_as(query).bind(name).bind(user_id).fetch_one(executor).await;
+        let result: Result<(i32,), sqlx::Error> = sqlx::query_as(query)
+            .bind(name)
+            .bind(user_id)
+            .fetch_one(executor)
+            .await;
 
         match result {
             Ok((id,)) => Some(id),
@@ -67,11 +132,12 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
     }
 
     async fn get_beekeeper_by_id(&self, id: i32, user_id: i32) -> Result<ModelBeekeeper, AppError> {
-        let result: Result<SqlBeekeeper, sqlx::Error> = sqlx::query_as("SELECT * FROM beekeeper WHERE id = ? AND user_id = ?")
-            .bind(id)
-            .bind(user_id)
-            .fetch_one(&self.pool)
-            .await;
+        let result: Result<SqlBeekeeper, sqlx::Error> =
+            sqlx::query_as("SELECT * FROM beekeeper WHERE id = ? AND user_id = ?")
+                .bind(id)
+                .bind(user_id)
+                .fetch_one(&self.pool)
+                .await;
         let beekeeper = result?;
         Ok(beekeeper.to_model_beekeeper())
     }
@@ -87,20 +153,27 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
         // 所有権チェック
-        let exists: Option<(i32,)> = sqlx::query_as("SELECT 1 FROM beekeeper WHERE id = ? AND user_id = ?")
-            .bind(id)
-            .bind(user_id)
-            .fetch_optional(&self.pool)
-            .await
-            ?;
-        
+        let exists: Option<(i32,)> =
+            sqlx::query_as("SELECT 1 FROM beekeeper WHERE id = ? AND user_id = ?")
+                .bind(id)
+                .bind(user_id)
+                .fetch_optional(&self.pool)
+                .await?;
         if exists.is_none() {
-            return Err(AppError::NotFound("指定された養蜂業者が見つからないか、権限がありません".to_string()));
+            return Err(AppError::NotFound(
+                "指定された養蜂業者が見つからないか、権限がありません".to_string(),
+            ));
         }
 
+        let name = beekeeper.name_jp.trim();
+        if name.is_empty() {
+            return Err(AppError::InvalidInput(
+                "養蜂場名を入力してください".to_string(),
+            ));
+        }
         let sqlx_bk = SqlBeekeeper {
             id,
-            name_jp: beekeeper.name_jp.clone(),
+            name_jp: name.to_string(),
             name_en: beekeeper.name_en.clone(),
             founding_year: beekeeper.founding_year,
             location_prefecture_id: beekeeper.location_prefecture_id,
@@ -116,7 +189,12 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
         Ok(())
     }
 
-    async fn exists_beekeeper_by_id<'a, E>(&self, id: i32, user_id: i32, executor: E) -> Result<bool, AppError>
+    async fn exists_beekeeper_by_id<'a, E>(
+        &self,
+        id: i32,
+        user_id: i32,
+        executor: E,
+    ) -> Result<bool, AppError>
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
@@ -130,10 +208,20 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
         Ok(result.0 != 0)
     }
 
-    async fn insert_beekeeper<'a, E>(&self, beekeeper: &ModelBeekeeper, user_id: i32, executor: E) -> Result<(), AppError>
+    async fn insert_beekeeper<'a, E>(
+        &self,
+        beekeeper: &ModelBeekeeper,
+        user_id: i32,
+        executor: E,
+    ) -> Result<(), AppError>
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
+        if beekeeper.name_jp.trim().is_empty() {
+            return Err(AppError::InvalidInput(
+                "養蜂場名を入力してください".to_string(),
+            ));
+        }
         let mut inserted_beekeeper = BeekeeperForInsert::new(beekeeper);
         inserted_beekeeper.user_id = Some(user_id);
         inserted_beekeeper
@@ -143,13 +231,22 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
         Ok(())
     }
 
-    async fn has_beekeeper<'a, E>(&self, beekeeper: &ModelBeekeeper, user_id: i32, executor: E) -> bool
+    async fn has_beekeeper<'a, E>(
+        &self,
+        beekeeper: &ModelBeekeeper,
+        user_id: i32,
+        executor: E,
+    ) -> bool
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
+        let name = beekeeper.name_jp.trim();
+        if name.is_empty() {
+            return false;
+        }
         let query = "SELECT EXISTS(SELECT 1 FROM beekeeper WHERE name_jp = ? AND user_id = ?)";
         let result: (i64,) = sqlx::query_as(query)
-            .bind(&beekeeper.name_jp)
+            .bind(name)
             .bind(user_id)
             .fetch_one(executor)
             .await
@@ -158,10 +255,7 @@ impl BeekeeperRepository for BeekeeperRepositorySqlite {
     }
 }
 
-pub async fn has_beekeeper<'a, E>(
-    beekeeper: &ModelBeekeeper,
-    executor: E,
-) -> bool
+pub async fn has_beekeeper<'a, E>(beekeeper: &ModelBeekeeper, executor: E) -> bool
 where
     E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
 {
@@ -190,18 +284,17 @@ where
     Ok(())
 }
 
-pub async fn get_beekeeper_id_by_name<'a, E>(
-    name: &str,
-    user_id: i32,
-    executor: E,
-) -> Option<i32>
+pub async fn get_beekeeper_id_by_name<'a, E>(name: &str, user_id: i32, executor: E) -> Option<i32>
 where
     E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
 {
     SqlBeekeeper::get_beekeeper_id_by_name(name, user_id, executor).await
 }
 
-pub async fn get_all_beekeepers(pool: &sqlx::SqlitePool, user_id: i32) -> Result<Vec<ModelBeekeeper>, AppError> {
+pub async fn get_all_beekeepers(
+    pool: &sqlx::SqlitePool,
+    user_id: i32,
+) -> Result<Vec<ModelBeekeeper>, AppError> {
     let repo = BeekeeperRepositorySqlite { pool: pool.clone() };
     repo.get_all_beekeepers(user_id).await
 }

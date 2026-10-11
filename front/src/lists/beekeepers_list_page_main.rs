@@ -124,14 +124,32 @@ fn write_beekeepers_to_table(beekeepers: Vec<ModelBeekeeper>, prefectures: Vec<M
                 });
         let row = document.create_element("tr").unwrap();
         let beekeeper_id = beekeeper.id.unwrap_or_default();
-        row.set_inner_html(&format!(
-            "<td>{}</td><td>{}</td><td>{}</td><td><a href='/honey_note/beekeepers/show.html?id={}'>詳細</a> | <a href='/honey_note/beekeepers/edit.html?id={}'>編集</a></td>",
-            beekeeper_id,
+        for value in [
+            beekeeper_id.to_string(),
             beekeeper.name_jp,
             matched_prefecture.map_or("Unknown".to_string(), |p| p.name_jp.clone()),
-            beekeeper_id,
-            beekeeper_id
-        ));
+        ] {
+            let cell = document.create_element("td").unwrap();
+            cell.set_text_content(Some(&value));
+            row.append_child(&cell).unwrap();
+        }
+        let actions = document.create_element("td").unwrap();
+        for (label, page) in [("詳細", "show"), ("編集", "edit")] {
+            if label == "編集" {
+                let separator = document.create_element("span").unwrap();
+                separator.set_text_content(Some(" | "));
+                actions.append_child(&separator).unwrap();
+            }
+            let link = document.create_element("a").unwrap();
+            link.set_attribute(
+                "href",
+                &format!("/honey_note/beekeepers/{}.html?id={}", page, beekeeper_id),
+            )
+            .unwrap();
+            link.set_text_content(Some(label));
+            actions.append_child(&link).unwrap();
+        }
+        row.append_child(&actions).unwrap();
         tbody.append_child(&row).unwrap();
     }
 }

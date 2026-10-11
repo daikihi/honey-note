@@ -8,6 +8,8 @@ pub struct Honey {
     pub name_jp: String,
     pub name_en: Option<String>,
     pub beekkeeper: Option<Beekeeper>, // 外部キーとしてBeekeeperを参照
+    #[serde(default)]
+    pub flower_names: Vec<String>,
     pub origin_country: Option<String>,
     pub origin_region: Option<String>,
     pub harvest_year: Option<i32>,

@@ -36,5 +36,8 @@ async fn main() {
         .parse::<i32>()
         .expect("ユーザーIDは数値で指定してください");
     let request_dto: HoneyLoaderRequestDto = HoneyLoaderRequestDto::new(file_name, db_file_name);
-    let _use_case_result = honey_loader_usecase::run(request_dto, user_id).await;
+    if let Err(error) = honey_loader_usecase::run(request_dto, user_id).await {
+        eprintln!("ハチミツの投入に失敗しました: {}", error);
+        std::process::exit(1);
+    }
 }
