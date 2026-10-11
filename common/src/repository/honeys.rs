@@ -114,6 +114,7 @@ impl HoneyRepository for HoneyRepositorySqlite {
         Ok(honey_id)
     }
 
+    /// 所有者を確認し、蜂蜜本体と養蜂場・蜜源の関連を同じ取引で更新する。
     async fn update_honey(&self, id: i64, honey: HoneyDetail, user_id: i32) -> Result<(), String> {
         use crate::repository::beekeepers as bk_repo;
         use crate::repository::flowers::{FlowerRepository, FlowerRepositorySqlite};

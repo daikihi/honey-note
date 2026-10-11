@@ -10,22 +10,19 @@ use sqlx::SqlitePool;
 use validator::Validate;
 
 #[post("/api/auth/signup")]
+/// ユーザー名の前後空白を除いて登録する。
 pub async fn signup(
     pool: web::Data<SqlitePool>,
     payload: web::Json<SignupRequest>,
 ) -> Result<HttpResponse, Error> {
     // バリデーション
     let validation_error = payload.validate().err();
-    if payload.username.trim().is_empty()
-        || payload.password.is_empty()
-        || validation_error.is_some()
-    {
+    let username = payload.username.trim().to_lowercase();
+    if username.is_empty() || payload.password.is_empty() || validation_error.is_some() {
         warn!("バリデーションエラー: {:?}", validation_error);
         return Ok(HttpResponse::BadRequest().json(AuthResponse {
             success: false,
-            message: Some(
-                "入力内容を確認してください。".to_string(),
-            ),
+            message: Some("入力内容を確認してください。".to_string()),
             user_id: None,
             username: None,
         }));
@@ -35,8 +32,7 @@ pub async fn signup(
         pool: pool.get_ref().clone(),
     };
 
-    // ユーザー名を小文字に正規化
-    let username = payload.username.to_lowercase();
+    // ユーザー名は登録とログインで同じ規則に正規化する。
     debug!("username: {}", username);
 
     // ユーザー名の重複チェック
@@ -101,6 +97,7 @@ pub async fn signup(
 }
 
 #[post("/api/auth/login")]
+/// 登録時と同じ規則でユーザー名を照合する。
 pub async fn login(
     pool: web::Data<SqlitePool>,
     payload: web::Json<LoginRequest>,
@@ -109,7 +106,7 @@ pub async fn login(
     let repo = UserRepositorySqlite {
         pool: pool.get_ref().clone(),
     };
-    let username = payload.username.to_lowercase();
+    let username = payload.username.trim().to_lowercase();
 
     let user_opt = repo
         .find_by_username(&username)
@@ -176,5 +173,98 @@ pub async fn me(session: Session) -> Result<HttpResponse, Error> {
             user_id: None,
             username: None,
         }))
+    }
+}
+
+#[cfg(test)]
+mod username_normalization_tests {
+    use super::*;
+    use actix_web::{http::StatusCode, test, App};
+
+    /// 登録・ログイン・重複判定で同じユーザー名の正規化を使うことを確認する。
+    #[actix_web::test]
+    async fn signup_and_login_use_the_same_trimmed_username() {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::query(
+            "CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, \
+             email_hash TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, display_name TEXT, \
+             created_at TEXT, terminated_at TEXT, updated_at TEXT)",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .wrap(
+                    actix_session::SessionMiddleware::builder(
+                        actix_session::storage::CookieSessionStore::default(),
+                        actix_web::cookie::Key::from(&[0; 64]),
+                    )
+                    .build(),
+                )
+                .service(signup)
+                .service(login),
+        )
+        .await;
+
+        let signup_request = SignupRequest {
+            username: "  Alice  ".to_string(),
+            email: "alice@example.com".to_string(),
+            password: "password123".to_string(),
+            display_name: None,
+        };
+        let response = test::call_service(
+            &app,
+            test::TestRequest::post()
+                .uri("/api/auth/signup")
+                .set_json(&signup_request)
+                .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let body: AuthResponse = test::read_body_json(response).await;
+        assert_eq!(body.username.as_deref(), Some("alice"));
+        let (stored_name,): (String,) = sqlx::query_as("SELECT username FROM users")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(stored_name, "alice");
+
+        let login_request = LoginRequest {
+            username: " ALICE ".to_string(),
+            password: "password123".to_string(),
+        };
+        let response = test::call_service(
+            &app,
+            test::TestRequest::post()
+                .uri("/api/auth/login")
+                .set_json(&login_request)
+                .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let body: AuthResponse = test::read_body_json(response).await;
+        assert_eq!(body.username.as_deref(), Some("alice"));
+
+        let response = test::call_service(
+            &app,
+            test::TestRequest::post()
+                .uri("/api/auth/signup")
+                .set_json(&SignupRequest {
+                    username: " alice ".to_string(),
+                    email: "another@example.com".to_string(),
+                    password: "password123".to_string(),
+                    display_name: None,
+                })
+                .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
     }
 }
