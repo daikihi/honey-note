@@ -66,27 +66,34 @@ fn write_honeys_to_table(honeys: Vec<ModelHoney>) {
         .unwrap();
 
     for honey in honeys {
-        web_sys::console::log_1(&"run main".into());
-
         let row = document.create_element("tr").unwrap();
         let id = honey.id.unwrap_or(0);
         let link = format!("/honey_note/honeys/show.html?id={}", id);
-        let values = [
-            id.to_string(),
-            honey.name_jp,
-            honey.name_en.unwrap_or_default(),
-            honey.beekkeeper.map(|b| b.name_jp).unwrap_or_default(),
-            String::new(),
-            honey.purchase_date.unwrap_or_default(),
-        ];
-        for value in values {
-            let cell = document.create_element("td").unwrap();
-            let anchor = document.create_element("a").unwrap();
-            anchor.set_attribute("href", &link).unwrap();
-            anchor.set_text_content(Some(&value));
-            cell.append_child(&anchor).unwrap();
-            row.append_child(&cell).unwrap();
-        }
+        let beekeeper_name = honey
+            .beekkeeper
+            .map(|beekeeper| beekeeper.name_jp)
+            .unwrap_or_default();
+        let flower_names = honey.flower_names.join("、");
+        let harvest_year = honey
+            .harvest_year
+            .map(|year| format!("{year}年"))
+            .unwrap_or_else(|| "-".to_string());
+
+        append_link_cell(&document, &row, &link, &id.to_string());
+        append_link_cell(&document, &row, &link, &honey.name_jp);
+        append_link_cell(&document, &row, &link, "");
+        append_link_cell(&document, &row, &link, &beekeeper_name);
+        append_link_cell(&document, &row, &link, &flower_names);
+        append_link_cell(&document, &row, &link, &harvest_year);
         tbody.append_child(&row).unwrap();
     }
+}
+
+fn append_link_cell(document: &Document, row: &web_sys::Element, href: &str, text: &str) {
+    let cell = document.create_element("td").unwrap();
+    let link = document.create_element("a").unwrap();
+    link.set_attribute("href", href).unwrap();
+    link.set_text_content(Some(text));
+    cell.append_child(&link).unwrap();
+    row.append_child(&cell).unwrap();
 }

@@ -2,7 +2,10 @@ use common_type::models::flowers::Flower as ModelFlower;
 use wasm_bindgen::JsValue;
 use web_sys::{Document, Window};
 
-use crate::commons::{ajax::{get_list_data, check_authentication}, validators::is_valid_path};
+use crate::commons::{
+    ajax::{check_authentication, get_list_data},
+    validators::is_valid_path,
+};
 
 pub async fn run() {
     // 認証チェック
@@ -75,20 +78,42 @@ fn write_flowers_to_table(flowers: Vec<ModelFlower>) {
 
     for flower in flowers {
         let row = document.create_element("tr").unwrap();
-        let id = flower.id.unwrap_or(0.0);
-        for value in [id.to_string(), flower.name_jp, flower.name_en.unwrap_or_default()] {
-            let cell = document.create_element("td").unwrap();
-            cell.set_text_content(Some(&value));
-            row.append_child(&cell).unwrap();
-        }
-        let actions = document.create_element("td").unwrap();
-        let edit_link = document.create_element("a").unwrap();
-        edit_link
-            .set_attribute("href", &format!("/honey_note/flowers/edit.html?id={}", id))
-            .unwrap();
-        edit_link.set_text_content(Some("編集"));
-        actions.append_child(&edit_link).unwrap();
-        row.append_child(&actions).unwrap();
+        let id = flower.id.unwrap_or_default() as i64;
+        let id_text = id.to_string();
+        append_text_cell(&document, &row, &id_text);
+        append_text_cell(&document, &row, &flower.name_jp);
+        append_text_cell(&document, &row, flower.name_en.as_deref().unwrap_or(""));
+
+        let action_cell = document.create_element("td").unwrap();
+        append_action_link(
+            &document,
+            &action_cell,
+            "詳細",
+            &format!("/honey_note/flowers/show.html?id={id}"),
+        );
+        let separator = document.create_element("span").unwrap();
+        separator.set_text_content(Some(" | "));
+        action_cell.append_child(&separator).unwrap();
+        append_action_link(
+            &document,
+            &action_cell,
+            "編集",
+            &format!("/honey_note/flowers/edit.html?id={id}"),
+        );
+        row.append_child(&action_cell).unwrap();
         tbody.append_child(&row).unwrap();
     }
+}
+
+fn append_text_cell(document: &Document, row: &web_sys::Element, text: &str) {
+    let cell = document.create_element("td").unwrap();
+    cell.set_text_content(Some(text));
+    row.append_child(&cell).unwrap();
+}
+
+fn append_action_link(document: &Document, cell: &web_sys::Element, text: &str, href: &str) {
+    let link = document.create_element("a").unwrap();
+    link.set_text_content(Some(text));
+    link.set_attribute("href", href).unwrap();
+    cell.append_child(&link).unwrap();
 }

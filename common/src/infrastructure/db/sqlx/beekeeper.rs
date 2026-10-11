@@ -28,13 +28,24 @@ impl Beekeeper {
         }
     }
 
-    pub async fn get_beekeeper_id_by_name<'a, E>(name: &str, user_id: i32, executor: E) -> Option<i32>
+    pub async fn get_beekeeper_id_by_name<'a, E>(
+        name: &str,
+        user_id: i32,
+        executor: E,
+    ) -> Option<i32>
     where
         E: sqlx::Executor<'a, Database = sqlx::Sqlite>,
     {
+        let name = name.trim();
+        if name.is_empty() {
+            return None;
+        }
         let query = "SELECT id FROM beekeeper WHERE name_jp = ? AND user_id = ?";
-        let result: Result<(i32,), sqlx::Error> =
-            sqlx::query_as(query).bind(name).bind(user_id).fetch_one(executor).await;
+        let result: Result<(i32,), sqlx::Error> = sqlx::query_as(query)
+            .bind(name)
+            .bind(user_id)
+            .fetch_one(executor)
+            .await;
 
         match result {
             Ok((id,)) => Some(id),
@@ -81,7 +92,7 @@ impl Beekeeper {
             WHERE id = ?
         "#;
         sqlx::query(query)
-            .bind(&self.name_jp)
+            .bind(self.name_jp.trim())
             .bind(&self.name_en)
             .bind(self.founding_year)
             .bind(self.location_prefecture_id)
@@ -112,7 +123,7 @@ pub struct BeekeeperForInsert {
 impl BeekeeperForInsert {
     pub fn new(model_beekeeper: &ModelBeekeeper) -> Self {
         BeekeeperForInsert {
-            name_jp: model_beekeeper.name_jp.clone(),
+            name_jp: model_beekeeper.name_jp.trim().to_string(),
             name_en: model_beekeeper.name_en.clone(),
             founding_year: model_beekeeper.founding_year,
             location_prefecture_id: model_beekeeper.location_prefecture_id,

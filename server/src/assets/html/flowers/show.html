@@ -1,117 +1,60 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>HoneyNote | 花の詳細</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/honey_note/css/common_form.css">
+    <meta charset="UTF-8">
+    <title>HoneyNote | 蜜源の詳細</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/honey_note/css/common_form.css">
+    <script type="module">
+        import init, { flower_show_main } from '/honey_note/javascript/front.js';
+        init().then(() => flower_show_main());
+    </script>
 </head>
 <body>
-
 <header>
-  <nav>
-    <a class="logo" href="/honey_note/flowers/lists.html">
-      <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
-      HoneyNote
-    </a>
-  </nav>
+    <nav>
+        <div class="nav-left">
+            <a class="logo" href="/honey_note/index.html">
+                <img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">
+                HoneyNote
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="/honey_note/honeys/lists.html">はちみつ一覧</a>
+            <a href="/honey_note/flowers/lists.html">蜜源リスト</a>
+            <a href="/honey_note/beekeepers/lists.html">養蜂場</a>
+        </div>
+    </nav>
 </header>
 
 <main>
-  <h1>アカシア（Acacia）</h1>
+    <section id="flower_detail" hidden>
+        <h1 id="page_title">蜜源の詳細</h1>
+        <div class="section">
+            <h2>基本情報</h2>
+            <div class="info-grid">
+                <div class="label">和名</div><div id="field_name_jp">-</div>
+                <div class="label">英名</div><div id="field_name_en">-</div>
+                <div class="label">学名</div><div id="field_scientific_name">-</div>
+                <div class="label">分類</div><div id="field_flower_type">-</div>
+                <div class="label">短い説明</div><div id="field_short_note">-</div>
+                <div class="label">画像</div><div><img id="field_image" alt="" hidden style="max-width: 100%; height: auto;"></div>
+                <div class="label">メモ</div><div id="field_note">-</div>
+            </div>
+        </div>
+        <div class="actions">
+            <a class="btn-back" href="/honey_note/flowers/lists.html">一覧に戻る</a>
+            <a class="btn-edit" id="btn_edit_link" href="/honey_note/flowers/edit.html">編集する</a>
+        </div>
+    </section>
 
-  <!-- 基本情報 -->
-  <div class="section">
-    <h2>基本情報</h2>
-    <div class="info-grid">
-      <div class="label">和名</div>
-      <div>アカシア</div>
-
-      <div class="label">学名</div>
-      <div>Robinia pseudoacacia</div>
-
-      <div class="label">分類</div>
-      <div>マメ科 ハリエンジュ属</div>
-
-      <div class="label">開花時期</div>
-      <div>5月〜6月</div>
-
-      <div class="label">主な分布</div>
-      <div>日本全国（本州以北に多い）</div>
-
-      <div class="label">蜜量</div>
-      <div>多い</div>
-
-      <div class="label">結晶化傾向</div>
-      <div>しにくい</div>
-    </div>
-  </div>
-
-  <!-- 蜂蜜への影響 -->
-  <div class="section">
-    <h2>蜂蜜の特徴</h2>
-    <table>
-      <tr>
-        <th>色</th>
-        <td>非常に淡い黄色〜透明</td>
-      </tr>
-      <tr>
-        <th>香り</th>
-        <td>穏やか、ほのかにフローラル</td>
-      </tr>
-      <tr>
-        <th>味</th>
-        <td>クセが少なく上品な甘さ</td>
-      </tr>
-      <tr>
-        <th>主な用途</th>
-        <td>紅茶、ヨーグルト、パン</td>
-      </tr>
-    </table>
-  </div>
-
-  <!-- 関連情報 -->
-  <div class="section">
-    <h2>関連情報</h2>
-
-    <div class="info-grid">
-      <div class="label">主な養蜂場</div>
-      <div>
-        <a href="/honey_note/beekeepers/show.html?id=5">青木養蜂場</a> ほか
-      </div>
-
-      <div class="label">使用されている蜂蜜</div>
-      <div>
-        <a href="/honey_note/honeies/show.html?id=7">アカシア蜂蜜（2023）</a>
-      </div>
-
-      <div class="label">タグ</div>
-      <div class="tag-list">
-        <span class="tag">単花蜜</span>
-        <span class="tag">定番</span>
-        <span class="tag">初心者向け</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- 補足 -->
-  <div class="section">
-    <h2>メモ</h2>
-    <p>
-      日本で最も流通量の多い蜂蜜の蜜源。
-      採蜜時期が安定しており、品質のブレが少ない。
-    </p>
-    <div class="hint">
-      ※ この項目は edit 時に textarea を想定
-    </div>
-  </div>
-
-  <div class="actions">
-    <a class="btn-back" href="/honey_note/flowers/index.html">一覧に戻る</a>
-    <a class="btn-edit" href="/honey_note/flowers/edit.html?id=10">編集する</a>
-  </div>
-
+    <section id="error_panel" class="section" hidden>
+        <h1>蜜源を表示できません</h1>
+        <p id="error_message"></p>
+        <div class="actions">
+            <a class="btn-back" href="/honey_note/flowers/lists.html">一覧に戻る</a>
+        </div>
+    </section>
 </main>
-
 </body>
 </html>
