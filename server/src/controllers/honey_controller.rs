@@ -174,8 +174,13 @@ mod tests {
     use common_type::request::honey::new::HoneyNewRequest;
     use sqlx::SqlitePool;
 
+    /// コントローラーテストに必要なテーブルをメモリ DB に用意する。
     async fn setup_db() -> SqlitePool {
-        let pool = SqlitePool::connect(":memory:").await.unwrap();
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
         sqlx::query(
             "CREATE TABLE honey (
                 id              INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -193,6 +198,19 @@ mod tests {
         .execute(&pool)
         .await
         .unwrap();
+        for statement in [
+            "CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE, \
+             email_hash TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, display_name TEXT, \
+             created_at TEXT, terminated_at TEXT, updated_at TEXT)",
+            "CREATE TABLE beekeeper (id INTEGER PRIMARY KEY, name_jp TEXT NOT NULL, \
+             user_id INTEGER NOT NULL, UNIQUE(user_id, name_jp))",
+            "CREATE TABLE flower (id INTEGER PRIMARY KEY, name_jp TEXT NOT NULL, name_en TEXT, \
+             scientific_name TEXT, short_note TEXT, flower_type TEXT, image_path TEXT, \
+             user_id INTEGER NOT NULL, note TEXT)",
+            "CREATE TABLE honey_flower (honey_id INTEGER NOT NULL, flower_id INTEGER NOT NULL)",
+        ] {
+            sqlx::query(statement).execute(&pool).await.unwrap();
+        }
         pool
     }
 
@@ -304,9 +322,34 @@ mod tests {
         // assert!(!body.success);
         // assert_eq!(body.error_message, Some("既に同じはちみつデータが存在します".to_string()));
     }
+
+    /// 認証済みの編集で蜜源を置換・解除し、保存対象外の値を保持する。
     #[actix_web::test]
     async fn test_put_edit_honey_success() {
         let pool = setup_db().await;
+        let password_hash = common::libs::auth::hash_password("password123").unwrap();
+        sqlx::query(
+            "INSERT INTO users (id, username, email_hash, password_hash) VALUES (1, 'testuser', 'hash', ?)",
+        )
+        .bind(password_hash)
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query(
+            "INSERT INTO honey (id, name_jp, name_en, user_id, note) \
+             VALUES (10, '編集前のはちみつ', 'English name', 1, '残すメモ')",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        sqlx::query("INSERT INTO flower (id, name_jp, user_id) VALUES (100, '旧蜜源', 1), (200, 'レンゲ', 2)")
+            .execute(&pool)
+            .await
+            .unwrap();
+        sqlx::query("INSERT INTO honey_flower (honey_id, flower_id) VALUES (10, 100)")
+            .execute(&pool)
+            .await
+            .unwrap();
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(pool.clone()))
@@ -317,42 +360,38 @@ mod tests {
                     )
                     .build(),
                 )
-                .service(put_new_honey)
+                .service(crate::controllers::auth_controller::login)
                 .service(put_edit_honey),
         )
         .await;
+        let login_response = test::call_service(
+            &app,
+            test::TestRequest::post()
+                .uri("/api/auth/login")
+                .set_json(&common_type::request::auth::auth::LoginRequest {
+                    username: " testuser ".to_string(),
+                    password: "password123".to_string(),
+                })
+                .to_request(),
+        )
+        .await;
+        assert!(login_response.status().is_success());
+        let session_cookie = login_response
+            .response()
+            .cookies()
+            .next()
+            .expect("認証済みセッションの Cookie が必要")
+            .into_owned();
 
-        // 1. 新規作成
-        let payload_new = create_test_request("編集前のはちみつ");
-        let req_new = test::TestRequest::put()
-            .uri("/honey-note/api/honey/new")
-            .set_json(&payload_new)
-            .to_request();
-        let resp_new = test::call_service(&app, req_new).await;
-        assert!(
-            resp_new.status().is_success()
-                || resp_new.status() == actix_web::http::StatusCode::BAD_REQUEST
-                || resp_new.status() == actix_web::http::StatusCode::UNAUTHORIZED
-        );
-
-        let honey_id = if resp_new.status().is_success() {
-            let body_new: PutNewHoneyResponseDto = test::read_body_json(resp_new).await;
-            body_new.id.unwrap()
-        } else {
-            println!("status: {:?}", resp_new.status());
-            return;
-        };
-
-        // 2. 編集
         let payload_edit = HoneyEditRequest {
-            id: honey_id,
+            id: 10,
             basic: HoneyEditBasicRequest {
                 name_jp: Some("編集後のはちみつ".to_string()),
-                beekeeper_name: None,
+                beekeeper_name: Some("養蜂場".to_string()),
                 harvest_year: None,
                 country: None,
                 region: None,
-                flower_names: vec![],
+                flower_names: vec!["レンゲ".to_string()],
                 honey_type: None,
                 volume: None,
                 purchase_date: None,
@@ -362,18 +401,63 @@ mod tests {
         };
         let req_edit = test::TestRequest::put()
             .uri("/honey-note/api/honey/edit")
+            .cookie(session_cookie.clone())
             .set_json(&payload_edit)
             .to_request();
 
         let resp_edit = test::call_service(&app, req_edit).await;
         assert!(resp_edit.status().is_success());
+        let body_edit: PutEditHoneyResponseDto = test::read_body_json(resp_edit).await;
+        assert!(body_edit.success);
+        let (name, english_name, note, beekeeper_id): (String, String, String, i32) =
+            sqlx::query_as("SELECT name_jp, name_en, note, beekeeper_id FROM honey WHERE id = 10")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(name, "編集後のはちみつ");
+        assert_eq!(english_name, "English name");
+        assert_eq!(note, "残すメモ");
+        let (beekeeper_name,): (String,) =
+            sqlx::query_as("SELECT name_jp FROM beekeeper WHERE id = ? AND user_id = 1")
+                .bind(beekeeper_id)
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(beekeeper_name, "養蜂場");
+        let (flower_name, flower_owner): (String, i32) = sqlx::query_as(
+            "SELECT f.name_jp, f.user_id FROM honey_flower hf \
+             JOIN flower f ON f.id = hf.flower_id WHERE hf.honey_id = 10",
+        )
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+        assert_eq!((flower_name.as_str(), flower_owner), ("レンゲ", 1));
 
-        if resp_edit.status().is_success() {
-            let body_edit: PutEditHoneyResponseDto = test::read_body_json(resp_edit).await;
-            assert!(body_edit.success);
-        } else {
-            println!("status: {:?}", resp_edit.status());
-        }
+        let mut clear_request = payload_edit;
+        clear_request.basic.beekeeper_name = None;
+        clear_request.basic.flower_names.clear();
+        let clear_response = test::call_service(
+            &app,
+            test::TestRequest::put()
+                .uri("/honey-note/api/honey/edit")
+                .cookie(session_cookie)
+                .set_json(&clear_request)
+                .to_request(),
+        )
+        .await;
+        assert!(clear_response.status().is_success());
+        let (beekeeper_id,): (Option<i32>,) =
+            sqlx::query_as("SELECT beekeeper_id FROM honey WHERE id = 10")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(beekeeper_id, None);
+        let (relation_count,): (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM honey_flower WHERE honey_id = 10")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(relation_count, 0);
     }
 
     #[actix_web::test]

@@ -69,6 +69,7 @@ async fn convert_js_value_to_flower_list_data(value: JsValue) -> Result<Vec<Mode
     })
 }
 
+/// 蜜源の一覧を詳細・編集リンクとともに表へ追加する。
 fn write_flowers_to_table(flowers: Vec<ModelFlower>) {
     let window: Window = web_sys::window().expect("no global `window` exists");
     let document: Document = window.document().expect("should have a document on window");

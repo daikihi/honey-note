@@ -9,6 +9,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{Request, RequestInit, Response};
 
+/// 編集画面の見出しとフォームを、対象の蜂蜜データで初期化する。
 pub fn setup_edit_mode(_window: &Window, document: &web_sys::Document) {
     let pathname = _window.location().pathname().unwrap_or_default();
     let is_edit = pathname.contains("/edit.html");

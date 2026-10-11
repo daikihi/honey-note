@@ -86,6 +86,7 @@ fn set_text(document: &Document, id: &str, text: &str) {
     }
 }
 
+/// 養蜂場の詳細を表示し、安全なウェブサイト URL だけをリンクにする。
 fn render_detail(document: &Document, beekeeper: &Beekeeper, prefectures: &[Prefecture]) {
     set_text(document, "field_name_jp", &beekeeper.name_jp);
     set_text(document, "field_name_en", beekeeper.name_en.as_deref().unwrap_or("-"));
@@ -114,7 +115,7 @@ fn render_detail(document: &Document, beekeeper: &Beekeeper, prefectures: &[Pref
             match web_sys::Url::new(url) {
                 Ok(parsed) if parsed.protocol() == "http:" || parsed.protocol() == "https:" => {
                     let link = document.create_element("a").unwrap();
-                    link.set_attribute("href", url).unwrap();
+                    link.set_attribute("href", &parsed.href()).unwrap();
                     link.set_attribute("target", "_blank").unwrap();
                     link.set_attribute("rel", "noopener noreferrer").unwrap();
                     link.set_text_content(Some(url));

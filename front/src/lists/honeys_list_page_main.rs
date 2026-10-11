@@ -58,6 +58,7 @@ async fn convert_js_value_to_honey_list_data(value: JsValue) -> Result<Vec<Model
     })
 }
 
+/// 蜂蜜の一覧を蜜源名・採蜜年とともに表へ追加する。
 fn write_honeys_to_table(honeys: Vec<ModelHoney>) {
     let window: Window = web_sys::window().expect("no global `window` exists");
     let document: Document = window.document().expect("should have a document on window");

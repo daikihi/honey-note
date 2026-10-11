@@ -105,6 +105,7 @@ async fn convert_js_value_to_beekeepers_list_data(
     })
 }
 
+/// 養蜂場の一覧を、表示値を HTML と解釈せずに表へ追加する。
 fn write_beekeepers_to_table(beekeepers: Vec<ModelBeekeeper>, prefectures: Vec<ModelPrefecture>) {
     let window: Window = web_sys::window().expect("no global `window` exists");
     let document: Document = window.document().expect("should have a document on window");
