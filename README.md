@@ -39,13 +39,23 @@ cargo install sqlx-cli --no-default-features --features sqlite
 
 ### データベースの準備
 
+サーバーの DB 接続先は `common/config/server/local.toml` または `common/config/server/prod.toml` の `database_url` で指定します。`sqlite://resources/db/honey_note.db` はリポジトリルートから見た相対パス、`sqlite:///var/lib/honey-note/honey_note.db` は絶対パスです。SQLx の SQLite URL 形式で指定してください。ローカルの既存 DB はそのまま利用します。本番用の `prod.toml` は Git 管理対象外です。新しいチェックアウトでは次のようにサンプルをコピーし、デプロイ先に合わせて編集してください。
+
 ```bash
-cd resources/db
-# データベースファイルの作成とマイグレーションの実行
-sqlx migrate run --database-url sqlite:./honey_note.db
+cp common/config/server/prod.example.toml common/config/server/prod.toml
 ```
 
-デフォルトのデータベースファイル名は `common/src/infrastructure/db/sqlx.rs` の `DB_FILE_NAME` で定義されています。
+既に `prod.toml` を編集しているチェックアウトで、この追跡解除を含む更新を取り込む場合は、更新前にそのファイルを退避し、更新後に戻してください。`local.toml` は引き続き Git 管理対象です。
+
+新しい DB を用意する場合は、配置先ディレクトリと書き込み権限を運用者が準備し、リポジトリルートでマイグレーションを実行してください。本番の DB は Git 管理対象外の永続ストレージに置きます。
+
+```bash
+# 本番 DB を新規に用意する場合のみ実行
+sqlx database create --database-url sqlite:///var/lib/honey-note/honey_note.db
+sqlx migrate run --source resources/db/migrations --database-url sqlite:///var/lib/honey-note/honey_note.db
+```
+
+既存 DB に対して `database create` は実行せず、バックアップを取ってから必要なマイグレーションだけを実行してください。設定ファイルの `database_url` を変更した場合は、上記コマンドの接続先も同じ値にしてください。
 
 ## ビルドと実行
 
@@ -79,13 +89,21 @@ wasm-pack test --chrome --headless -- --test signup_tests
 
 ### サーバーの起動
 
+以下はリポジトリルートを作業ディレクトリとして実行します。設定ファイルと静的ファイルの参照にも、この作業ディレクトリが必要です。
+
 ```bash
-# ルートディレクトリから実行
-RUST_LOG=info cargo run -p server
+# ローカル環境（--env を省略した場合も local）
+RUST_LOG=info cargo run -p server -- --env local
+
+# 本番環境
+RUST_LOG=info cargo run -p server --release -- --env prod
 ```
 
-サーバーはデフォルトで `http://127.0.0.1:8080/honey_note/honeys/lists.html` でアクセス可能です。
-設定は `common/config/server/local.toml` で変更できます。
+`cargo run -p server` でも従来どおりローカル環境で起動し、既定では `http://127.0.0.1:8080/honey_note/honeys/lists.html` でアクセスできます。`--help` で引数を確認できます。`local` と `prod` 以外は指定できません。
+
+本番環境の初期設定は `127.0.0.1:8081` で、前段に Nginx などのリバースプロキシを置く想定です。デプロイ先に合わせて `common/config/server/prod.toml` の Host、Port、DB URL を変更してください。`prod` では起動前に64バイトの `SESSION_SECRET_KEY` を環境変数で設定する必要があります。`local` では未設定時にランダムキーを生成します。Debug / Release の違いはこの判定に影響しません。
+
+`prod` の Session Cookie には `Secure` が付くため、ブラウザーとの通信には前段のリバースプロキシで HTTPS を提供してください。現状の `Cors::permissive()` は本番向けの許可元制限をしていません。公開側のスキーム・IP・ポートが決まったら、デプロイ前に必要なオリジンだけを許可する設定へ変更してください。
 
 ### バッチ処理
 
