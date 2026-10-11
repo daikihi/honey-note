@@ -152,7 +152,11 @@ use crate::infrastructure::db::sqlx::beekeeper::Beekeeper as SqlBeekeeper;
 use common_type::models::beekeeper::Beekeeper as ModelBeekeeper;
 use common_type::models::honey::Honey as ModelHoney;
 
-pub fn create_model_honey(sql_honey: Honey, beekeeper: Option<SqlBeekeeper>) -> ModelHoney {
+pub fn create_model_honey(
+    sql_honey: Honey,
+    beekeeper: Option<SqlBeekeeper>,
+    flower_names: Vec<String>,
+) -> ModelHoney {
     let _beekeeper: Option<ModelBeekeeper> = beekeeper.map(|b| ModelBeekeeper {
         id: Some(b.id),
         name_jp: b.name_jp,
@@ -169,6 +173,7 @@ pub fn create_model_honey(sql_honey: Honey, beekeeper: Option<SqlBeekeeper>) -> 
         name_jp: sql_honey.name_jp,
         name_en: sql_honey.name_en,
         beekkeeper: _beekeeper, // 外部キーとしてBeekeeperを参照
+        flower_names,
         origin_country: sql_honey.origin_country,
         origin_region: sql_honey.origin_region,
         harvest_year: sql_honey.harvest_year,
@@ -298,6 +303,7 @@ mod tests {
                 website_url: Some("https://yamadabeefarm.jp".to_string()),
                 note: Some("信頼できる養蜂場".to_string()),
             }),
+            flower_names: vec![],
             origin_country: Some("日本".to_string()),
             origin_region: Some("北海道".to_string()),
             harvest_year: Some(2024),
@@ -306,7 +312,7 @@ mod tests {
         };
 
         // 実際の関数呼び出し
-        let result_honey: ModelHoney = create_model_honey(sql_honey, sql_beekeeper);
+        let result_honey: ModelHoney = create_model_honey(sql_honey, sql_beekeeper, vec![]);
 
         // 結果の比較
         assert_eq!(result_honey, expected_honey);

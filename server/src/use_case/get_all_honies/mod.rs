@@ -45,6 +45,7 @@ mod tests {
                 name_jp: "アカシア".to_string(),
                 name_en: None,
                 beekkeeper: None,
+                flower_names: vec![],
                 origin_country: None,
                 origin_region: None,
                 harvest_year: None,
