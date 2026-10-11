@@ -32,7 +32,7 @@ mod tests {
         assert_eq!(local.port, 8080);
         assert_eq!(local.database_url, "sqlite://resources/db/honey_note.db");
 
-        let prod = load_config_from_path(&format!("{config_dir}/prod.toml")).unwrap();
+        let prod = load_config_from_path(&format!("{config_dir}/prod.example.toml")).unwrap();
         assert_eq!(prod.host_name, "127.0.0.1");
         assert_eq!(prod.port, 8081);
         assert_eq!(

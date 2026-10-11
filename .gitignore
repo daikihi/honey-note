@@ -29,6 +29,7 @@ target/
 **/*.db
 **/*.sqlite
 *session.sql
+common/config/server/prod.toml
 
 # IDEs
 .idea/

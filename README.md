@@ -39,7 +39,13 @@ cargo install sqlx-cli --no-default-features --features sqlite
 
 ### データベースの準備
 
-サーバーの DB 接続先は `common/config/server/local.toml` または `common/config/server/prod.toml` の `database_url` で指定します。`sqlite://resources/db/honey_note.db` はリポジトリルートから見た相対パス、`sqlite:///var/lib/honey-note/honey_note.db` は絶対パスです。SQLx の SQLite URL 形式で指定してください。ローカルの既存 DB はそのまま利用します。
+サーバーの DB 接続先は `common/config/server/local.toml` または `common/config/server/prod.toml` の `database_url` で指定します。`sqlite://resources/db/honey_note.db` はリポジトリルートから見た相対パス、`sqlite:///var/lib/honey-note/honey_note.db` は絶対パスです。SQLx の SQLite URL 形式で指定してください。ローカルの既存 DB はそのまま利用します。本番用の `prod.toml` は Git 管理対象外です。新しいチェックアウトでは次のようにサンプルをコピーし、デプロイ先に合わせて編集してください。
+
+```bash
+cp common/config/server/prod.example.toml common/config/server/prod.toml
+```
+
+既に `prod.toml` を編集しているチェックアウトで、この追跡解除を含む更新を取り込む場合は、更新前にそのファイルを退避し、更新後に戻してください。`local.toml` は引き続き Git 管理対象です。
 
 新しい DB を用意する場合は、配置先ディレクトリと書き込み権限を運用者が準備し、リポジトリルートでマイグレーションを実行してください。本番の DB は Git 管理対象外の永続ストレージに置きます。
 
