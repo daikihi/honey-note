@@ -69,7 +69,10 @@ fn write_honeys_to_table(honeys: Vec<ModelHoney>) {
         let row = document.create_element("tr").unwrap();
         let id = honey.id.unwrap_or(0);
         let link = format!("/honey_note/honeys/show.html?id={}", id);
-        let beekeeper_name = honey.beekkeeper.map(|beekeeper| beekeeper.name_jp).unwrap_or_default();
+        let beekeeper_name = honey
+            .beekkeeper
+            .map(|beekeeper| beekeeper.name_jp)
+            .unwrap_or_default();
         let flower_names = honey.flower_names.join("、");
         let harvest_year = honey
             .harvest_year

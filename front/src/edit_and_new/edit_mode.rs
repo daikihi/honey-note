@@ -18,7 +18,7 @@ pub fn setup_edit_mode(_window: &Window, document: &web_sys::Document) {
             let params = url.search_params();
             if let Some(id_str) = params.get("id") {
                 if let Some(h1) = document.get_elements_by_tag_name("h1").item(0) {
-                    h1.set_inner_html(&format!("蜂蜜の編集 (ID: {})", id_str));
+                    h1.set_text_content(Some(&format!("蜂蜜の編集 (ID: {})", id_str)));
                 }
             }
         }

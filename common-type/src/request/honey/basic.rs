@@ -7,7 +7,7 @@
 //! - 変換: to_honey_input_basic, from_honey_input_basic で内部モデルと相互変換
 
 use serde::{Serialize, Deserialize};
-use chrono::{DateTime};
+use chrono::{DateTime, NaiveDate};
 use crate::models::honey_detail_basic::HoneyDetailBasic;
 use crate::models::honey_detail_types::{HoneyNameJp, BeekeeperName, Country, Region, FlowerName, HoneyType, Volume};
 
@@ -56,7 +56,14 @@ impl HoneyEditBasicRequest {
             flower_names: self.flower_names.iter().map(|s| FlowerName(s.clone())).collect(),
             honey_type: self.honey_type.clone().map(HoneyType),
             volume: self.volume.clone().map(Volume),
-            purchase_date: self.purchase_date.as_ref().and_then(|s| DateTime::parse_from_rfc3339(s).ok()),
+            purchase_date: self.purchase_date.as_ref().and_then(|s| {
+                DateTime::parse_from_rfc3339(s).ok().or_else(|| {
+                    NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                        .ok()
+                        .and_then(|date| date.and_hms_opt(0, 0, 0))
+                        .map(|date_time| date_time.and_utc().fixed_offset())
+                })
+            }),
         }
     }
     /// モデル型 → HoneyEditBasicRequest への変換
