@@ -6,12 +6,13 @@ mod use_case;
 use actix_cors::Cors;
 use actix_files::Files;
 // for signing key
-use actix_governor::{Governor, GovernorConfigBuilder};
+use actix_governor::governor::middleware::NoOpMiddleware;
+use actix_governor::{Governor, GovernorConfig, GovernorConfigBuilder, PeerIpKeyExtractor};
 use actix_session::storage::CookieSessionStore;
 use actix_session::SessionMiddleware;
 use actix_web::cookie::Key;
 use actix_web::{middleware::Logger, web, App, HttpServer};
-use common::libs::config::models::server::load_config;
+use common::libs::config::models::server::{load_config, RateLimit};
 
 #[derive(Debug, PartialEq, Eq)]
 enum StartupOption {
@@ -43,6 +44,24 @@ fn is_production(env: &str) -> bool {
     env == "prod"
 }
 
+fn build_governor_config(
+    config: &RateLimit,
+) -> Result<GovernorConfig<PeerIpKeyExtractor, NoOpMiddleware>, String> {
+    // Governor内部では、全件回復までの時間をu64のナノ秒で保持する。
+    u64::from(config.request_interval_ms)
+        .checked_mul(u64::from(config.burst_size))
+        .and_then(|milliseconds| milliseconds.checked_mul(1_000_000))
+        .ok_or_else(|| {
+            "rate_limit.request_interval_ms と burst_size の積は18446744073709以下にしてください"
+                .to_string()
+        })?;
+    GovernorConfigBuilder::default()
+        .milliseconds_per_request(u64::from(config.request_interval_ms))
+        .burst_size(config.burst_size)
+        .finish()
+        .ok_or_else(|| "レート制限の回復間隔と連続許可件数は1以上にしてください".to_string())
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init();
@@ -70,11 +89,13 @@ async fn main() -> std::io::Result<()> {
 
     let is_production = is_production(env);
 
-    let governor_conf = GovernorConfigBuilder::default()
-        .seconds_per_request(2) // 2秒に1リクエスト（0.5 req/s）
-        .burst_size(20) // 最大20回バースト許可
-        .finish()
-        .unwrap();
+    let governor_conf = match build_governor_config(&config.rate_limit) {
+        Ok(config) => config,
+        Err(error) => {
+            eprintln!("環境 '{env}' のレート制限を設定できません: {error}");
+            std::process::exit(1);
+        }
+    };
 
     // 本番では64バイトの固定鍵を必須とし、ローカルでは未設定時に生成する。
     let secret_key = match std::env::var("SESSION_SECRET_KEY") {
@@ -133,7 +154,8 @@ async fn main() -> std::io::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_production, parse_startup_args, StartupOption};
+    use super::{build_governor_config, is_production, parse_startup_args, StartupOption};
+    use common::libs::config::models::server::RateLimit;
 
     fn parse(args: &[&str]) -> Result<StartupOption, String> {
         parse_startup_args(
@@ -169,6 +191,85 @@ mod tests {
         assert_eq!(parse(&["--help"]), Ok(StartupOption::Help));
         assert!(!is_production("local"));
         assert!(is_production("prod"));
+    }
+
+    #[test]
+    fn rate_limit_rejects_zero_settings_without_panicking() {
+        assert!(build_governor_config(&RateLimit {
+            request_interval_ms: 0,
+            burst_size: 20,
+        })
+        .is_err());
+        assert!(build_governor_config(&RateLimit {
+            request_interval_ms: 2000,
+            burst_size: 0,
+        })
+        .is_err());
+    }
+
+    #[test]
+    fn rate_limit_checks_internal_duration_limit_without_panicking() {
+        assert!(build_governor_config(&RateLimit {
+            request_interval_ms: u32::MAX,
+            burst_size: u32::MAX,
+        })
+        .is_err());
+        assert!(build_governor_config(&RateLimit {
+            request_interval_ms: u32::MAX,
+            burst_size: 4294,
+        })
+        .is_ok());
+        assert!(build_governor_config(&RateLimit {
+            request_interval_ms: u32::MAX,
+            burst_size: 4295,
+        })
+        .is_err());
+    }
+
+    #[actix_web::test]
+    async fn rate_limit_uses_configured_burst_and_interval() {
+        use actix_governor::Governor;
+        use actix_web::{http::StatusCode, test, web, App, HttpResponse};
+
+        let config = build_governor_config(&RateLimit {
+            request_interval_ms: 60_000,
+            burst_size: 2,
+        })
+        .unwrap();
+        let app = test::init_service(
+            App::new()
+                .wrap(Governor::new(&config))
+                .route("/", web::get().to(|| async { HttpResponse::Ok().finish() })),
+        )
+        .await;
+
+        for _ in 0..2 {
+            let request = test::TestRequest::get()
+                .uri("/")
+                .peer_addr("127.0.0.1:12345".parse().unwrap())
+                .to_request();
+            assert_eq!(
+                test::call_service(&app, request).await.status(),
+                StatusCode::OK
+            );
+        }
+
+        let request = test::TestRequest::get()
+            .uri("/")
+            .peer_addr("127.0.0.1:12345".parse().unwrap())
+            .to_request();
+        let response = test::call_service(&app, request).await;
+        assert_eq!(response.status(), StatusCode::TOO_MANY_REQUESTS);
+        let remaining_seconds = response
+            .headers()
+            .get("x-ratelimit-after")
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .parse::<u64>()
+            .unwrap();
+        // 実時間で待たず、設定した60秒間隔が制限応答へ反映されることを確認する。
+        assert!((30..=60).contains(&remaining_seconds));
     }
 }
 

@@ -1,3 +1,9 @@
 host_name = "127.0.0.1"
 port = 8080
 database_url = "sqlite://resources/db/honey_note.db"
+
+[rate_limit]
+# リクエスト1件分を回復する間隔（ミリ秒）。100なら毎秒10件分。
+request_interval_ms = 100
+# 短時間に連続して許可する件数。
+burst_size = 60
