@@ -53,14 +53,12 @@ async fn setup_header_user_info(document: &web_sys::Document, username: &str) ->
 
         let user_info_div = document.create_element("div")?;
         user_info_div.set_id("header_user_info");
-        user_info_div.set_attribute("style", "display: flex; align-items: center; gap: 1rem; font-size: 0.9rem; color: #666;")?;
         
         let span = document.create_element("span")?;
         span.set_text_content(Some(&format!("ユーザー: {}", username)));
         
         let logout_btn = document.create_element("button")?;
         logout_btn.set_text_content(Some("ログアウト"));
-        logout_btn.set_attribute("style", "padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; background: #eee; cursor: pointer;")?;
         
         let closure = Closure::wrap(Box::new(move || {
             wasm_bindgen_futures::spawn_local(async move {
