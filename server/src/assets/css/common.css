@@ -26,21 +26,29 @@ header {
 
 header nav {
   max-width: 1000px;
-  height: 64px;
+  min-height: 64px;
   margin: auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1rem;
+  gap: 12px;
+  padding: 4px 1rem;
 }
 
 .nav-left {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex: 0 0 auto;
 }
 
 header nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   color: #555;
   text-decoration: none;
   font-size: .95rem;
@@ -54,10 +62,17 @@ header nav a.logo {
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--gold);
+  white-space: nowrap;
 }
 
 header nav a:hover {
   color: var(--gold);
+}
+
+header nav a:focus-visible,
+header nav button:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
 }
 
 .logo img {
@@ -67,7 +82,60 @@ header nav a:hover {
 
 .nav-links {
   display: flex;
-  gap: 1.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: 100%;
+  gap: 8px 1.5rem;
+}
+
+.nav-links a {
+  white-space: nowrap;
+}
+
+#header_user_info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+#header_user_info span {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#header_user_info button {
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #eee;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  header nav {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 8px 1rem;
+  }
+
+  .nav-links {
+    column-gap: 8px;
+  }
+
+  header nav a,
+  #header_user_info button {
+    min-height: 48px;
+  }
 }
 
 /* Main Container */
