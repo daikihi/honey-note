@@ -33,8 +33,8 @@ pub async fn check_authentication() -> Result<(), JsValue> {
         }
 
         // ログイン済みならヘッダーを調整
-        if let Some(username) = Reflect::get(&json, &JsValue::from_str("username"))?.as_string() {
-            setup_header_user_info(&document, &username).await?;
+        if let Some(name) = header_display_name(&json)? {
+            setup_header_user_info(&document, &name).await?;
         }
     } else {
         window.location().assign("/honey_note/login.html")?;
@@ -44,7 +44,13 @@ pub async fn check_authentication() -> Result<(), JsValue> {
     Ok(())
 }
 
-async fn setup_header_user_info(document: &web_sys::Document, username: &str) -> Result<(), JsValue> {
+pub(crate) fn header_display_name(json: &JsValue) -> Result<Option<String>, JsValue> {
+    let display_name = Reflect::get(json, &JsValue::from_str("display_name"))?.as_string();
+    let username = Reflect::get(json, &JsValue::from_str("username"))?.as_string();
+    Ok(display_name.filter(|name| !name.trim().is_empty()).or(username))
+}
+
+pub(crate) async fn setup_header_user_info(document: &web_sys::Document, name: &str) -> Result<(), JsValue> {
     if let Some(nav) = document.query_selector("header nav")? {
         // すでにユーザー情報が表示されているか確認（重複防止）
         if document.get_element_by_id("header_user_info").is_some() {
@@ -54,8 +60,9 @@ async fn setup_header_user_info(document: &web_sys::Document, username: &str) ->
         let user_info_div = document.create_element("div")?;
         user_info_div.set_id("header_user_info");
         
-        let span = document.create_element("span")?;
-        span.set_text_content(Some(&format!("ユーザー: {}", username)));
+        let span = document.create_element("a")?;
+        span.set_attribute("href", "/honey_note/users/show.html")?;
+        span.set_text_content(Some(&format!("ユーザー: {}", name)));
         
         let logout_btn = document.create_element("button")?;
         logout_btn.set_text_content(Some("ログアウト"));

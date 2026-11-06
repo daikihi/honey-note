@@ -29,4 +29,12 @@ pub struct MeResponse {
     pub logged_in: bool,
     pub user_id: Option<i32>,
     pub username: Option<String>,
+    #[serde(default)]
+    pub display_name: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(deny_unknown_fields)]
+pub struct UpdateDisplayNameRequest {
+    pub display_name: String,
 }

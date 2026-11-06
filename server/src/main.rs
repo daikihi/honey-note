@@ -278,6 +278,7 @@ fn configure_routes(cfg: &mut web::ServiceConfig) {
         .service(controllers::auth_controller::login)
         .service(controllers::auth_controller::logout)
         .service(controllers::auth_controller::me)
+        .service(controllers::auth_controller::put_display_name)
         .service(controllers::honey_controller::get_all_honeys)
         .service(controllers::honey_controller::get_honey_by_id)
         .service(controllers::health_checking::health_check)

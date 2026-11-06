@@ -68,7 +68,8 @@
 | 新規登録 | `POST /api/auth/signup` | `username`, `email`, `password`, `display_name` を受け取る。バリデーションや重複で失敗する |
 | ログイン | `POST /api/auth/login` | `username`, `password` を受け取り、成功時にセッションを発行する |
 | ログアウト | `POST /api/auth/logout` | セッションを破棄する |
-| 現在のログイン状態 | `GET /api/auth/me` | 現在のログイン状態と識別子を返す |
+| 現在のログイン状態 | `GET /api/auth/me` | 現在のログイン状態と、ログイン中なら識別子・表示名を返す |
+| 表示名更新 | `PUT /api/auth/me/display-name` | 同一オリジンからの認証済みリクエストで、自分の表示名だけを更新する |
 
 ## 認証と認可
 
