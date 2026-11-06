@@ -18,12 +18,29 @@ export function setup_user_fetch() {
     };
 }
 export function restore_user_fetch() { window.fetch = originalFetch; }
-export async function user_tick() { await new Promise(resolve => setTimeout(resolve, 0)); }
+export function wait_for_user_error() {
+    const error = document.getElementById('error_message');
+    if (error.textContent) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+        const observer = new MutationObserver(() => {
+            if (error.textContent) {
+                clearTimeout(timeout);
+                observer.disconnect();
+                resolve();
+            }
+        });
+        observer.observe(error, {childList: true, characterData: true, subtree: true});
+        const timeout = setTimeout(() => {
+            observer.disconnect();
+            reject(new Error('保存失敗時のエラーが表示されませんでした'));
+        }, 3000);
+    });
+}
 "#)]
 extern "C" {
     fn setup_user_fetch();
     fn restore_user_fetch();
-    async fn user_tick();
+    async fn wait_for_user_error();
 }
 
 fn setup_dom(edit: bool) {
@@ -103,7 +120,7 @@ async fn prefills_name_and_keeps_input_after_failed_save() {
         .unwrap()
         .dispatch_event(&event)
         .unwrap();
-    user_tick().await;
+    wait_for_user_error().await;
     assert_eq!(input.value(), "New Alice");
     assert_eq!(
         document
