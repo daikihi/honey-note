@@ -138,3 +138,32 @@ async fn prefills_name_and_keeps_input_after_failed_save() {
         .ends_with("/users/show.html"));
     cleanup();
 }
+
+#[wasm_bindgen_test]
+async fn rejects_display_name_over_50_characters() {
+    setup_dom(true);
+    front::user_edit_main().await;
+    let document = web_sys::window().unwrap().document().unwrap();
+    let input = document
+        .get_element_by_id("display_name")
+        .unwrap()
+        .dyn_into::<HtmlInputElement>()
+        .unwrap();
+    input.set_value(&"あ".repeat(51));
+    document
+        .get_element_by_id("display_name_form")
+        .unwrap()
+        .dispatch_event(&web_sys::Event::new("submit").unwrap())
+        .unwrap();
+    wait_for_user_error().await;
+    assert_eq!(input.value(), "あ".repeat(51));
+    assert_eq!(
+        document
+            .get_element_by_id("error_message")
+            .unwrap()
+            .text_content()
+            .as_deref(),
+        Some("表示名は50文字以内にしてください")
+    );
+    cleanup();
+}

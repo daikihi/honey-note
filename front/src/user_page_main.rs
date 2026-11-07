@@ -1,3 +1,4 @@
+use common_type::models::user::DISPLAY_NAME_MAX_CHARS;
 use std::{cell::Cell, rc::Rc};
 use wasm_bindgen::{prelude::*, JsCast};
 use wasm_bindgen_futures::JsFuture;
@@ -116,6 +117,8 @@ pub async fn edit() {
                 let value = input.value().trim().to_string();
                 if value.is_empty() {
                     error(&document, "表示名を入力してください");
+                } else if value.chars().count() > DISPLAY_NAME_MAX_CHARS {
+                    error(&document, "表示名は50文字以内にしてください");
                 } else if value == original {
                     let _ = window.location().assign(SHOW_PATH);
                 } else {

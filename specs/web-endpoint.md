@@ -39,6 +39,7 @@ It focuses on the HTML files that exist today and the WASM entry points they loa
 
 - Loads `user_edit_main()` and edits only the display name
 - Saves through `PUT /api/auth/me/display-name`; save success, unchanged input, and cancel return to `/users/show.html`
+- The trimmed display name must contain 1 to 50 characters
 
 ## Honeys
 

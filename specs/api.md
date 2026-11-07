@@ -23,6 +23,8 @@ It is organized as a table-first reference so that endpoints, authentication req
 | GET | `/api/auth/me` | No | None | Return login state and, when logged in, `user_id`, `username`, and `display_name`; logged-out values are `null` | `200 OK`, `401 Unauthorized` (session user no longer exists), `500 Internal Server Error` |
 | PUT | `/api/auth/me/display-name` | Yes | JSON: `display_name` (string) only | Trim and update the session user's display name. Reject blank values and extra fields. Require a same-origin `Origin` header | `200 OK` (`display_name`), `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `500 Internal Server Error` |
 
+Sign-up and display-name updates trim the stored display name and reject blank values or values longer than 50 characters. When sign-up omits a display name, the same limit applies to the username used as its fallback.
+
 Successful sign-up and display-name saves write structured recovery log events with a timestamp, user ID, and stored display name. The sign-up event also includes the username.
 
 The display-name update's same-origin check uses HTTP as the public scheme in `local` and HTTPS in `prod`. It does not use the scheme from forwarding headers.

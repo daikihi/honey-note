@@ -1,4 +1,5 @@
 use common::repository::users::UserRepository;
+use common_type::models::user::DISPLAY_NAME_MAX_CHARS;
 
 pub async fn update_display_name(
     repo: &impl UserRepository,
@@ -8,6 +9,9 @@ pub async fn update_display_name(
     let display_name = input.trim();
     if display_name.is_empty() {
         return Err("表示名を入力してください".to_string());
+    }
+    if display_name.chars().count() > DISPLAY_NAME_MAX_CHARS {
+        return Err("表示名は50文字以内にしてください".to_string());
     }
     let user = repo.find_by_id(user_id).await?;
     let Some(user) = user else { return Ok(false) };

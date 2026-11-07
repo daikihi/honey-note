@@ -7,6 +7,7 @@ use common::libs::auth::{hash_email, hash_password, verify_password};
 use common::repository::users::{UserRepository, UserRepositorySqlite};
 use common_type::models::session::SessionData;
 use common_type::models::user::User;
+use common_type::models::user::DISPLAY_NAME_MAX_CHARS;
 use common_type::request::auth::auth::{
     AuthResponse, LoginRequest, MeResponse, SignupRequest, UpdateDisplayNameRequest,
 };
@@ -23,7 +24,18 @@ pub async fn signup(
     // バリデーション
     let validation_error = payload.validate().err();
     let username = payload.username.trim().to_lowercase();
-    if username.is_empty() || payload.password.is_empty() || validation_error.is_some() {
+    let display_name = payload
+        .display_name
+        .as_deref()
+        .unwrap_or(&username)
+        .trim()
+        .to_string();
+    if username.is_empty()
+        || payload.password.is_empty()
+        || validation_error.is_some()
+        || display_name.is_empty()
+        || display_name.chars().count() > DISPLAY_NAME_MAX_CHARS
+    {
         warn!("バリデーションエラー: {:?}", validation_error);
         return Ok(HttpResponse::BadRequest().json(AuthResponse {
             success: false,
@@ -65,10 +77,6 @@ pub async fn signup(
     let password_hash = hash_password(&payload.password)
         .map_err(|e| actix_web::error::ErrorInternalServerError(e.to_string()))?;
 
-    let display_name = payload
-        .display_name
-        .clone()
-        .unwrap_or_else(|| username.clone());
     let new_user = User {
         id: None,
         username: username.clone(),
@@ -261,7 +269,10 @@ pub async fn put_display_name(
             Ok(HttpResponse::Ok().json(serde_json::json!({"display_name": display_name})))
         }
         Ok(false) => Ok(HttpResponse::NotFound().finish()),
-        Err(message) if message == "表示名を入力してください" => {
+        Err(message)
+            if message == "表示名を入力してください"
+                || message == "表示名は50文字以内にしてください" =>
+        {
             Ok(HttpResponse::BadRequest().json(serde_json::json!({"message": message})))
         }
         Err(error) => {
@@ -329,11 +340,9 @@ mod username_normalization_tests {
         assert_eq!(response.status(), StatusCode::OK);
         let body: AuthResponse = test::read_body_json(response).await;
         assert_eq!(body.username.as_deref(), Some("alice"));
-        let (stored_name,): (String,) = sqlx::query_as("SELECT username FROM users")
-            .fetch_one(&pool)
-            .await
-            .unwrap();
-        assert_eq!(stored_name, "alice");
+        let repo = UserRepositorySqlite { pool: pool.clone() };
+        let stored_user = repo.find_by_username("alice").await.unwrap().unwrap();
+        assert_eq!(stored_user.username, "alice");
 
         let login_request = LoginRequest {
             username: " ALICE ".to_string(),
@@ -365,6 +374,26 @@ mod username_normalization_tests {
         )
         .await;
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+
+        for (username, display_name) in [
+            ("another".to_string(), Some("あ".repeat(51))),
+            ("a".repeat(51), None),
+        ] {
+            let response = test::call_service(
+                &app,
+                test::TestRequest::post()
+                    .uri("/api/auth/signup")
+                    .set_json(&SignupRequest {
+                        email: format!("{username}@example.com"),
+                        username,
+                        password: "password123".to_string(),
+                        display_name,
+                    })
+                    .to_request(),
+            )
+            .await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        }
     }
 }
 
@@ -469,6 +498,30 @@ mod display_name_tests {
             .await;
             assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         }
+        let response = test::call_service(
+            &app,
+            test::TestRequest::put()
+                .uri("/api/auth/me/display-name")
+                .cookie(cookie.clone())
+                .insert_header(("Host", "localhost"))
+                .insert_header(("Origin", "http://localhost"))
+                .set_json(serde_json::json!({"display_name": "あ".repeat(51)}))
+                .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let response = test::call_service(
+            &app,
+            test::TestRequest::put()
+                .uri("/api/auth/me/display-name")
+                .cookie(cookie.clone())
+                .insert_header(("Host", "localhost"))
+                .insert_header(("Origin", "http://localhost"))
+                .set_json(serde_json::json!({"display_name": "あ".repeat(50)}))
+                .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
         for body in [
             serde_json::json!({"display_name": "Other", "username": "bob"}),
             serde_json::json!({"display_name": "Other", "user_id": 2}),

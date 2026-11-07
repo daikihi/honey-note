@@ -23,6 +23,8 @@
 | GET | `/api/auth/me` | 不要 | なし | ログイン状態、ログイン中なら `user_id`、`username`、`display_name` を返す。未ログインなら `logged_in: false` と各値 `null` | `200 OK`, `401 Unauthorized`（セッションのユーザーが存在しない場合）, `500 Internal Server Error` |
 | PUT | `/api/auth/me/display-name` | 必要 | JSON: `display_name`（文字列）のみ | セッションのユーザーの表示名を前後空白除去後に更新する。空白のみ・余分なフィールドは拒否。同一オリジンの `Origin` ヘッダーを要求する | `200 OK`（`display_name`）, `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `500 Internal Server Error` |
 
+新規登録と表示名更新では、保存する表示名の前後空白を除き、空白のみと50文字を超える値を拒否する。新規登録で表示名を省略した場合は、代わりに保存するユーザー名にもこの上限を適用する。
+
 登録・表示名保存の成功時は、復旧用に時刻、イベント名、ユーザーID、保存した表示名を構造化ログへ記録する。登録ログにはユーザー名も含める。
 
 表示名更新時の同一オリジン判定は、`local` では HTTP、`prod` では HTTPS を公開側の通信方式として使用する。転送ヘッダーの通信方式は使用しない。

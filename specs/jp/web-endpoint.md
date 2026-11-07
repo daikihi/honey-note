@@ -39,6 +39,7 @@
 
 - 表示名だけを編集する独立ページ
 - `user_edit_main()` を呼ぶ。保存時は `PUT /api/auth/me/display-name` を使う
+- 表示名は前後空白を除いて1〜50文字とする
 - 保存成功・変更なし・キャンセル時は `/users/show.html` に戻る
 
 ## はちみつ
