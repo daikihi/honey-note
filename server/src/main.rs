@@ -13,6 +13,7 @@ use actix_session::SessionMiddleware;
 use actix_web::cookie::Key;
 use actix_web::{middleware::Logger, web, App, HttpServer};
 use common::libs::config::models::server::{load_config, RateLimit};
+use controllers::auth_controller::PublicScheme;
 
 #[derive(Debug, PartialEq, Eq)]
 enum StartupOption {
@@ -88,6 +89,7 @@ async fn main() -> std::io::Result<()> {
     };
 
     let is_production = is_production(env);
+    let public_scheme = if is_production { "https" } else { "http" };
 
     let governor_conf = match build_governor_config(&config.rate_limit) {
         Ok(config) => config,
@@ -136,6 +138,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(PublicScheme(public_scheme)))
             .wrap(
                 SessionMiddleware::builder(CookieSessionStore::default(), secret_key.clone())
                     .cookie_name("honey_note_session".to_string())
@@ -278,6 +281,7 @@ fn configure_routes(cfg: &mut web::ServiceConfig) {
         .service(controllers::auth_controller::login)
         .service(controllers::auth_controller::logout)
         .service(controllers::auth_controller::me)
+        .service(controllers::auth_controller::put_display_name)
         .service(controllers::honey_controller::get_all_honeys)
         .service(controllers::honey_controller::get_honey_by_id)
         .service(controllers::health_checking::health_check)

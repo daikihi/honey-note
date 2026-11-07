@@ -103,6 +103,20 @@ impl User {
             .await
     }
 
+    pub async fn update_display_name<'a, E>(id: i32, display_name: &str, executor: E) -> Result<bool, sqlx::Error>
+    where
+        E: Executor<'a, Database = Sqlite>,
+    {
+        let result = sqlx::query(
+            "UPDATE users SET display_name = ? WHERE id = ? AND terminated_at IS NULL",
+        )
+        .bind(display_name)
+        .bind(id)
+        .execute(executor)
+        .await?;
+        Ok(result.rows_affected() == 1)
+    }
+
     /// メールアドレスのハッシュ値が既に登録されているか確認します
     /// 重複チェック（UNIQUE 制約違反の防止）に使用します
     pub async fn exists_by_email_hash<'a, E>(email_hash: &str, executor: E) -> Result<bool, sqlx::Error>

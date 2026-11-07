@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+pub const DISPLAY_NAME_MAX_CHARS: usize = 50;
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct User {
     pub id: Option<i32>,

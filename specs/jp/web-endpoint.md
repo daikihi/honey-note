@@ -27,6 +27,21 @@
 - 新規登録フォーム
 - `signup_main()` を呼ぶ
 
+## ユーザー情報
+
+### `/users/show.html`
+
+- ログイン中のユーザー名と表示名を `GET /api/auth/me` から取得して表示する
+- `user_show_main()` を呼ぶ。共通ヘッダーのユーザーリンクから遷移する
+- 共通ヘッダーは表示名を優先し、表示名がない場合のみユーザー名を表示する
+
+### `/users/edit.html`
+
+- 表示名だけを編集する独立ページ
+- `user_edit_main()` を呼ぶ。保存時は `PUT /api/auth/me/display-name` を使う
+- 表示名は前後空白を除いて1〜50文字とする
+- 保存成功・変更なし・キャンセル時は `/users/show.html` に戻る
+
 ## はちみつ
 
 ### `/honeys/lists.html`

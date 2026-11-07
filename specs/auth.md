@@ -68,7 +68,8 @@ Each of these tables has a `user_id` column so records can be separated per user
 | Sign up | `POST /api/auth/signup` | Accepts `username`, `email`, `password`, and `display_name`. Fails on validation errors or duplicates |
 | Log in | `POST /api/auth/login` | Accepts `username` and `password`. Creates a session on success |
 | Log out | `POST /api/auth/logout` | Clears the session |
-| Current user | `GET /api/auth/me` | Returns the current login state and the current user's identifiers |
+| Current user | `GET /api/auth/me` | Returns the current login state and, when logged in, the current user's identifiers and display name |
+| Update display name | `PUT /api/auth/me/display-name` | Updates only the authenticated user's display name from a same-origin request |
 
 ## Authorization
 

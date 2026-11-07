@@ -105,6 +105,8 @@ RUST_LOG=info cargo run -p server --release -- --env prod
 
 `prod` の Session Cookie には `Secure` が付くため、ブラウザーとの通信には前段のリバースプロキシで HTTPS を提供してください。現状の `Cors::permissive()` は本番向けの許可元制限をしていません。公開側のスキーム・IP・ポートが決まったら、デプロイ前に必要なオリジンだけを許可する設定へ変更してください。
 
+表示名更新 API の Origin 判定では、公開側の通信方式を `local` では HTTP、`prod` では HTTPS として扱います。`Forwarded` / `X-Forwarded-Proto` の値は判定に使用しません。
+
 ### レート制限（DoS対策）
 
 選択した環境の `common/config/server/local.toml` または `prod.toml` の `[rate_limit]` で調整できます。

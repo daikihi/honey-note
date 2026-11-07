@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HoneyNote | ユーザー情報</title>
+    <link rel="stylesheet" href="/honey_note/css/common_form.css">
+    <link rel="stylesheet" href="/honey_note/css/user.css">
+    <script type="module">
+        import init, { user_show_main } from '/honey_note/javascript/front.js';
+        init().then(user_show_main);
+    </script>
+</head>
+<body>
+<header>
+    <nav>
+        <div class="nav-left"><a class="logo" href="/honey_note/index.html"><img src="/honey_note/icons/honeu_note_logo_v0.0.1.jpeg" alt="HoneyNote Logo">HoneyNote</a></div>
+        <div class="nav-links"><a href="/honey_note/honeys/lists.html">はちみつ一覧</a><a href="/honey_note/flowers/lists.html">蜜源リスト</a><a href="/honey_note/beekeepers/lists.html">養蜂場</a></div>
+    </nav>
+</header>
+<main>
+    <h1>ユーザー情報</h1>
+    <p class="error-message" id="error_message" role="alert"></p>
+    <div class="section">
+        <h2>基本情報</h2>
+        <div class="info-grid">
+            <div class="label">ユーザー名</div><div id="username">-</div>
+            <div class="label">表示名</div><div id="display_name">-</div>
+        </div>
+    </div>
+    <div class="actions">
+        <a class="btn-back" href="/honey_note/index.html">戻る</a>
+        <a class="btn-edit" href="/honey_note/users/edit.html">表示名を編集</a>
+    </div>
+</main>
+</body>
+</html>

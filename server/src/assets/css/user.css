@@ -1,0 +1,6 @@
+@media (max-width: 640px) {
+    main { margin: 1rem; padding: 1.25rem; }
+    .info-grid { grid-template-columns: 1fr; }
+    .info-grid > div { overflow-wrap: anywhere; }
+    .actions { flex-wrap: wrap; }
+}
