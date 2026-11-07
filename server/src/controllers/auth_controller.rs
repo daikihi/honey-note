@@ -185,6 +185,7 @@ pub async fn me(session: Session, pool: web::Data<SqlitePool>) -> Result<HttpRes
             .await
             .map_err(actix_web::error::ErrorInternalServerError)?;
         let Some(user) = user else {
+            session.purge();
             return Ok(HttpResponse::Unauthorized().finish());
         };
         Ok(HttpResponse::Ok().json(MeResponse {
@@ -497,7 +498,7 @@ mod display_name_tests {
             &app,
             test::TestRequest::get()
                 .uri("/api/auth/me")
-                .cookie(cookie)
+                .cookie(cookie.clone())
                 .to_request(),
         )
         .await;
@@ -518,5 +519,38 @@ mod display_name_tests {
                 ("bob".into(), Some("bob".into()))
             ]
         );
+
+        sqlx::query("UPDATE users SET terminated_at = '2026-11-07' WHERE id = 1")
+            .execute(&pool)
+            .await
+            .unwrap();
+        let response = test::call_service(
+            &app,
+            test::TestRequest::get()
+                .uri("/api/auth/me")
+                .cookie(cookie.clone())
+                .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+        let response = test::call_service(
+            &app,
+            test::TestRequest::put()
+                .uri("/api/auth/me/display-name")
+                .cookie(cookie)
+                .insert_header(("Host", "localhost"))
+                .insert_header(("Origin", "http://localhost"))
+                .set_json(serde_json::json!({"display_name": "Should not save"}))
+                .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        let (stored_name,): (String,) =
+            sqlx::query_as("SELECT display_name FROM users WHERE id = 1")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
+        assert_eq!(stored_name, "Alice New");
     }
 }
