@@ -7,6 +7,7 @@ pub trait UserRepository: Send + Sync {
     async fn find_by_username(&self, username: &str) -> Result<Option<User>, String>;
     async fn find_by_id(&self, id: i32) -> Result<Option<User>, String>;
     async fn exists_by_email_hash(&self, email_hash: &str) -> Result<bool, String>;
+    async fn update_display_name(&self, id: i32, display_name: &str) -> Result<bool, String>;
 }
 
 pub struct UserRepositorySqlite {
@@ -38,5 +39,13 @@ impl UserRepository for UserRepositorySqlite {
         crate::infrastructure::db::sqlx::user::User::exists_by_email_hash(email_hash, &self.pool)
             .await
             .map_err(|e| e.to_string())
+    }
+
+    async fn update_display_name(&self, id: i32, display_name: &str) -> Result<bool, String> {
+        crate::infrastructure::db::sqlx::user::User::update_display_name(
+            id, display_name, &self.pool,
+        )
+        .await
+        .map_err(|e| e.to_string())
     }
 }

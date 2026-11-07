@@ -27,6 +27,20 @@ It focuses on the HTML files that exist today and the WASM entry points they loa
 - Sign-up page
 - Loads `signup_main()`
 
+## User Information
+
+### `/users/show.html`
+
+- Loads `user_show_main()` and displays the current username and display name from `GET /api/auth/me`
+- Reached through the user link in the common header
+- The common header shows the display name, falling back to the username only when no display name is set
+
+### `/users/edit.html`
+
+- Loads `user_edit_main()` and edits only the display name
+- Saves through `PUT /api/auth/me/display-name`; save success, unchanged input, and cancel return to `/users/show.html`
+- The trimmed display name must contain 1 to 50 characters
+
 ## Honeys
 
 ### `/honeys/lists.html`

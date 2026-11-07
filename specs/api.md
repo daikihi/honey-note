@@ -7,7 +7,7 @@ It is organized as a table-first reference so that endpoints, authentication req
 
 | Item | Value |
 | :--- | :--- |
-| Base URL | `/honey-note/api` |
+| Base URL | `/api/auth` for authentication; `/honey-note/api` for other data APIs |
 | Authentication model | Read the current user from the session |
 | Failure when unauthenticated | `401 Unauthorized` |
 | PUT requests | Accepted as JSON and logged with their bodies |
@@ -19,8 +19,15 @@ It is organized as a table-first reference so that endpoints, authentication req
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | POST | `/api/auth/signup` | No | `username`, `email`, `password`, `display_name` | Normalize `username` to lowercase. Hash `email` for duplicate checks. Hash `password` with bcrypt. Use `username` as `display_name` if omitted | `200 OK`, `400 Bad Request`, `500 Internal Server Error` |
 | POST | `/api/auth/login` | No | `username`, `password` | Normalize `username` to lowercase and verify credentials. On success, store `SessionData` under the `user` key | `200 OK`, `401 Unauthorized` |
-| POST | `/api/auth/logout` | Yes | None | Clear the session | `200 OK` |
-| GET | `/api/auth/me` | Yes | None | Return the current login state | `200 OK` |
+| POST | `/api/auth/logout` | No | None | Clear the session | `200 OK` |
+| GET | `/api/auth/me` | No | None | Return login state and, when logged in, `user_id`, `username`, and `display_name`; logged-out values are `null` | `200 OK`, `401 Unauthorized` (session user no longer exists), `500 Internal Server Error` |
+| PUT | `/api/auth/me/display-name` | Yes | JSON: `display_name` (string) only | Trim and update the session user's display name. Reject blank values and extra fields. Require a same-origin `Origin` header | `200 OK` (`display_name`), `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `500 Internal Server Error` |
+
+Sign-up and display-name updates trim the stored display name and reject blank values or values longer than 50 characters. When sign-up omits a display name, the same limit applies to the username used as its fallback.
+
+Successful sign-up and display-name saves write structured recovery log events with a timestamp, user ID, and stored display name. The sign-up event also includes the username.
+
+The display-name update's same-origin check uses HTTP as the public scheme in `local` and HTTPS in `prod`. It does not use the scheme from forwarding headers.
 
 ## Master Data
 

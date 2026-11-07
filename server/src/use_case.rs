@@ -11,3 +11,5 @@ pub mod put_edit_flower;
 pub mod get_honey_by_id;
 pub mod get_beekeeper_by_id;
 pub mod get_flower_by_id;
+#[path = "use_case/update_display_name.rs"]
+pub mod update_display_name;

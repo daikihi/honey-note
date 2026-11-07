@@ -8,6 +8,7 @@ mod lists;
 mod login_page_main;
 mod models;
 mod show;
+mod user_page_main;
 pub mod signup_page_main;
 
 #[wasm_bindgen]
@@ -30,6 +31,16 @@ pub async fn top_page_main() {
         return;
     }
     web_sys::console::log_1(&"Hello, Honey Note!".into());
+}
+
+#[wasm_bindgen]
+pub async fn user_show_main() {
+    user_page_main::show().await;
+}
+
+#[wasm_bindgen]
+pub async fn user_edit_main() {
+    user_page_main::edit().await;
 }
 
 /**
