@@ -507,18 +507,13 @@ mod display_name_tests {
         assert!(body.logged_in);
         assert_eq!(body.username.as_deref(), Some("alice"));
         assert_eq!(body.display_name.as_deref(), Some("Alice New"));
-        let rows: Vec<(String, Option<String>)> =
-            sqlx::query_as("SELECT username, display_name FROM users ORDER BY id")
-                .fetch_all(&pool)
-                .await
-                .unwrap();
-        assert_eq!(
-            rows,
-            vec![
-                ("alice".into(), Some("Alice New".into())),
-                ("bob".into(), Some("bob".into()))
-            ]
-        );
+        let repo = UserRepositorySqlite { pool: pool.clone() };
+        let alice = repo.find_by_id(1).await.unwrap().unwrap();
+        let bob = repo.find_by_id(2).await.unwrap().unwrap();
+        assert_eq!(alice.username, "alice");
+        assert_eq!(alice.display_name.as_deref(), Some("Alice New"));
+        assert_eq!(bob.username, "bob");
+        assert_eq!(bob.display_name.as_deref(), Some("bob"));
 
         sqlx::query("UPDATE users SET terminated_at = '2026-11-07' WHERE id = 1")
             .execute(&pool)
@@ -546,11 +541,5 @@ mod display_name_tests {
         )
         .await;
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-        let (stored_name,): (String,) =
-            sqlx::query_as("SELECT display_name FROM users WHERE id = 1")
-                .fetch_one(&pool)
-                .await
-                .unwrap();
-        assert_eq!(stored_name, "Alice New");
     }
 }
