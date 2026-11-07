@@ -25,6 +25,8 @@ It is organized as a table-first reference so that endpoints, authentication req
 
 Successful sign-up and display-name saves write structured recovery log events with a timestamp, user ID, and stored display name. The sign-up event also includes the username.
 
+The display-name update's same-origin check uses HTTP as the public scheme in `local` and HTTPS in `prod`. It does not use the scheme from forwarding headers.
+
 ## Master Data
 
 | Method | Path | Auth | Main Input | Main Behavior | Typical Responses |

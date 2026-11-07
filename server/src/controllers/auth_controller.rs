@@ -204,8 +204,11 @@ pub async fn me(session: Session, pool: web::Data<SqlitePool>) -> Result<HttpRes
     }
 }
 
+/// 公開側の通信方式。転送ヘッダーはクライアントが偽装できるため、判定に使わない。
+pub struct PublicScheme(pub &'static str);
+
 /// Cookie セッションで行う更新は同一オリジンからの要求に限定する。
-fn same_origin(request: &HttpRequest) -> bool {
+fn same_origin(request: &HttpRequest, public_scheme: &str) -> bool {
     let Some(origin) = request
         .headers()
         .get(header::ORIGIN)
@@ -223,7 +226,7 @@ fn same_origin(request: &HttpRequest) -> bool {
     else {
         return false;
     };
-    origin.scheme_str() == Some(request.connection_info().scheme())
+    origin.scheme_str() == Some(public_scheme)
         && origin.authority().map(|value| value.as_str()) == Some(host)
 }
 
@@ -232,9 +235,10 @@ pub async fn put_display_name(
     request: HttpRequest,
     user: AuthenticatedUser,
     pool: web::Data<SqlitePool>,
+    public_scheme: web::Data<PublicScheme>,
     payload: web::Json<UpdateDisplayNameRequest>,
 ) -> Result<HttpResponse, Error> {
-    if !same_origin(&request) {
+    if !same_origin(&request, public_scheme.0) {
         return Ok(
             HttpResponse::Forbidden().json(serde_json::json!({"message": "不正なオリジンです"}))
         );
@@ -370,6 +374,30 @@ mod display_name_tests {
     use actix_web::{http::StatusCode, test, App};
 
     #[actix_web::test]
+    async fn origin_uses_the_configured_public_scheme() {
+        let local = test::TestRequest::default()
+            .insert_header(("Host", "localhost:8080"))
+            .insert_header(("Origin", "http://localhost:8080"))
+            .insert_header(("X-Forwarded-Proto", "https"))
+            .to_http_request();
+        assert!(same_origin(&local, "http"));
+        assert!(!same_origin(&local, "https"));
+
+        let forged = test::TestRequest::default()
+            .insert_header(("Host", "localhost:8080"))
+            .insert_header(("Origin", "https://localhost:8080"))
+            .insert_header(("Forwarded", "proto=https"))
+            .to_http_request();
+        assert!(!same_origin(&forged, "http"));
+
+        let behind_tls_proxy = test::TestRequest::default()
+            .insert_header(("Host", "example.com"))
+            .insert_header(("Origin", "https://example.com"))
+            .to_http_request();
+        assert!(same_origin(&behind_tls_proxy, "https"));
+    }
+
+    #[actix_web::test]
     async fn updates_only_the_session_user_and_keeps_the_session() {
         let pool = sqlx::sqlite::SqlitePoolOptions::new()
             .max_connections(1)
@@ -387,6 +415,7 @@ mod display_name_tests {
         let app = test::init_service(
             App::new()
                 .app_data(web::Data::new(pool.clone()))
+                .app_data(web::Data::new(PublicScheme("http")))
                 .wrap(
                     actix_session::SessionMiddleware::builder(
                         actix_session::storage::CookieSessionStore::default(),
